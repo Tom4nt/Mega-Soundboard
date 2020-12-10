@@ -1,5 +1,4 @@
 {
-    "type": "module",
     "name": "mega-soundboard",
     "version": "0.3.1",
     "description": "Mega Soundboard",
@@ -13,13 +12,13 @@
     "author": "Tom4nt",
     "license": "ISC",
     "devDependencies": {
-        "electron": ">=7.2.4",
+        "electron": "^11.0.4",
         "electron-builder": "^21.2.0"
     },
     "dependencies": {
         "electron-reload": "^1.5.0",
-        "electron-updater": "^4.1.2",
-        "iohook": "^0.6.4",
+        "electron-updater": "^4.3.5",
+        "iohook": "^0.7.2",
         "typeface-roboto": "0.0.75"
     },
     "build": {
@@ -45,7 +44,7 @@
     "iohook": {
         "targets": [
             "node-72",
-            "electron-75"
+            "electron-85"
         ],
         "platforms": [
             "win32",
@@ -53,8 +52,7 @@
             "linux"
         ],
         "arches": [
-            "x64",
-            "ia32"
+            "x64"
         ]
     }
 }

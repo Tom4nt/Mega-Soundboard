@@ -61,7 +61,8 @@ function createWindow() {
         minWidth: 650,
         minHeight: 420,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            enableRemoteModule: true
         },
         frame: false,
         title: "Mega Soundboard",
