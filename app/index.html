@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mega Soundboard</title>
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <!-- <script type="module" src="index.js"></script> -->
+    <script src="elements/SoundSearchbox.js"></script>
+</head>
+
+<body>
+    <ms-titlebar id="tb" main="Mega SoundBoard" sub="beta 0.3.0" onClose="closew()" onMin="miniw()" onSize="changeSize()"></ms-titlebar>
+    <div onclick="update(this)" id="updateButton" class="updateButton update" tabindex="-1">
+        <div id="filler">
+            <span id="desc">Restart and update</span>
+            <span id="ico">u</span>
+        </div>
+    </div>
+
+    <!-- Main window body -->
+    <div id="content">
+        <div id="panel-left">
+            <div id="soundboardlistactions">
+                <div id="logo-container">
+                    <button id="logo">
+                        <span id="logo-indicator"></span>
+                    </button>
+                    <button class="icon-button" id="update-button">download</button>
+                    <span id="logo-label">Test</span>
+                </div>
+                <button id="button-addSoundboard" class="icon-button" style="float: right;">add_list</button>
+            </div>
+            <ms-soundboardlist id="soundboardlist"></ms-soundboardlist>
+        </div>
+
+        <div id="panel-right">
+            <div id="soundlist-actions">
+                <button id="soundlist-searchbox-button" class="icon-button">search</button>
+                <input type="search" id="soundlist-searchbox">
+                <button id="add-sound-button" class="icon-button" style="float: right;">add</button>
+                <button id="add-sounds-button" class="icon-button" style="float: right; margin-right: 8px;">add_multiple</button>
+            </div>
+            <ms-soundlist id="soundlist"></ms-soundlist>
+            <div id="actionpanel">
+                <button id="btndevicesettings" class="icon-button">devices</button>
+                <button id="btnquicksettings" class="icon-button">tune</button>
+                <button id="button-stopAll" class="icon-button red">stop</button>
+            </div>
+
+            <div class="actionpanel-container" id="devicesettings">
+                <div style="bottom: 116px;">
+                    <span class="label">Main device</span>
+                    <ms-dropdown id="dropdown-mainDevice"></ms-dropdown>
+                    <ms-slider id="slider-mainDeviceVolume"></ms-slider>
+                </div>
+                <div style="bottom: 115px" class="devicesettings-separator"></div>
+                <div style="bottom: 0;">
+                    <span class="label">Secondary device</span>
+                    <ms-dropdown id="dropdown-secondaryDevice"></ms-dropdown>
+                    <ms-slider id="slider-secondaryDeviceVolume"></ms-slider>
+                </div>
+            </div>
+
+            <div class="actionpanel-container" id="quicksettings">
+                <div>
+                    <span class="label">Quick settings</span>
+                    <ms-checkbox id="toggler-enableKeybinds" text="Enable keybinds"></ms-checkbox>
+                    <ms-checkbox id="toggler-overlapSounds" text="Overlap sounds"></ms-checkbox>
+                    <button id="button-more-settings" class="icon-text-button"><span class="icon">settings</span><span>More Settings</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="index.js"></script>
+
+</html>

@@ -1,0 +1,87 @@
+ms-keyrecorder {
+    display: block;
+    border: 1px solid/*var(--color-dark)*/
+    var(--color-dark);
+    border-radius: 4px;
+    padding: 4px;
+    background-color: var(--color-normalD);
+    color: var(--color-gray);
+    outline: none;
+    transition: 0.2s all;
+    font-size: 13px;
+    /*box-shadow: inset 0 0 4px var(--color-dark);*/
+}
+
+ms-keyrecorder:hover {
+    border: 1px solid var(--color-red);
+}
+
+ms-keyrecorder:hover>.keyrecorder-indicator {
+    font-size: 11px;
+    margin: 2px;
+    padding: 3px 8px;
+}
+
+.keyrecorder-label {
+    vertical-align: middle;
+    margin-left: 4px;
+    line-height: 23px;
+}
+
+.keyrecorder-indicator {
+    font-size: 0;
+    float: right;
+    background-color: var(--color-red);
+    padding: 5.5px;
+    border-radius: 9.5px;
+    margin: 6px;
+    transition: all 0.2s;
+    color: var(--color-white);
+    transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
+    text-transform: uppercase;
+}
+
+.recording {
+    border: 1px solid var(--color-red);
+    animation-name: recording;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
+
+.recording>.keyrecorder-indicator {
+    border-radius: 1.5px;
+}
+
+@keyframes recording {
+    0% {
+        box-shadow: inset 0 0 4px var(--color-red), 0px 0px 0px 0px rgba(181, 42, 42, 1);
+    }
+    55% {
+        box-shadow: inset 0 0 4px var(--color-red), 0px 0px 24px 0px rgba(181, 42, 42, 0);
+    }
+    100% {
+        box-shadow: inset 0 0 4px var(--color-red), 0px 0px 24px 0px rgba(181, 42, 42, 0);
+    }
+}
+
+ms-keyrecorder .key {
+    margin-right: 2px;
+}
+
+.key {
+    display: inline-block;
+    min-width: 12px;
+    min-height: 12px;
+    background-color: var(--color-normalL);
+    padding: 3px 4px 6px;
+    vertical-align: middle;
+    border: 1px solid var(--color-dark);
+    border-radius: 2px;
+    color: var(--color-white);
+    box-shadow: inset 0 -4px 0 var(--color-darkL);
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+}

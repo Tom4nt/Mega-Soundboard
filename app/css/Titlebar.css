@@ -1,0 +1,122 @@
+ms-titlebar {
+    position: fixed;
+    top: 0;
+    z-index: 100;
+    background-color: var(--color-normalL);
+    width: 100%;
+}
+
+ms-titlebar span {
+    color: white;
+    display: inline-block;
+    font-family: Roboto;
+    font-size: 14px;
+    padding: 7px 0 0 8px;
+}
+
+ms-titlebar button {
+    border: none;
+    color: white;
+    background-color: transparent;
+    height: 30px;
+    -webkit-app-region: no-drag;
+    float: right;
+    font-family: 'MSIcons';
+    font-size: 16px;
+    padding: 0 8px 0 8px;
+    transition: all 0.1s;
+}
+
+ms-titlebar button:focus {
+    outline: none;
+}
+
+ms-titlebar button:hover {
+    background-color: var(--color-light);
+}
+
+ms-titlebar button:active {
+    background-color: var(--color-lightL);
+}
+
+ms-titlebar button.red:hover {
+    background-color: var(--color-red-lightL);
+}
+
+ms-titlebar button.red:active {
+    background-color: var(--color-red-light);
+}
+
+ms-titlebar .drag {
+    -webkit-app-region: drag;
+    z-index: -1;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    height: 25px;
+    width: 100%;
+}
+
+.updateButton {
+    display: none;
+    float: right;
+    -webkit-app-region: none;
+    outline: none;
+    width: 165px;
+}
+
+.update {
+    background-color: transparent;
+}
+
+.downloading {
+    background-color: #135cb5;
+}
+
+.downloading #filler {
+    background-color: #257ce6;
+}
+
+#filler {
+    overflow: visible;
+    white-space: nowrap;
+    background-color: rgba(90, 238, 47, 0.30);
+    padding: 5px 0 5px 0;
+    height: 30px;
+    box-sizing: border-box;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.update #filler {
+    padding-left: 12px;
+    cursor: pointer;
+}
+
+.downloading #filler {
+    padding-left: 8px;
+}
+
+.update #filler:hover {
+    background-color: rgba(90, 238, 47, 0.40);
+}
+
+.update #filler:active {
+    background-color: rgba(90, 238, 47, 0.20);
+}
+
+#ico {
+    padding: 0;
+    font-size: 16px;
+    font-family: Icons;
+    display: inline;
+    vertical-align: middle;
+}
+
+#desc {
+    padding: 0;
+    padding-right: 3px;
+    display: inline;
+    vertical-align: middle;
+    font-size: 14px;
+}

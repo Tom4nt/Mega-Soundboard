@@ -1,0 +1,21 @@
+#soundlist-searchbox {
+    padding: 2px 0;
+    margin-left: 4px;
+    border: none;
+    border-bottom: 1px solid var(--color-white);
+    outline: none;
+    color: var(--color-white);
+    background-color: transparent;
+    font-size: 13px;
+    margin-top: 8px;
+    vertical-align: top;
+    width: 0;
+    box-sizing: content-box;
+    transition: all 0.3s;
+    transition-timing-function: cubic-bezier(0, 1, 0, 1);
+}
+
+#soundlist-searchbox.open {
+    width: 300px;
+    padding: 2px;
+}

@@ -1,0 +1,60 @@
+{
+    "type": "module",
+    "name": "mega-soundboard",
+    "version": "0.3.1",
+    "description": "Mega Soundboard",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder",
+        "pub": "electron-builder -p=always"
+    },
+    "repository": "https://github.com/Tom4nt/Mega-Soundboard",
+    "author": "Tom4nt",
+    "license": "ISC",
+    "devDependencies": {
+        "electron": ">=6.0.0",
+        "electron-builder": "^21.2.0"
+    },
+    "dependencies": {
+        "electron-reload": "^1.5.0",
+        "electron-updater": "^4.1.2",
+        "iohook": "^0.6.4",
+        "typeface-roboto": "0.0.75"
+    },
+    "build": {
+        "appId": "com.tom4nt.megasoundboard",
+        "productName": "Mega Soundboard",
+        "icon": "app/res/icon.ico",
+        "files": [
+            "**/*",
+            "app/res"
+        ],
+        "publish": {
+            "provider": "github",
+            "owner": "Tom4nt",
+            "private": "true",
+            "releaseType": "release"
+        },
+        "fileAssociations": {
+            "ext": "mspkg",
+            "name": "Mega Soundboard Package",
+            "description": "Mega Soundboard Package"
+        }
+    },
+    "iohook": {
+        "targets": [
+            "node-72",
+            "electron-75"
+        ],
+        "platforms": [
+            "win32",
+            "darwin",
+            "linux"
+        ],
+        "arches": [
+            "x64",
+            "ia32"
+        ]
+    }
+}

@@ -1,0 +1,123 @@
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+.modal-dimmer {
+    background-color: var(--color-dimmer);
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    transition: all 0.1s;
+}
+
+.modal-dimmer.hidden {
+    opacity: 0;
+}
+
+.modal-window {
+    color: white;
+    font-family: Roboto;
+    z-index: 2;
+    opacity: 1;
+    visibility: visible;
+    background-color: var(--color-normal);
+    border-radius: 4px;
+    width: 400px;
+    box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
+    transition: all 0.2s;
+    position: absolute;
+    transition-timing-function: cubic-bezier(0, 0, 0, 1);
+}
+
+.modal-window.hidden {
+    opacity: 0;
+    transform: scale(0.8) rotateX(-10deg)
+}
+
+.modal-header {
+    border-radius: 4px 4px 0 0;
+    padding: 16px 16px 0 16px;
+}
+
+.modal-header h1 {
+    font-size: 13px;
+    color: var(--color-white);
+    margin: 0;
+}
+
+.modal-body {
+    padding: 16px;
+}
+
+.modal-body>* {
+    margin-bottom: 12px;
+}
+
+.modal-body>:last-child {
+    margin-bottom: 0;
+}
+
+.modal-body .modal-label {
+    color: var(--color-white);
+    font-size: 11px;
+    display: inline-block;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.modal-body p {
+    margin-top: 0;
+    font-size: 12px;
+    color: var(--color-white);
+    line-height: 1.6;
+}
+
+.modal-footer {
+    background-color: var(--color-normalL);
+    border-radius: 0 0 4px 4px;
+    text-align: right;
+    padding: 16px;
+}
+
+.modal-footer button {
+    border: none;
+    padding: 8px 16px 8px 16px;
+    border-radius: 4px;
+    color: var(--color-white);
+    background-color: transparent;
+    font-family: Roboto;
+}
+
+.modal-footer>*:not(:last-child) {
+    margin-right: 8px;
+}
+
+.modal-footer button:hover {
+    background-color: var(--color-light);
+}
+
+.modal-footer button:focus {
+    outline: none;
+}
+
+.modal-footer button:active {
+    background-color: var(--color-lightL);
+}
+
+.modal-footer .button-warn {
+    background-color: var(--color-red);
+}
+
+.modal-footer button.button-warn:active {
+    background-color: var(--color-red-lightL);
+}
+
+.modal-footer .button-warn:hover {
+    background-color: var(--color-red-light);
+}
