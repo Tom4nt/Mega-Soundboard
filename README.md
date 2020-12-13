@@ -48,5 +48,3 @@ Distributed under the MIT License. [More information](https://github.com/Tom4nt/
 ## Contact
 
 Tomás Antunes - tmsntns@gmail.com
-
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
