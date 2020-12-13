@@ -41,7 +41,7 @@ Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soun
 
 <!-- LICENSE -->
 ## License
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. [More information](https://github.com/Tom4nt/Mega-Soundboard/blob/master/LICENSE).
 
 
 <!-- CONTACT -->
