@@ -8,7 +8,7 @@
     <br/>
     <a href="https://github.com/Tom4nt/Mega-Soundboard/releases">Download</a>
     ·
-    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues">Report Bug</a>
+    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=bug&template=bug_report.md&title=">Report a Bug</a>
     ·
     <a href="https://github.com/Tom4nt/Mega-Soundboard/discussions?discussions_q=category%3AIdeas">Request Feature</a>
   </p>
