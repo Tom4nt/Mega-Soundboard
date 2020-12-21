@@ -139,7 +139,6 @@ module.exports = class SoundList extends HTMLElement {
             this._displayNoSoundsMessage(NO_SOUNDS)
             return;
         }
-        console.log("a")
         this._removeAll()
         this.emptyIndicator.style.display = "none"
         let hasSounds = false
