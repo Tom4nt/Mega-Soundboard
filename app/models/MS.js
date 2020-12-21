@@ -101,6 +101,15 @@ class MS {
             return MS.devices
         }
     }
+
+    /**
+     * @returns {Number}
+     */
+    static getElementIndex(element) {
+        let i = 0;
+        while ((element = element.previousElementSibling) != null) ++i;
+        return i;
+    }
 }
 
 module.exports = MS
