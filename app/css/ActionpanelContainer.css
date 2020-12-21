@@ -7,7 +7,7 @@
     width: 0;
     height: 0;
     background-color: var(--color-normalL);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.3);
     transition: all 0.4s;
     transition-timing-function: cubic-bezier(0, 1, 0, 1);
 }

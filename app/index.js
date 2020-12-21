@@ -84,12 +84,10 @@ const buttonMoreSettings = quickSettings.querySelector('#button-more-settings');
 //#region Events
 
 MS.eventDispatcher.addEventListener(MS.EVENT_TOGGLED_KEYBINDS_STATE, () => {
-    console.log("EVENT_TOGGLED_KEYBINDS_STATE")
     enabeKeybindsToggler.toggled = MS.settings.enableKeybinds
 })
 
 KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUNDBOARD, (e) => {
-    console.log("ate event")
     soundboardList.selectSoundboard(e.detail.soundboard)
 })
 
@@ -155,6 +153,11 @@ updateButton.addEventListener('click', () => {
 
 soundboardList.addEventListener("soundboardselect", (e) => {
     selectSoundboard(e.detail.soundboard)
+})
+
+soundList.addEventListener('soundboardselect', (e) => {
+    if (MS.getSelectedSoundboard() === e.detail.soundboard) return;
+    soundboardList.selectSoundboard(e.detail.soundboard)
 })
 
 //#endregion
@@ -267,8 +270,8 @@ function fillDeviceLists(devices) {
 //#endregion
 
 function selectSoundboard(soundboard) {
-    setSoundlistSounds(soundboard)
     const currSB = MS.getSelectedSoundboard()
+    setSoundlistSounds(soundboard)
     if (currSB) KeybindManager.unregisterSounds(currSB)
     MS.setSelectedSoundboard(soundboard)
     soundboard.sounds.forEach(sound => {

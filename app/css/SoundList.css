@@ -1,18 +1,27 @@
 ms-soundlist {
     padding: 4px;
+    padding-top: 0;
+    top: -4px;
     font-family: Roboto;
     color: var(--color-white);
     position: relative;
     box-sizing: border-box;
     font-size: 0;
     display: block;
-    max-height: calc(100% - 42px);
+    max-height: calc(100% - 46px);
     overflow-y: overlay;
     padding-bottom: 78px;
 }
 
+.soundlist-itemcontainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
 .soundlist-item {
-    display: inline-block;
+    display: list-item;
+    list-style: none;
+    flex-grow: 1;
     padding: 8px;
     border-radius: 4px;
     background-color: var(--color-normalL);
@@ -20,14 +29,23 @@ ms-soundlist {
     margin: 4px;
     box-sizing: border-box;
     font-size: 16px;
-    width: calc(16.666666% - 8px);
-    transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0.5s;
+    transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0s;
     vertical-align: middle;
 }
 
-.soundlist-item:hover {
+.soundlist-item:hover:not(.dragdummy) {
     background-color: var(--color-light);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+.soundlist-item:active:not(.dragdummy):not(.drag) {
+    background-color: var(--color-lightL);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.soundlist-item.drag {
+    transform: rotate(5deg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 12px 10px rgba(0, 0, 0, 0.23);
 }
 
 .soundlist-empty {
@@ -39,46 +57,11 @@ ms-soundlist {
 }
 
 .dragdummy {
-    background-color: var(--color-normalD);
+    display: none;
+    background-color: var(--color-normal);
     box-shadow: none;
     height: 53px;
-    box-shadow: inset 0px 0px 16px 0px rgba(0, 0, 0, 0.2);
-}
-
-.dragdummy:hover {
-    background-color: var(--color-normalD);
-    box-shadow: none;
-    box-shadow: inset 0px 0px 16px 0px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 2400px) {
-    .soundlist-item {
-        width: calc(20% - 8px);
-    }
-}
-
-@media (max-width: 1900px) {
-    .soundlist-item {
-        width: calc(25% - 8px);
-    }
-}
-
-@media (max-width: 1420px) {
-    .soundlist-item {
-        width: calc(33.33333% - 8px);
-    }
-}
-
-@media (max-width: 1080px) {
-    .soundlist-item {
-        width: calc(50% - 8px);
-    }
-}
-
-@media (max-width: 820px) {
-    .soundlist-item {
-        width: calc(100% - 8px);
-    }
+    box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
 }
 
 .soundlist-item span {
