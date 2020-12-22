@@ -76,3 +76,7 @@ ms-soundlist {
     margin-top: 4px;
     color: var(--color-grayL);
 }
+
+.soundlist-item.playing {
+    background-color: green;
+}
