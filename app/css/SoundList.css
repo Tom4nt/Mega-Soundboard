@@ -70,9 +70,3 @@ ms-soundlist {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
-.soundlist-item-desc {
-    font-size: 12px;
-    margin-top: 4px;
-    color: var(--color-grayL);
-}
