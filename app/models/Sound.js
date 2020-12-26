@@ -98,6 +98,7 @@ module.exports = class Sound {
             this.instances.splice(i, 1)
             i--
         }
+        this.playing = false
         console.log("Stopped all instances of " + this.name + ".")
     }
 
