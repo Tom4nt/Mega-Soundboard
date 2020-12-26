@@ -29,8 +29,10 @@ ms-soundlist {
     margin: 4px;
     box-sizing: border-box;
     font-size: 16px;
-    transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0s;
+    transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0s, background-position 0.2s;
     vertical-align: middle;
+    position: relative;
+    overflow: hidden;
 }
 
 .soundlist-item:hover:not(.dragdummy) {
@@ -69,4 +71,22 @@ ms-soundlist {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.soundlist-item-desc {
+    font-size: 12px;
+    color: var(--color-grayL);
+    margin-top: 4px;
+}
+
+.soundlist-item-playingindicator {
+    top: -22px;
+    right: -22px;
+    width: 22px;
+    height: 22px;
+    display: block;
+    position: absolute;
+    background-color: var(--color-green);
+    transform: rotate(45deg);
+    transition: all 0.3s cubic-bezier(0.65, 0.05, 0.36, 1);
 }

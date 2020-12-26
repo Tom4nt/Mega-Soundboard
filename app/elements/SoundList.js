@@ -5,15 +5,15 @@ const MS = require('../models/MS.js')
 const SoundModal = require('./modals/SoundModal.js')
 const Modal = require('./modals/Modal.js')
 
-const NO_KEYBIND = "Right click to add a keybind"
-const NO_SOUNDS = "This soundboard has no sounds"
-const SEARCH_EMPTY = "No sounds with the current filter"
+const NO_KEYBIND = 'Right click to add a keybind'
+const NO_SOUNDS = 'This soundboard has no sounds'
+const SEARCH_EMPTY = 'No sounds with the current filter'
 const DRAG_START_OFFSET = 10
 
 module.exports = class SoundList extends HTMLElement {
     constructor() {
         super()
-        this._filter = ""
+        this._filter = ''
         this.sounds = []
         this.dragElem = null
     }
@@ -28,10 +28,10 @@ module.exports = class SoundList extends HTMLElement {
     }
 
     connectedCallback() {
-        const empty = document.createElement("span")
-        empty.classList.add("soundlist-empty")
+        const empty = document.createElement('span')
+        empty.classList.add('soundlist-empty')
         this.emptyIndicator = empty
-        const itemsContainer = document.createElement("div")
+        const itemsContainer = document.createElement('div')
         itemsContainer.classList.add('soundlist-itemcontainer')
         this.items = itemsContainer
 
@@ -46,6 +46,25 @@ module.exports = class SoundList extends HTMLElement {
 
         document.addEventListener('mousemove', (e) => this._onMouseMove(e))
         document.addEventListener('mouseup', (e) => this._onMouseUp(e))
+
+        MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_PLAY, (e) => {
+            const sound = e.detail
+            const elem = this._getSoundElement(sound)
+            this._setElementPlayingState(elem, true)
+        })
+
+        MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_STOP, (e) => {
+            const sound = e.detail
+            const elem = this._getSoundElement(sound)
+            this._setElementPlayingState(elem, false)
+        })
+
+        MS.eventDispatcher.addEventListener(MS.EVENT_STOP_ALL_SOUNDS, () => {
+            for (let i = 0; i < this.items.childElementCount; i++) {
+                const elem = this.items.childNodes[i]
+                this._setElementPlayingState(elem, false)
+            }
+        })
     }
 
     /**
@@ -53,35 +72,38 @@ module.exports = class SoundList extends HTMLElement {
      * @param {Sound} sound 
      */
     addSound(sound) {
-        this.emptyIndicator.style.display = "none"
-        const item = document.createElement("div")
-        item.classList.add("soundlist-item")
+        this.emptyIndicator.style.display = 'none'
+        const item = document.createElement('div')
+        item.classList.add('soundlist-item')
 
-        const title = document.createElement("span")
+        const title = document.createElement('span')
         title.innerHTML = sound.name
 
-        const desc = document.createElement("span")
-        desc.classList.add("soundlist-item-desc")
+        const desc = document.createElement('span')
+        desc.classList.add('soundlist-item-desc')
         if (sound.keys) desc.innerHTML = Keys.toKeyString(sound.keys)
         else desc.innerHTML = NO_KEYBIND
 
-        item.sound = sound
-        item.append(title, desc)
+        const playingIndicator = document.createElement('div')
+        playingIndicator.classList.add('soundlist-item-playingindicator')
 
-        item.addEventListener("click", () => {
+        item.sound = sound
+        item.append(title, desc, playingIndicator)
+
+        item.addEventListener('click', () => {
             if (!MS.playSound(sound)) {
-                new Modal("Could not play",
+                new Modal('Could not play',
                     `'${sound.path}' could not be found. It was moved, deleted or perhaps never existed...<br/>
                     If the file exists make sure Mega Soundboard has permission to access it.`).open()
                 MS.playUISound(MS.SOUND_ERR)
             }
         })
 
-        item.addEventListener("contextmenu", () => {
+        item.addEventListener('contextmenu', () => {
             const sb = MS.getSelectedSoundboard()
             const modal = new SoundModal(SoundModal.Mode.EDIT, sound)
             modal.open()
-            modal.addEventListener("edit", (e) => {
+            modal.addEventListener('edit', (e) => {
                 item.childNodes[0].innerHTML = e.detail.sound.name
                 if (e.detail.sound.keys) item.childNodes[1].innerHTML = Keys.toKeyString(e.detail.sound.keys)
                 else item.childNodes[1].innerHTML = NO_KEYBIND
@@ -89,7 +111,7 @@ module.exports = class SoundList extends HTMLElement {
                 sound.soundboard = sb
                 MS.data.save()
             })
-            modal.addEventListener("remove", (e) => {
+            modal.addEventListener('remove', (e) => {
                 item.remove()
                 if (this.items.childElementCount < 1) this._displayNoSoundsMessage(NO_SOUNDS)
                 KeybindManager.unregisterSound(sound)
@@ -108,8 +130,8 @@ module.exports = class SoundList extends HTMLElement {
             let offsetY = e.offsetY
             let offsetX = e.offsetX
             if (!e.target.classList.contains('soundlist-item')) {
-                offsetY = e.offsetY + e.target.offsetTop - e.target.parentElement.offsetTop
-                offsetX = e.offsetX + e.target.offsetLeft - e.target.parentElement.offsetLeft
+                offsetY = e.offsetY + e.target.offsetTop //- e.target.parentElement.offsetTop
+                offsetX = e.offsetX + e.target.offsetLeft //- e.target.parentElement.offsetLeft
             }
 
             elem.offsetX = offsetX + parseInt(getComputedStyle(elem).marginLeft)
@@ -143,13 +165,14 @@ module.exports = class SoundList extends HTMLElement {
         this.emptyIndicator.style.display = "none"
         let hasSounds = false
         sounds.forEach(sound => {
-            if (!this.filter || sound.name.includes(this.filter)) {
+            if (!this.filter || sound.name.toLowerCase().includes(this.filter.toLowerCase())) {
                 if (!this.dragOK || sound != this.dragElem.sound) {
                     this.addSound(sound)
                     hasSounds = true
                 }
             }
         });
+        this._updatePlayingStates()
         if (!hasSounds && !this.dragOK) this._displayNoSoundsMessage(SEARCH_EMPTY)
     }
 
@@ -172,6 +195,46 @@ module.exports = class SoundList extends HTMLElement {
         this.emptyIndicator.innerHTML = message
     }
 
+    /**
+     * Returns an element from the list for a specified sound.
+     * Returns null if the element is not found.
+     * @param {Sound} sound 
+     * @returns {HTMLElement}
+     */
+    _getSoundElement(sound) {
+        for (let i = 0; i < this.items.childElementCount; i++) {
+            let elem = this.items.childNodes[i]
+            if (elem.sound === sound) return elem
+        }
+        return null
+    }
+
+    /**
+     * Sets the element style to represent if it's sound is playing or not.
+     * @param {HTMLElement} element
+     */
+    _setElementPlayingState(element, playingState) {
+        if (!element || element.classList.contains('dragdummy')) return
+        if (playingState) {
+            element.childNodes[2].style.top = '-11px'
+            element.childNodes[2].style.right = '-11px'
+        } else {
+            element.childNodes[2].style.top = null
+            element.childNodes[2].style.right = null
+        }
+    }
+
+    /**
+     * Updates the displayed playing states on the list elements based on currently playing sounds.
+     */
+    _updatePlayingStates() {
+        const playing = MS.playingSounds
+        for (let i = 0; i < playing.length; i++) {
+            const elem = this._getSoundElement(playing[i])
+            if (elem) this._setElementPlayingState(elem, true)
+        }
+    }
+
     _onMouseMove(e) {
         const d = this.dragElem
         if (!d) return;
@@ -184,6 +247,8 @@ module.exports = class SoundList extends HTMLElement {
 
                 d.style.top = e.clientY - d.offsetY + 'px'
                 d.style.left = e.clientX - d.offsetX + 'px'
+
+                d.style.zIndex = 1
 
                 this.items.insertBefore(this.dragDummy, d.nextSibling)
                 this.dragDummy.style.display = 'inline-block'
@@ -222,6 +287,7 @@ module.exports = class SoundList extends HTMLElement {
             d.style.width = null
             d.style.top = null
             d.style.left = null
+            d.style.zIndex = null
             this.items.insertBefore(d, this.dragDummy.nextElementSibling)
             this.dragElem = null
             this.dragDummy.style.display = 'none'

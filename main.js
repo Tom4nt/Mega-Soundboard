@@ -17,12 +17,12 @@ const MainMenu = new Menu();
 let tray = null;
 let trayMenu;
 let minToTray = false;
-const availableKeys = [] // To lock long press (unused)
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
 app.commandLine.appendSwitch('disable-features', 'ColorCorrectRendering');
 app.commandLine.appendSwitch('disable-color-correct-rendering');
+app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling');
 
 //#region Prevent other instances
 
@@ -56,13 +56,16 @@ setInterval(function() {
 //#region Init OS things
 function createWindow() {
     win = new BrowserWindow({
+        show: false,
         width: 850,
         height: 600,
         minWidth: 650,
         minHeight: 420,
         webPreferences: {
             nodeIntegration: true,
-            enableRemoteModule: true
+            enableRemoteModule: true,
+            contextIsolation: false,
+            spellcheck: false
         },
         frame: false,
         title: "Mega Soundboard",
@@ -71,11 +74,23 @@ function createWindow() {
 
     win.webContents.on("did-finish-load", function() {});
 
+    win.on('ready-to-show', () => {
+        win.show()
+    })
+
     win.on('minimize', function() {
         if (minToTray) {
             win.hide();
         }
     });
+
+    win.on('maximize', function() {
+        win.webContents.send('win.maximize')
+    })
+
+    win.on('unmaximize', function() {
+        win.webContents.send('win.unmaximize')
+    })
 
     win.setMenu(MainMenu);
 
@@ -197,22 +212,13 @@ ipcMain.on('win.minToTray', (e, val) => {
 
 ipcMain.handle("key.register", (e, keycode) => {
     const id = ioHook.registerShortcut(keycode, () => {
-        // console.log("Shortcut " + id + " down")
-        // if (availableKeys[id] == undefined)
-        //     availableKeys[id] = true
-        // if (availableKeys[id])
         win.webContents.send("key.perform", id)
-            // availableKeys[id] = false
-    }, () => {
-        // console.log("Shortcut " + id + " up")
-        // availableKeys[id] = true
     })
     return id
 })
 
 ipcMain.handle("key.unregister", (e, id) => {
     ioHook.unregisterShortcut(id)
-    delete availableKeys[id]
 })
 
 ipcMain.on("file.browse", (e, typeName, extensions) => {

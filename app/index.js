@@ -1,4 +1,4 @@
-const { ipcRenderer, ipcMain } = require("electron");
+const { ipcRenderer } = require("electron");
 const path = require('path')
 
 const MS = require('./models/MS.js');
