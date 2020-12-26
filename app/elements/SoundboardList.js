@@ -109,13 +109,21 @@ module.exports = class SoundboardList extends HTMLElement {
     }
 
     /**
+     * Updates the information about playing sounds in a soundboard.
+     */
+    incrementPlayingSound(soundboard, increment) {
+        const elem = this._getSoundboardElement(soundboard)
+        if (!elem) return
+        this._updatePlayingIndicator(elem, increment)
+    }
+
+    /**
      * Updates the playing indicator of an element in the list.
      * @param {Number} playingSoundsIncrement Increments the currently playing sounds on the specified element (thus soundboard). Can be negative.
      */
     _updatePlayingIndicator(element, playingSoundsIncrement) {
         if (element.playingSounds) element.playingSounds += playingSoundsIncrement
         else element.playingSounds = playingSoundsIncrement
-        console.log(element.playingSounds)
 
         if (element.playingSounds < 0) element.playingSounds = 0 // Not supposed to happen
 

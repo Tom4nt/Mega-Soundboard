@@ -309,9 +309,20 @@ module.exports = class SoundList extends HTMLElement {
 
         // Register keybind again if it's a different soundboard
         if (this.initialSoundboard != MS.getSelectedSoundboard().sounds) {
+            sound.soundboard = MS.getSelectedSoundboard()
             KeybindManager.registerSound(sound)
         }
 
         MS.data.save();
+
+        this.dispatchEvent(new CustomEvent('reorder', {
+            detail: {
+                sound,
+                oldIndex,
+                newIndex,
+                oldSoundboard: this.initialSoundboard,
+                newSoundboard: MS.getSelectedSoundboard()
+            }
+        }))
     }
 }

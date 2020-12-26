@@ -9,6 +9,7 @@ module.exports = class Sound {
 
         this.soundboard = soundboard // Reference to the soundboard where this sound is
         this.instances = []
+        this.playing = false
     }
 
     toJSON() {
@@ -52,12 +53,14 @@ module.exports = class Sound {
         let sound = new Audio(url);
         let sound2 = new Audio(url);
         this.instances.push(sound, sound2);
+        this.playing = true
 
         console.log("Added and playing 2 instances of " + this.name + ".")
 
         sound.addEventListener('ended', (e) => {
             this.instances.splice(this.instances.indexOf(sound), 1);
             if (this.instances.length < 1) {
+                this.playing = false
                 console.log("All instances of " + this.name + " finished playing.")
                 onend()
             }
@@ -65,6 +68,7 @@ module.exports = class Sound {
         sound2.addEventListener('ended', (e) => {
             this.instances.splice(this.instances.indexOf(sound2), 1);
             if (this.instances.length < 1) {
+                this.playing = false
                 console.log("All instances of " + this.name + " finished playing.")
                 onend()
             }
@@ -95,5 +99,9 @@ module.exports = class Sound {
             i--
         }
         console.log("Stopped all instances of " + this.name + ".")
+    }
+
+    isPlaying() {
+        return this.playing
     }
 }

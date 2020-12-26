@@ -91,6 +91,8 @@ KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUN
     soundboardList.selectSoundboard(e.detail.soundboard)
 })
 
+//#region Window
+
 window.addEventListener("load", () => {
     MS.data.soundboards.forEach(soundboard => {
         KeybindManager.registerSoundboardn(soundboard)
@@ -133,6 +135,8 @@ window.addEventListener("contextmenu", (e) => {
     closeActionPanelContainers(e)
 })
 
+//#endregion
+
 //#region Left
 
 addSoundboardButton.addEventListener("click", (e) => {
@@ -153,11 +157,6 @@ updateButton.addEventListener('click', () => {
 
 soundboardList.addEventListener("soundboardselect", (e) => {
     selectSoundboard(e.detail.soundboard)
-})
-
-soundList.addEventListener('soundboardselect', (e) => {
-    if (MS.getSelectedSoundboard() === e.detail.soundboard) return;
-    soundboardList.selectSoundboard(e.detail.soundboard)
 })
 
 //#endregion
@@ -194,6 +193,23 @@ soundlistSearchbox.addEventListener("input", (e) => {
 soundlistSearchboxButton.addEventListener("click", (e) => {
     if (soundlistSearchbox.value) {
         soundList.filter = ""
+    }
+})
+
+soundList.addEventListener('soundboardselect', (e) => {
+    if (MS.getSelectedSoundboard() === e.detail.soundboard) return;
+    soundboardList.selectSoundboard(e.detail.soundboard)
+})
+
+soundList.addEventListener('reorder', (e) => {
+    const sound = e.detail.sound
+    const oldSB = e.detail.oldSoundboard
+    const newSB = e.detail.newSoundboard
+    if (oldSB === newSB) return
+
+    if (sound.isPlaying()) {
+        soundboardList.incrementPlayingSound(oldSB, -1)
+        soundboardList.incrementPlayingSound(newSB, 1)
     }
 })
 
