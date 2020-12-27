@@ -35,6 +35,7 @@
     --color-red: #b52a2a4f;
     --color-red-light: #b52a2a73;
     --color-red-lightL: #b52a2a91;
+    --color-green: #2d5f2f;
     --color-dimmer: #25252bb3;
 }
 
@@ -63,8 +64,6 @@ html {
 #content {
     margin-top: 30px;
     height: calc(100% - 30px);
-    position: relative;
-    display: flex;
     background-color: var(--color-normalL);
 }
 
@@ -109,10 +108,11 @@ html {
 #panel-left {
     box-sizing: border-box;
     background-color: var(--color-normalL);
-    flex-grow: 1;
-    flex-basis: 150px;
     font-size: 0;
-    max-width: 400px;
+    max-width: 350px;
+    float: left;
+    width: 35%;
+    height: 100%;
 }
 
 #soundboardlistactions {
@@ -164,7 +164,7 @@ html {
 #update-button {
     display: none;
     margin-left: 8px;
-    color: #71b374;
+    color: var(--color-white);
 }
 
 
@@ -175,14 +175,11 @@ html {
 
 #panel-right {
     box-sizing: border-box;
-    margin-left: auto;
-    flex-grow: 4;
-    flex-basis: 0px;
-    position: relative;
     background-color: var(--color-normal);
     font-size: 0;
     border-radius: 8px 0 0 0;
-    min-width: 0;
+    height: 100%;
+    overflow: auto;
 }
 
 #soundlist-actions {

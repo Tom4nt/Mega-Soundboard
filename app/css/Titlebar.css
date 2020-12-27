@@ -7,7 +7,7 @@ ms-titlebar {
 }
 
 ms-titlebar span {
-    color: white;
+    color: var(--color-white);
     display: inline-block;
     font-family: Roboto;
     font-size: 14px;
@@ -16,7 +16,7 @@ ms-titlebar span {
 
 ms-titlebar button {
     border: none;
-    color: white;
+    color: var(--color-white);
     background-color: transparent;
     height: 30px;
     -webkit-app-region: no-drag;

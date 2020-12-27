@@ -9,7 +9,19 @@ module.exports = class SoundboardList extends HTMLElement {
         super()
     }
 
-    connectedCallback() {}
+    connectedCallback() {
+        MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_PLAY, (e) => {
+            const elem = this._getSoundboardElement(e.detail.soundboard)
+            this._updatePlayingIndicator(elem, 1)
+        })
+
+        MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_STOP, (e) => {
+            const elem = this._getSoundboardElement(e.detail.soundboard)
+            this._updatePlayingIndicator(elem, -1)
+        })
+
+        MS.eventDispatcher.addEventListener(MS.EVENT_STOP_ALL_SOUNDS, () => { this._setAllPlayingIndicators(false) })
+    }
 
     /**
      * Adds a Soundboard to the list.
@@ -94,5 +106,62 @@ module.exports = class SoundboardList extends HTMLElement {
 
     selectIndex(index) {
         this.select(this.childNodes[index])
+    }
+
+    /**
+     * Updates the information about playing sounds in a soundboard.
+     */
+    incrementPlayingSound(soundboard, increment) {
+        const elem = this._getSoundboardElement(soundboard)
+        if (!elem) return
+        this._updatePlayingIndicator(elem, increment)
+    }
+
+    /**
+     * Updates the playing indicator of an element in the list.
+     * @param {Number} playingSoundsIncrement Increments the currently playing sounds on the specified element (thus soundboard). Can be negative.
+     */
+    _updatePlayingIndicator(element, playingSoundsIncrement) {
+        if (element.playingSounds) element.playingSounds += playingSoundsIncrement
+        else element.playingSounds = playingSoundsIncrement
+
+        if (element.playingSounds < 0) element.playingSounds = 0 // Not supposed to happen
+
+        this._setPlayingIndicatorState(element, element.playingSounds > 0)
+    }
+
+    /**
+     * Sets all playing indicators to a specific state.
+     */
+    _setAllPlayingIndicators(state) {
+        for (let i = 0; i < this.childElementCount; i++) {
+            const elem = this.childNodes[i]
+            elem.playingSounds = null
+            this._setPlayingIndicatorState(elem, state)
+        }
+    }
+
+    /**
+     * Sets the current playing indicator state for an element of the list.
+     */
+    _setPlayingIndicatorState(element, state) {
+        if (state) {
+            element.childNodes[1].style.fontWeight = '1000'
+        } else {
+            element.childNodes[1].style.fontWeight = null
+        }
+    }
+
+    /**
+     * Returns the element from the list representing a specific soundboard.
+     * Returns null if no element is found.
+     */
+    _getSoundboardElement(soundboard) {
+        if (!soundboard) return null
+        for (let i = 0; i < this.childElementCount; i++) {
+            const elem = this.childNodes[i]
+            if (elem.soundboard === soundboard) return elem
+        }
+        return null
     }
 }

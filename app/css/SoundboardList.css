@@ -9,12 +9,17 @@ ms-soundboardlist {
 }
 
 .soundboardlist-item {
+    display: flex;
     color: var(--color-white);
     font-family: Roboto;
     padding: 12px 16px 12px 16px;
     position: relative;
     transition: all 0.1s;
     font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    height: 42px;
 }
 
 .soundboardlist-item:hover {
@@ -26,7 +31,7 @@ ms-soundboardlist {
 }
 
 .soundboardlist-item.selected .soundboardlist-item-title {
-    padding-left: 12px;
+    padding-left: 22px;
 }
 
 .soundboardlist-item.selected .soundboardlist-item-indicator {
@@ -34,12 +39,16 @@ ms-soundboardlist {
 }
 
 .soundboardlist-item-title {
-    padding-left: -10px;
     transition: all 0.2s;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    margin-left: -10px;
+    margin-right: 6px;
 }
 
 .soundboardlist-item-indicator {
-    display: inline-block;
     opacity: 0;
     width: 10px;
     height: 10px;
@@ -47,6 +56,7 @@ ms-soundboardlist {
     border-radius: 5px;
     box-shadow: 0 0 6px var(--color-white);
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .soundboardlist-item-desc {
@@ -54,4 +64,5 @@ ms-soundboardlist {
     float: right;
     font-size: 12px;
     line-height: 1.45;
+    flex-shrink: 0;
 }
