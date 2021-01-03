@@ -9,13 +9,7 @@
 </head>
 
 <body>
-    <ms-titlebar id="tb" main="Mega SoundBoard" sub="beta 0.3.0" onClose="closew()" onMin="miniw()" onSize="changeSize()"></ms-titlebar>
-    <div onclick="update(this)" id="updateButton" class="updateButton update" tabindex="-1">
-        <div id="filler">
-            <span id="desc">Restart and update</span>
-            <span id="ico">u</span>
-        </div>
-    </div>
+    <ms-titlebar id="tb" main="Mega SoundBoard" onClose="closew()" onMin="miniw()" onSize="changeSize()"></ms-titlebar>
 
     <!-- Main window body -->
     <div id="content">
@@ -47,21 +41,21 @@
                 <button id="button-stopAll" class="icon-button red">stop</button>
             </div>
 
-            <div class="actionpanel-container" id="devicesettings">
-                <div style="bottom: 116px;">
+            <div class="actionpanel-container closed" id="devicesettings" style="right: 107px;">
+                <div>
                     <span class="label">Main device</span>
                     <ms-dropdown id="dropdown-mainDevice"></ms-dropdown>
                     <ms-slider id="slider-mainDeviceVolume"></ms-slider>
                 </div>
-                <div style="bottom: 115px" class="devicesettings-separator"></div>
-                <div style="bottom: 0;">
+                <div class="devicesettings-separator"></div>
+                <div>
                     <span class="label">Secondary device</span>
                     <ms-dropdown id="dropdown-secondaryDevice"></ms-dropdown>
                     <ms-slider id="slider-secondaryDeviceVolume"></ms-slider>
                 </div>
             </div>
 
-            <div class="actionpanel-container" id="quicksettings">
+            <div class="actionpanel-container closed" id="quicksettings" style="right: 66px;">
                 <div>
                     <span class="label">Quick settings</span>
                     <ms-checkbox id="toggler-enableKeybinds" text="Enable keybinds"></ms-checkbox>

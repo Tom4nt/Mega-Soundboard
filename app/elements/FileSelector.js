@@ -19,7 +19,7 @@ class FileSelector extends HTMLElement {
         let button = document.createElement("button")
         button.classList.add("fileselector-button")
         button.onclick = () => this.browseFile()
-        button.innerHTML = "..."
+        button.innerHTML = "folder"
 
         this.append(this.input, button)
     }

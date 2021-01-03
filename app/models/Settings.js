@@ -16,6 +16,7 @@ module.exports = class Settings {
         this.mainDeviceVolume = 100
         this.secondaryDeviceVolume = 100
         this.selectedSoundboard = 0
+        this.latestLogViewed = 0
     }
 
     static load() {
@@ -29,8 +30,6 @@ module.exports = class Settings {
             try {
                 const jsonData = JSON.parse(dataJSON);
                 Object.assign(settings, jsonData)
-                    //if (jsonData.selectedSoundboard) settings.selectedSoundboard = jsonData.selectedSoundboard
-                    //else settings.selectedSoundboard = 0
                 ipcRenderer.send('win.minToTray', settings.minToTray)
             } catch (err) {
                 dialog.showErrorBox("Error loading settings file", "There is a syntax error in the settings file located at " + dataPath + "\n\n" + err.message +

@@ -29,9 +29,9 @@ class MS {
         if (sound) {
             if (!MS.settings.overlapSounds) this.stopAllSounds()
             const result = sound.play(() => {
-                    MS.playingSounds.splice(MS.playingSounds.indexOf(sound), 1)
-                    MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_STOP, { detail: sound }))
-                },
+                this._removeSoundFromInstancesList(sound)
+                MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_STOP, { detail: sound }))
+            },
                 MS.settings.mainDeviceVolume, MS.settings.secondaryDeviceVolume, MS.settings.mainDevice, MS.settings.secondaryDevice);
 
             if (result) {
@@ -43,6 +43,14 @@ class MS {
             } else {
                 return false
             }
+        }
+    }
+
+    static stopSound(sound) {
+        if (sound) {
+            this._removeSoundFromInstancesList(sound)
+            sound.stop()
+            MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_STOP, { detail: sound }))
         }
     }
 
@@ -84,7 +92,7 @@ class MS {
 
     static initDevices(callback) {
         navigator.mediaDevices.enumerateDevices()
-            .then(function(devices_) {
+            .then(function (devices_) {
                 MS.devices = devices_.filter(device => device.kind == 'audiooutput' &&
                     device.deviceId != 'communications'
                 );
@@ -111,9 +119,16 @@ class MS {
         while ((element = element.previousElementSibling) != null) ++i;
         return i;
     }
+
+    static _removeSoundFromInstancesList(sound) {
+        MS.playingSounds.splice(MS.playingSounds.indexOf(sound), 1)
+    }
 }
 
 module.exports = MS
+
+MS.latestWithLog = 1 // Increments on every version that should display the changelog.
+
 MS.devices = []
 MS.playingSounds = []
 MS.data = Data.load()

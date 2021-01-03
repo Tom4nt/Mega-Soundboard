@@ -20,6 +20,8 @@
 }
 
 .modal-window {
+    display: flex;
+    flex-direction: column;
     color: white;
     font-family: Roboto;
     z-index: 2;
@@ -29,19 +31,20 @@
     border-radius: 4px;
     width: 400px;
     box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-    transition: all 0.2s;
+    transition: transform 0.2s, opacity 0.2s;
     position: absolute;
-    transition-timing-function: cubic-bezier(0, 0, 0, 1);
+    transition-timing-function: cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    max-height: calc(100% - 64px);
 }
 
 .modal-window.hidden {
     opacity: 0;
-    transform: scale(0.8) rotateX(-10deg)
+    transform: scale(0.9)
 }
 
 .modal-header {
     border-radius: 4px 4px 0 0;
-    padding: 16px 16px 0 16px;
+    padding: 16px 16px 8px 16px;
 }
 
 .modal-header h1 {
@@ -51,7 +54,9 @@
 }
 
 .modal-body {
-    padding: 16px;
+    padding: 8px 16px 16px 16px;
+    overflow-y: auto;
+    overflow-x: visible;
 }
 
 .modal-body>* {

@@ -1,0 +1,43 @@
+.news {
+    color: var(--color-white)
+}
+
+.news h3 {
+    margin: 0;
+}
+
+.news ul {
+    padding-left: 6px;
+    list-style: none;
+    font-size: 14px;
+}
+
+.news ul li {
+    margin-bottom: 8px;
+}
+
+.news ul li span {
+    vertical-align: middle;
+}
+
+.news ul li::marker {
+    background-color: aliceblue;
+}
+
+.news ul li span.tag {
+    vertical-align: middle;
+    font-weight: bold;
+    font-size: 12px;
+    margin-right: 2px;
+    padding: 2px 6px 2px 6px;
+    border-radius: 10px;
+    color: white;
+}
+
+.news ul li span.tag.new {
+    background-color: #1B5E20;
+}
+
+.news ul li span.tag.fix {
+    background-color: #B71C1C;
+}

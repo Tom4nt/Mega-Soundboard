@@ -90,13 +90,18 @@ module.exports = class SoundList extends HTMLElement {
         item.sound = sound
         item.append(title, desc, playingIndicator)
 
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
+            if (e.target === playingIndicator) return
             if (!MS.playSound(sound)) {
                 new Modal('Could not play',
                     `'${sound.path}' could not be found. It was moved, deleted or perhaps never existed...<br/>
                     If the file exists make sure Mega Soundboard has permission to access it.`).open()
                 MS.playUISound(MS.SOUND_ERR)
             }
+        })
+
+        playingIndicator.addEventListener('click', () => {
+            MS.stopSound(sound)
         })
 
         item.addEventListener('contextmenu', () => {

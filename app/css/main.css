@@ -12,6 +12,7 @@
 @import 'ActionpanelContainer.css';
 @import 'SoundSearch.css';
 @import 'KeyRecorder.css';
+@import 'News.css';
 @font-face {
     font-family: 'MSIcons';
     src: url('../res/MSIcons.ttf?4c4ea') format('truetype');
@@ -39,8 +40,7 @@
     --color-dimmer: #25252bb3;
 }
 
-body,
-html {
+body, html {
     margin: 0;
     padding: 0;
     background-color: var(--color-normalL);
@@ -179,7 +179,7 @@ html {
     font-size: 0;
     border-radius: 8px 0 0 0;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 #soundlist-actions {
@@ -192,32 +192,6 @@ html {
     z-index: 1;
     position: relative;
     border-radius: 8px;
-}
-
-#devicesettings.open {
-    height: 227px;
-    width: 301px;
-}
-
-#devicesettings {
-    right: 108px;
-}
-
-#devicesettings>div:not(.devicesettings-separator) {
-    padding: 16px;
-}
-
-#quicksettings {
-    right: 66px;
-}
-
-#quicksettings.open {
-    height: 142.84px;
-    width: 200px;
-}
-
-#quicksettings>div {
-    padding: 16px;
 }
 
 #actionpanel {

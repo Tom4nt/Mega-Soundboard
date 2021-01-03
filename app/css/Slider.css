@@ -1,7 +1,6 @@
 ms-slider {
     display: block;
     font-size: initial;
-    position: relative;
     white-space: nowrap;
 }
 
@@ -15,9 +14,9 @@ ms-slider {
     height: 1px;
     outline: none;
     transition: 0.1s all;
-    position: relative;
     right: 0px;
     bottom: 5px;
+    position: relative;
 }
 
 .slider-input::-webkit-slider-thumb {
@@ -30,18 +29,13 @@ ms-slider {
     box-sizing: content-box;
 }
 
-.slider-input:hover~.slider-label {
-    opacity: 1;
-    bottom: 30px;
-}
-
 .slider-label {
+    display: block;
     z-index: 2;
     pointer-events: none;
-    position: absolute;
+    position: fixed;
     opacity: 0;
     text-align: center;
-    bottom: 25px;
     border-radius: 4px;
     font-family: Roboto;
     font-size: 12px;
@@ -50,7 +44,9 @@ ms-slider {
     padding: 6px;
     box-sizing: border-box;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-    transition: opacity 0.2s, bottom 0.2s;
+    transition: opacity 0.1s, top 0.1s, transform 0.1s;
+    transition-timing-function: cubic-bezier(0.18, 0.89, 0.47, 1.4);
+    height: fit-content;
 }
 
 .slider-label::after {

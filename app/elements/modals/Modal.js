@@ -8,14 +8,20 @@ class Modal extends HTMLElement {
         this.parent = document.getElementById("content")
         this.title = title
         this.message = message
+
         this.keyUp = (e) => {
             if (e.key == "Escape" && !this.lockEsc && !MS.recordingKey)
                 this.close()
         }
-        this.resize = (e) => {
-            this.modal.style.top = parseInt((this.clientHeight) / 2 - this.modal.clientHeight / 2) + "px"
-            this.modal.style.left = parseInt(this.clientWidth / 2 - this.modal.clientWidth / 2) + "px"
+
+        this.resizeAction = () => {
+            if (this.modal) {
+                this.modal.style.top = parseInt((this.clientHeight) / 2 - this.modal.clientHeight / 2) + 15 + "px"
+                this.modal.style.left = parseInt(this.clientWidth / 2 - this.modal.clientWidth / 2) + "px"
+            }
         }
+
+        this.resize = this.resizeAction
 
         document.addEventListener("keyup", this.keyUp)
         window.addEventListener("resize", this.resize)
@@ -107,6 +113,7 @@ class Modal extends HTMLElement {
     disconnectedCallback() {
         document.removeEventListener("keyup", this.keyUp)
         window.removeEventListener("resize", this.resize)
+        this.resize = null
     }
 
     getBodyElements() {
@@ -130,11 +137,11 @@ class Modal extends HTMLElement {
     }
 
     close() {
+        if (!this.modal) return
         this.dispatchEvent(new CustomEvent("close"))
         this.modal.classList.add("hidden")
         this.dimmer.classList.add("hidden")
-        setTimeout(() => this.dimmer.remove(), 100)
-        setTimeout(() => this.remove(), 200);
+        this.ontransitionend = () => this.remove();
         KeybindManager.lock = false
         delete this
     }

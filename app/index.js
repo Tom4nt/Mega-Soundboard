@@ -21,6 +21,7 @@ const SoundModal = require('./elements/modals/SoundModal.js')
 const SoundboardModal = require('./elements/modals/SoundboardModal.js')
 const SettingsModal = require('./elements/modals/SettingsModal.js')
 const KeybindManager = require('./models/KeybindManager.js');
+const NewsModal = require("./elements/modals/NewsModal.js");
 //#endregion
 
 //#region Define Custom elements
@@ -38,6 +39,7 @@ customElements.define('ms-modal', Modal);
 customElements.define("ms-soundboardmodal", SoundboardModal);
 customElements.define("ms-soundmodal", SoundModal);
 customElements.define('ms-settings-modal', SettingsModal);
+customElements.define('ms-news-modal', NewsModal);
 //#endregion
 
 //#region Elements
@@ -125,6 +127,14 @@ window.addEventListener("load", () => {
     //Register global settings keybinds
     KeybindManager.registerAction(MS.settings.stopSoundsKeys, () => { MS.stopAllSounds() }, 'stop-sounds')
     KeybindManager.registerAction(MS.settings.enableKeybindsKeys, () => { MS.toggleKeybindsState() }, 'toggle-keybinds-state')
+
+    // Decide whether to show the changelog or not
+    if (MS.latestWithLog > MS.settings.latestLogViewed && MS.settings.latestLogViewed >= 0) {
+        const modal = new NewsModal()
+        modal.open()
+        MS.settings.latestLogViewed = MS.latestWithLog
+        MS.settings.save()
+    }
 })
 
 window.addEventListener("click", (e) => {
@@ -222,16 +232,11 @@ stopAllButton.addEventListener("click", (e) => {
 })
 
 deviceSettingsButton.addEventListener("click", () => {
-    deviceSettings.classList.toggle("open")
-    if (deviceSettings.classList.contains("open")) {
-        setTimeout(() => { deviceSettings.style.overflow = "unset" }, 100)
-    } else {
-        deviceSettings.style.overflow = "hidden"
-    }
+    deviceSettings.classList.toggle('closed')
 })
 
 quickSettingsButton.addEventListener("click", () => {
-    quickSettings.classList.toggle("open")
+    quickSettings.classList.toggle('closed')
 })
 
 overlapSoundsToggler.addEventListener("toggle", (e) => {
@@ -257,8 +262,9 @@ enabeKeybindsToggler.addEventListener("toggle", (e) => {
     setKeybindsToggleSettings(enabeKeybindsToggler.toggled)
 })
 
-buttonMoreSettings.addEventListener("click", (e) => {
-    closeQuickSettings()
+buttonMoreSettings.addEventListener('click', (e) => {
+    quickSettings.classList.add('closed')
+    MS.settings.save()
     let modal = new SettingsModal()
     modal.open()
 });
@@ -311,24 +317,14 @@ function setOverlapSoundsSettings(state) {
 }
 
 function closeActionPanelContainers(e) {
-    if (!e.path.includes(deviceSettings) && e.target != deviceSettingsButton && deviceSettings.classList.contains("open")) {
-        closeDeviceSettings()
+    if (!e.path.includes(deviceSettings) && e.target != deviceSettingsButton && !deviceSettings.classList.contains('closed')) {
+        deviceSettings.classList.add('closed')
+        MS.settings.save()
     }
-    if (!e.path.includes(quickSettings) && e.target != quickSettingsButton && quickSettings.classList.contains("open")) {
-        closeQuickSettings()
+    if (!e.path.includes(quickSettings) && e.target != quickSettingsButton && !quickSettings.classList.contains('closed')) {
+        quickSettings.classList.add('closed')
+        MS.settings.save()
     }
-}
-
-function closeDeviceSettings() {
-    deviceSettings.classList.remove("open")
-    deviceSettings.style.overflow = "hidden"
-    MS.settings.save()
-}
-
-function closeQuickSettings() {
-    quickSettings.classList.remove("open")
-    quickSettings.style.overflow = "hidden"
-    MS.settings.save()
 }
 
 /**
@@ -345,7 +341,7 @@ function addSound(sound) {
 
 //#region Main Events
 
-ipcRenderer.on("update.available", function() {
+ipcRenderer.on("update.available", function () {
     // updateButton.updateReady = false;
     // updateButton.style.display = "inline-block";
     // updateButton.classList.add("downloading");
@@ -354,21 +350,21 @@ ipcRenderer.on("update.available", function() {
     // updateButton.firstElementChild.style.width = "0%";
 });
 
-ipcRenderer.on("update.progress", function(e, progress) {
+ipcRenderer.on("update.progress", function (e, progress) {
     // updateButton.firstElementChild.style.width = progress.percent + "%";
 });
 
-ipcRenderer.on("update.ready", function() {
+ipcRenderer.on("update.ready", function () {
     updateButton.style.display = 'inherit'
     console.log("READY TO UPDATE");
 });
 
-ipcRenderer.on("settings.overlapSounds", function(e, state) {
+ipcRenderer.on("settings.overlapSounds", function (e, state) {
     overlapSoundsToggler.toggled = state
     setOverlapSoundsSettings(state)
 })
 
-ipcRenderer.on("settings.enableKeybinds", function(e, state) {
+ipcRenderer.on("settings.enableKeybinds", function (e, state) {
     enabeKeybindsToggler.toggled = state
     setKeybindsToggleSettings(state)
 })
