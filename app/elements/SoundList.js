@@ -123,7 +123,7 @@ module.exports = class SoundList extends HTMLElement {
             modal.addEventListener('remove', (e) => {
                 item.remove()
                 MS.stopSound(this.sound)
-                if (this.items.childElementCount < 1) this._displayNoSoundsMessage(NO_SOUNDS)
+                if (!this.hasSounds()) this._displayNoSoundsMessage(NO_SOUNDS)
                 KeybindManager.unregisterSound(sound)
                 MS.getSelectedSoundboard().removeSound(sound)
                 MS.data.save()
@@ -164,6 +164,10 @@ module.exports = class SoundList extends HTMLElement {
         } else {
             this._filterSounds(sounds)
         }
+    }
+
+    hasSounds() {
+        return this.items.childElementCount > 1 // Drag dummy doesn't count
     }
 
     _filterSounds(sounds) {
