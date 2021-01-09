@@ -96,7 +96,7 @@ module.exports = class Dropdown extends HTMLElement {
         this.container.removeChild(this.container.childNodes.item(index))
     }
 
-    switch () {
+    switch() {
         if (this.isOpen) this.close()
         else this.open()
     }
@@ -110,7 +110,7 @@ module.exports = class Dropdown extends HTMLElement {
         let max = document.documentElement.clientHeight - this.main.getBoundingClientRect().bottom
         let min = totalHeight + 2
 
-        //Saber se é preciso uma scrollbar
+        // Calculate if a scrollbar is necessary
         if (min > max) {
             this.container.style.height = max + "px"
             this.container.style.overflowY = "auto"

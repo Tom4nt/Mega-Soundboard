@@ -11,8 +11,8 @@
     vertical-align: top;
     width: 0;
     box-sizing: content-box;
-    transition: all 0.3s;
-    transition-timing-function: cubic-bezier(0, 1, 0, 1);
+    transition: all 0.2s;
+    transition-timing-function: cubic-bezier(0, 1.12, 0, 1.12);
 }
 
 #soundlist-searchbox.open {

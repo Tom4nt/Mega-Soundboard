@@ -50,6 +50,7 @@ module.exports = class SoundboardList extends HTMLElement {
         const title = document.createElement('span')
         title.classList.add('title')
         title.innerHTML = soundboard.name
+        item.titleElement = title
 
         const desc = document.createElement('span')
         if (soundboard.keys) desc.innerHTML = Keys.toKeyString(soundboard.keys)
@@ -150,8 +151,10 @@ module.exports = class SoundboardList extends HTMLElement {
     _setAllPlayingIndicators(state) {
         for (let i = 0; i < this.childElementCount; i++) {
             const elem = this.childNodes[i]
-            elem.playingSounds = null
-            this._setPlayingIndicatorState(elem, state)
+            if (elem !== this.dragDummy) {
+                elem.playingSounds = null
+                this._setPlayingIndicatorState(elem, state)
+            }
         }
     }
 
@@ -159,11 +162,11 @@ module.exports = class SoundboardList extends HTMLElement {
      * Sets the current playing indicator state for an element of the list.
      */
     _setPlayingIndicatorState(element, state) {
-        if (!element.indicator) return
+        if (!element.titleElement) return
         if (state) {
-            element.indicator.style.fontWeight = '1000'
+            element.titleElement.style.fontWeight = '1000'
         } else {
-            element.indicator.style.fontWeight = null
+            element.titleElement.style.fontWeight = null
         }
     }
 

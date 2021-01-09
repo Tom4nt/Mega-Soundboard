@@ -6,7 +6,7 @@
     background-color: var(--color-normalL);
     box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.3);
     transition: all 0.15s;
-    transition-timing-function: cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    transition-timing-function: cubic-bezier(0.13, 0.93, 0.18, 1.26);
     padding: 16px;
     transform-origin: bottom right;
 }

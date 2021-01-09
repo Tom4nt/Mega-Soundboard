@@ -22,8 +22,9 @@
 }
 
 :root {
-    --color-dark: #15151a;
-    --color-darkL: #1a1a1f;
+    --color-black: #0e0e11;
+    --color-dark:  #121217;
+    --color-darkL: #17171c;
     --color-normalD: #1c1c21;
     --color-normal: #1f1f24;
     --color-normalL: #25252b;
@@ -58,7 +59,7 @@ button {
     color: var(--color-white);
     border-radius: 4px;
     outline: none;
-    transition: background-color 0.2s;
+    transition: background-color 0.1s;
 }
 
 button span {
@@ -130,7 +131,7 @@ button:active {
 .icon-text-button .icon {
     font-family: 'MSIcons';
     font-size: 18px;
-    margin-right: 8px;
+    margin-right: 3px;
     display: inline-block;
     vertical-align: middle;
 }
@@ -278,7 +279,7 @@ button:active {
 
 @keyframes warn {
     0% {
-        border-color: var(--color-dark);
+        border-color: var(--color-darkL);
         box-shadow: none
     }
     25% {
@@ -286,7 +287,7 @@ button:active {
         box-shadow: inset 0 0 4px var(--color-red);
     }
     50% {
-        border-color: var(--color-dark);
+        border-color: var(--color-darkL);
         box-shadow: none
     }
     75% {
@@ -294,7 +295,7 @@ button:active {
         box-shadow: inset 0 0 4px var(--color-red);
     }
     100% {
-        border-color: var(--color-dark);
+        border-color: var(--color-darkL);
         box-shadow: none
     }
 }

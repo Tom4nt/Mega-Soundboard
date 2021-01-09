@@ -46,8 +46,11 @@ class MS {
         }
     }
 
+    /**
+     * @param {Sound} sound 
+     */
     static stopSound(sound) {
-        if (sound) {
+        if (sound && sound.isPlaying()) {
             this._removeSoundFromInstancesList(sound)
             sound.stop()
             MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_STOP, { detail: sound }))

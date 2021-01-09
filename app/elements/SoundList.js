@@ -100,6 +100,10 @@ module.exports = class SoundList extends HTMLElement {
             }
         })
 
+        item.addEventListener('auxclick', (e) => {
+            if (e.button === 1) MS.stopSound(sound)
+        })
+
         playingIndicator.addEventListener('click', () => {
             MS.stopSound(sound)
         })
@@ -118,6 +122,7 @@ module.exports = class SoundList extends HTMLElement {
             })
             modal.addEventListener('remove', (e) => {
                 item.remove()
+                MS.stopSound(this.sound)
                 if (this.items.childElementCount < 1) this._displayNoSoundsMessage(NO_SOUNDS)
                 KeybindManager.unregisterSound(sound)
                 MS.getSelectedSoundboard().removeSound(sound)

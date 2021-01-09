@@ -2,7 +2,7 @@ module.exports = class Slider extends HTMLElement {
     constructor() {
         super()
         this.progressColor = "var(--color-white)"
-        this.maincolor = "var(--color-dark)"
+        this.maincolor = "var(--color-darkL)"
     }
 
     connectedCallback() {

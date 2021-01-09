@@ -16,7 +16,8 @@ module.exports = class TextField extends HTMLElement {
     }
 
     get text() {
-        return this.value
+        if (!this.input) return this.value
+        return this.input.value
     }
 
     set text(value) {

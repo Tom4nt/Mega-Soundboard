@@ -1,7 +1,6 @@
 ms-keyrecorder {
     display: block;
-    border: 1px solid/*var(--color-dark)*/
-    var(--color-dark);
+    border: 1px solid var(--color-darkL);
     border-radius: 4px;
     padding: 4px;
     background-color: var(--color-normalD);
@@ -9,7 +8,6 @@ ms-keyrecorder {
     outline: none;
     transition: 0.2s all;
     font-size: 13px;
-    /*box-shadow: inset 0 0 4px var(--color-dark);*/
 }
 
 ms-keyrecorder:hover {
@@ -35,9 +33,9 @@ ms-keyrecorder:hover>.keyrecorder-indicator {
     padding: 5.5px;
     border-radius: 9.5px;
     margin: 6px;
-    transition: all 0.2s;
+    transition: all 0.15s;
     color: var(--color-white);
-    transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
+    transition-timing-function: cubic-bezier(0.07, 0.91, 0.1, 1.19);
     text-transform: uppercase;
 }
 
@@ -75,7 +73,7 @@ ms-keyrecorder .key {
     background-color: var(--color-normalL);
     padding: 3px 4px 6px;
     vertical-align: middle;
-    border: 1px solid var(--color-dark);
+    border: 1px solid var(--color-darkL);
     border-radius: 2px;
     color: var(--color-white);
     box-shadow: inset 0 -4px 0 var(--color-darkL);

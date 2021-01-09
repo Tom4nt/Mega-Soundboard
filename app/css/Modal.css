@@ -33,9 +33,9 @@
     background-color: var(--color-normal);
     border-radius: 4px;
     box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-    transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.15s, opacity 0.15s;
     position: absolute;
-    transition-timing-function: cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    transition-timing-function: cubic-bezier(0.13, 0.93, 0.18, 1.26);
     max-height: calc(100% - 64px);
     margin-top: 32px;
     max-width: 600px;

@@ -4,6 +4,7 @@ const TextField = require('../TextField.js')
 const FileSelector = require('../FileSelector.js')
 const KeyRecorder = require('../KeyRecorder.js')
 const Sound = require('../../models/Sound.js')
+const MS = require('../../models/MS.js')
 
 const Mode = {
     ADD: 'add',
@@ -72,7 +73,9 @@ class SoundModal extends Modal {
         ]
 
         if (this.mode == Mode.EDIT) {
-            buttons.unshift(Modal.getButton("remove", () => { this.removeSound() }, true, true))
+            buttons.unshift(Modal.getButton("remove", () => {
+                this.removeSound()
+            }, true, true))
         }
 
         return buttons

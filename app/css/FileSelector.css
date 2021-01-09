@@ -6,7 +6,7 @@ ms-fileselector {
 .fileselector-input {
     box-sizing: border-box;
     border-radius: 4px 0 0 4px;
-    border: 1px solid var(--color-dark);
+    border: 1px solid var(--color-darkL);
     padding: 8px;
     background-color: var(--color-normalD);
     color: var(--color-white);
@@ -17,7 +17,7 @@ ms-fileselector {
 }
 
 .fileselector-input:focus {
-    border: 1px solid var(--color-light);
+    border: 1px solid var(--color-black);
 }
 
 .fileselector-input::placeholder {
@@ -29,7 +29,7 @@ ms-fileselector {
     background-color: transparent;
     outline: none;
     border-style: solid;
-    border-color: var(--color-dark);
+    border-color: var(--color-darkL);
     border-width: 1px 1px 1px 0;
     border-radius: 0 4px 4px 0;
     padding: 6px 10px 6px 10px;

@@ -33,7 +33,8 @@ class FileSelector extends HTMLElement {
     }
 
     get path() {
-        return this.value
+        if (!this.input) return this.value
+        return this.input.value
     }
 
     set path(value) {
