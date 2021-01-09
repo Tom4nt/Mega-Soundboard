@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, MenuItem, ipcMain, Tray, dialog } = require("electron");
+const { app, BrowserWindow, Menu, MenuItem, ipcMain, Tray, dialog, shell } = require("electron");
 const ioHook = require("iohook");
 const { autoUpdater } = require("electron-updater");
 require('electron-reload')(__dirname);
@@ -47,7 +47,7 @@ autoUpdater.checkForUpdates();
 autoUpdater.on("update-available", () => { win.webContents.send("update.available") });
 autoUpdater.on("download-progress", (progress) => { win.webContents.send("update.progress", progress) });
 autoUpdater.on("update-downloaded", () => { win.webContents.send("update.ready") });
-setInterval(function() {
+setInterval(function () {
     autoUpdater.checkForUpdates();
 }, 300000); //5 minutes
 
@@ -63,7 +63,7 @@ function createWindow() {
         minHeight: 420,
         webPreferences: {
             nodeIntegration: true,
-            enableRemoteModule: true,
+            enableRemoteModule: false,
             contextIsolation: false,
             spellcheck: false
         },
@@ -72,23 +72,26 @@ function createWindow() {
         backgroundColor: '#1f1f24'
     });
 
-    win.webContents.on("did-finish-load", function() {});
+    win.webContents.on('will-navigate', (e, url) => {
+        e.preventDefault()
+        shell.openExternal(url)
+    })
 
     win.on('ready-to-show', () => {
         win.show()
     })
 
-    win.on('minimize', function() {
+    win.on('minimize', function () {
         if (minToTray) {
             win.hide();
         }
     });
 
-    win.on('maximize', function() {
+    win.on('maximize', function () {
         win.webContents.send('win.maximize')
     })
 
-    win.on('unmaximize', function() {
+    win.on('unmaximize', function () {
         win.webContents.send('win.unmaximize')
     })
 
@@ -101,38 +104,38 @@ function createTray() {
     tray = new Tray(iconWhitePath);
     tray.setToolTip("Mega Soundboard");
     trayMenu = Menu.buildFromTemplate([{
-            id: TRAY_KEYBINDS,
-            label: 'Enable keybinds',
-            type: 'checkbox',
-            click: function() {
-                sendkeybindsEnabledState()
-                updateIcon(trayMenu.getMenuItemById(TRAY_KEYBINDS).checked)
-            }
-        },
-        {
-            id: TRAY_OVERLAP,
-            label: 'Overlap sounds',
-            type: 'checkbox',
-            click: function() {
-                sendOverlapSoundsState()
-            }
-        },
-        { type: 'separator' },
-        {
-            label: 'Show',
-            click: function() {
-                win.show();
-            }
-        },
-        {
-            label: 'Close',
-            click: function() {
-                app.quit();
-            }
+        id: TRAY_KEYBINDS,
+        label: 'Enable keybinds',
+        type: 'checkbox',
+        click: function () {
+            sendkeybindsEnabledState()
+            updateIcon(trayMenu.getMenuItemById(TRAY_KEYBINDS).checked)
         }
+    },
+    {
+        id: TRAY_OVERLAP,
+        label: 'Overlap sounds',
+        type: 'checkbox',
+        click: function () {
+            sendOverlapSoundsState()
+        }
+    },
+    { type: 'separator' },
+    {
+        label: 'Show',
+        click: function () {
+            win.show();
+        }
+    },
+    {
+        label: 'Close',
+        click: function () {
+            app.quit();
+        }
+    }
     ]);
     tray.setContextMenu(trayMenu);
-    tray.on('click', function() {
+    tray.on('click', function () {
         win.show();
     });
 }
@@ -186,11 +189,11 @@ ioHook.on("keyup", event => {
 
 //#region win
 
-ipcMain.on('win.close', function() {
+ipcMain.on('win.close', function () {
     app.quit();
 });
 
-ipcMain.on('win.size', function() {
+ipcMain.on('win.size', function () {
     if (win.isMaximized()) {
         win.unmaximize();
     } else {
@@ -198,7 +201,7 @@ ipcMain.on('win.size', function() {
     }
 });
 
-ipcMain.on('win.min', function(e, toTray) {
+ipcMain.on('win.min', function (e, toTray) {
     //if (toTray) win.hide();
     /*else*/
     win.minimize();
@@ -221,46 +224,62 @@ ipcMain.handle("key.unregister", (e, id) => {
     ioHook.unregisterShortcut(id)
 })
 
-ipcMain.on("file.browse", (e, typeName, extensions) => {
-    var r = dialog.showOpenDialogSync({
-        properties: ['openFile'],
+ipcMain.handle('version', (e) => {
+    return app.getVersion()
+})
+
+ipcMain.handle('open.url', (e, url) => {
+    shell.openExternal(url)
+})
+
+ipcMain.on('get.savePath', (e) => {
+    e.returnValue = app.getPath("appData") + "\\MegaSoundboard"
+})
+
+ipcMain.handle("file.browse", async (e, multiple, typeName, extensions) => {
+    const properties = ['openFile']
+    if (multiple) properties.push('multiSelections')
+    return dialog.showOpenDialog({
+        properties: properties,
         filters: [
             { name: typeName, extensions: extensions }
         ]
-    });
-    if (r && r[0]) {
-        e.returnValue = r[0];
-    } else {
-        e.returnValue = null
-    }
+    }).then((r) => {
+        if (r.filePaths && r.filePaths[0]) {
+            return multiple ? r.filePaths : r.filePaths[0];
+        } else {
+            return null
+        }
+    })
 })
 
-ipcMain.on("sound.browse", (e, multiple) => {
+ipcMain.handle("sound.browse", async (e, multiple) => {
     const properties = ['openFile']
     if (multiple) properties.push('multiSelections')
-    var r = dialog.showOpenDialogSync({
+    return dialog.showOpenDialog({
         properties: properties,
         filters: [
             { name: "Audio files", extensions: ['mp3', 'wav', 'ogg'] }
         ]
-    });
-    if (r && r[0]) {
-        e.returnValue = multiple ? r : r[0];
-    } else {
-        e.returnValue = null
-    }
+    }).then((r) => {
+        if (r.filePaths && r.filePaths[0]) {
+            return multiple ? r.filePaths : r.filePaths[0];
+        } else {
+            return null
+        }
+    })
 })
 
-ipcMain.on('update.perform', function() {
+ipcMain.on('update.perform', function () {
     autoUpdater.quitAndInstall();
 });
 
-ipcMain.on('settings.enableKeybinds', function(e, state) {
+ipcMain.on('settings.enableKeybinds', function (e, state) {
     trayMenu.getMenuItemById(TRAY_KEYBINDS).checked = state;
     updateIcon(state)
 })
 
-ipcMain.on('settings.overlapSounds', function(e, state) {
+ipcMain.on('settings.overlapSounds', function (e, state) {
     trayMenu.getMenuItemById(TRAY_OVERLAP).checked = state;
 })
 
@@ -268,12 +287,12 @@ ipcMain.on('settings.overlapSounds', function(e, state) {
 
 //#region App events
 
-app.on("ready", function() {
+app.on("ready", function () {
     createWindow();
     createTray();
 });
 
-app.on("will-quit", function() {
+app.on("will-quit", function () {
     ioHook.unregisterAllShortcuts();
 });
 

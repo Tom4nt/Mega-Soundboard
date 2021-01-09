@@ -25,14 +25,15 @@ class FileSelector extends HTMLElement {
     }
 
     browseFile() {
-        const location = ipcRenderer.sendSync("file.browse", this.typeName, this.extensions)
-        if (location) {
-            this.path = location
-        }
+        ipcRenderer.invoke("file.browse", false, this.typeName, this.extensions).then((paths) => {
+            if (paths) {
+                this.path = paths
+            }
+        })
     }
 
     get path() {
-        return this.input.value
+        return this.value
     }
 
     set path(value) {

@@ -1,4 +1,7 @@
 .modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: absolute;
     top: 0;
     left: 0;
@@ -29,12 +32,14 @@
     visibility: visible;
     background-color: var(--color-normal);
     border-radius: 4px;
-    width: 400px;
     box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
     transition: transform 0.2s, opacity 0.2s;
     position: absolute;
     transition-timing-function: cubic-bezier(0.18, 0.89, 0.32, 1.28);
     max-height: calc(100% - 64px);
+    margin-top: 32px;
+    max-width: 600px;
+    min-width: 400px;
 }
 
 .modal-window.hidden {
@@ -57,14 +62,15 @@
     padding: 8px 16px 16px 16px;
     overflow-y: auto;
     overflow-x: visible;
+    color: var(--color-white);
 }
 
-.modal-body>* {
+.modal-body>*:not(:last-child) {
     margin-bottom: 12px;
 }
 
-.modal-body>:last-child {
-    margin-bottom: 0;
+.modal-body h4 {
+    margin: 0;
 }
 
 .modal-body .modal-label {

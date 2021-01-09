@@ -15,9 +15,10 @@ class SoundModal extends Modal {
      * @param {Mode} mode 
      * @param {Sound} sound 
      */
-    constructor(mode, sound) {
+    constructor(mode, sound, path) {
         super()
         this.mode = mode
+        this.path = path
         if (mode == Mode.ADD)
             super.title = "Add Sound"
         else {
@@ -45,6 +46,10 @@ class SoundModal extends Modal {
         this.pathSelector.addEventListener(FileSelector.EVENT_VALUE_CHANGED, (e) => {
             if (!this.nameField.text) this.nameField.text = this.pathSelector.getFileNameNoExtension()
         })
+
+        if (this.mode == Mode.ADD) {
+            this.pathSelector.path = this.path
+        }
 
         return [
             this.nameField,

@@ -4,7 +4,7 @@ const Soundboard = require("./Soundboard.js")
 
 const { ipcRenderer } = require("electron");
 
-const LOG = true
+const LOG = false
 
 class KeybindManager {
 

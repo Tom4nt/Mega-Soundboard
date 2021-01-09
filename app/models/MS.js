@@ -73,7 +73,7 @@ class MS {
     static setSelectedSoundboard(soundboard) {
         for (let i = 0; i < this.data.soundboards.length; i++) {
             const sb = this.data.soundboards[i];
-            if (sb == soundboard) {
+            if (sb === soundboard) {
                 this.settings.selectedSoundboard = i
             }
         }
@@ -109,6 +109,10 @@ class MS {
         if (MS.devices.length > 0) {
             return MS.devices
         }
+    }
+
+    static getVersion() {
+        return ipcRenderer.invoke('version')
     }
 
     /**

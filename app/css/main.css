@@ -37,6 +37,7 @@
     --color-red-light: #b52a2a73;
     --color-red-lightL: #b52a2a91;
     --color-green: #2d5f2f;
+    --color-greenL: #377539;
     --color-dimmer: #25252bb3;
 }
 
@@ -50,6 +51,36 @@ body, html {
     perspective: 300px;
 }
 
+button {
+    padding: 8px;
+    background-color: var(--color-normalL);
+    border: 1px solid var(--color-light);
+    color: var(--color-white);
+    border-radius: 4px;
+    outline: none;
+    transition: background-color 0.2s;
+}
+
+button span {
+    vertical-align: middle;
+}
+
+button .icon {
+    line-height: 0.5;
+}
+
+button span:not(:first-child) {
+    margin-left: 6px;
+}
+
+button:hover {
+    background-color: var(--color-light);
+}
+
+button:active {
+    background-color: var(--color-normal);
+}
+
 ::-webkit-search-cancel-button {
     -webkit-appearance: none;
 }
@@ -59,6 +90,11 @@ body, html {
     color: var(--color-white);
     font-size: 12px;
     display: inline-block;
+}
+
+.icon {
+    font-family: 'MSIcons';
+    font-size: 18px;
 }
 
 #content {
@@ -110,6 +146,7 @@ body, html {
     background-color: var(--color-normalL);
     font-size: 0;
     max-width: 350px;
+    min-width: 260px;
     float: left;
     width: 35%;
     height: 100%;
@@ -144,6 +181,7 @@ body, html {
     outline: none;
     position: relative;
     vertical-align: top;
+    padding: 0;
 }
 
 #logo:hover {

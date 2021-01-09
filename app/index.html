@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="css/main.css" />
     <!-- <script type="module" src="index.js"></script> -->
     <script src="elements/SoundSearchbox.js"></script>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
 </head>
 
 <body>
@@ -22,7 +23,7 @@
                     <button class="icon-button" id="update-button">download</button>
                     <span id="logo-label">Test</span>
                 </div>
-                <button id="button-addSoundboard" class="icon-button" style="float: right;">add_list</button>
+                <button id="button-addSoundboard" class="icon-button" style="float: right;">add_multiple</button>
             </div>
             <ms-soundboardlist id="soundboardlist"></ms-soundboardlist>
         </div>
@@ -32,7 +33,6 @@
                 <button id="soundlist-searchbox-button" class="icon-button">search</button>
                 <input type="search" id="soundlist-searchbox">
                 <button id="add-sound-button" class="icon-button" style="float: right;">add</button>
-                <button id="add-sounds-button" class="icon-button" style="float: right; margin-right: 8px;">add_multiple</button>
             </div>
             <ms-soundlist id="soundlist"></ms-soundlist>
             <div id="actionpanel">

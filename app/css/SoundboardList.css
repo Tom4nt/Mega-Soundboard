@@ -8,13 +8,13 @@ ms-soundboardlist {
     overflow-y: overlay;
 }
 
-.soundboardlist-item {
+ms-soundboardlist .item {
     display: flex;
     color: var(--color-white);
     font-family: Roboto;
     padding: 12px 16px 12px 16px;
     position: relative;
-    transition: all 0.1s;
+    transition: background-color 0.1s;
     font-size: 14px;
     width: 100%;
     box-sizing: border-box;
@@ -22,23 +22,32 @@ ms-soundboardlist {
     height: 42px;
 }
 
-.soundboardlist-item:hover {
+ms-soundboardlist .item:hover {
     background-color: var(--color-light);
 }
 
-.soundboardlist-item.selected {
+ms-soundboardlist .item.selected {
     background-color: var(--color-normal);
 }
 
-.soundboardlist-item.selected .soundboardlist-item-title {
+ms-soundboardlist .item.selected .title, .item.drag .title {
     padding-left: 22px;
 }
 
-.soundboardlist-item.selected .soundboardlist-item-indicator {
+ms-soundboardlist .item.selected .indicator {
     opacity: 1;
 }
 
-.soundboardlist-item-title {
+ms-soundboardlist .item.dragdummy {
+    display: none;
+    background-color: var(--color-normal);
+    box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
+}
+
+/* ms-soundboardlist .item.drag .title {
+} */
+
+ms-soundboardlist .item .title {
     transition: all 0.2s;
     overflow: hidden;
     white-space: nowrap;
@@ -48,7 +57,7 @@ ms-soundboardlist {
     margin-right: 6px;
 }
 
-.soundboardlist-item-indicator {
+ms-soundboardlist .item .indicator {
     opacity: 0;
     width: 10px;
     height: 10px;
@@ -59,7 +68,7 @@ ms-soundboardlist {
     flex-shrink: 0;
 }
 
-.soundboardlist-item-desc {
+ms-soundboardlist .item .desc {
     color: var(--color-gray);
     float: right;
     font-size: 12px;

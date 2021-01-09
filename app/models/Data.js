@@ -1,22 +1,14 @@
-const { app, dialog } = require("electron").remote
+const { ipcRenderer } = require("electron")
 const fs = require("fs")
-const savePath = app.getPath("appData") + "\\MegaSoundboard"
-const dataPath = savePath + "\\Soundboards.json"
 const Soundboard = require('./Soundboard.js');
+
+const savePath = ipcRenderer.sendSync('get.savePath')
+const dataPath = savePath + "\\Soundboards.json"
 
 module.exports = class Data {
     constructor() {
         this.soundboards = []
     }
-
-    // selectSoundboard(soundboard) {
-    //     for (let i = 0; i < this.soundboards.length; i++) {
-    //         const sb = this.soundboards[i];
-    //         if (sb == soundboard) {
-    //             this.selectedSoundboardID = i
-    //         }
-    //     }
-    // }
 
     addSoundboard(soundboard) {
         this.soundboards.push(soundboard)
@@ -26,14 +18,8 @@ module.exports = class Data {
         this.soundboards.splice(this.soundboards.indexOf(soundboard), 1)
     }
 
-    // /**
-    //  * @returns {Soundboard}
-    //  */
-    // getSelectedSoundboard() {
-    //     return this.soundboards[this.selectedSoundboardID]
-    // }
-
     static load() {
+
         let data = new Data()
         if (!fs.existsSync(savePath)) {
             fs.mkdirSync(savePath);
@@ -48,8 +34,6 @@ module.exports = class Data {
                 let jsonData = JSON.parse(dataJSON);
                 data.soundboards = this.getSoundboardsFromData(jsonData.soundboards)
             } catch (err) {
-                dialog.showErrorBox("Error loading save file", "There is a syntax error in the save file located at " + dataPath + "\n\n" + err.message +
-                    "\n\nIf you modified this file, please fix any syntax errors.");
                 app.quit();
                 return;
             }

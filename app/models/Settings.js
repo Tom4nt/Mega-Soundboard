@@ -1,7 +1,7 @@
-const { app, dialog } = require("electron").remote
 const { ipcRenderer } = require('electron');
 const fs = require("fs")
-const savePath = app.getPath("appData") + "\\MegaSoundboard"
+
+const savePath = ipcRenderer.sendSync('get.savePath')
 const dataPath = savePath + "\\Settings.json"
 
 module.exports = class Settings {
@@ -39,7 +39,6 @@ module.exports = class Settings {
             }
         }
 
-        console.log(settings)
         return settings
     }
 

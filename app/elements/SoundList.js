@@ -28,21 +28,21 @@ module.exports = class SoundList extends HTMLElement {
     }
 
     connectedCallback() {
-        const empty = document.createElement('span')
-        empty.classList.add('soundlist-empty')
-        this.emptyIndicator = empty
+        const infoSpan = document.createElement('span')
+        infoSpan.classList.add('info')
+        this.infoSpan = infoSpan
         const itemsContainer = document.createElement('div')
-        itemsContainer.classList.add('soundlist-itemcontainer')
+        itemsContainer.classList.add('itemcontainer')
         this.items = itemsContainer
 
         const dragDummy = document.createElement('div')
-        dragDummy.classList.add('soundlist-item')
+        dragDummy.classList.add('item')
         dragDummy.classList.add('dragdummy')
         this.dragDummy = dragDummy
 
         itemsContainer.append(dragDummy)
 
-        this.append(empty, itemsContainer)
+        this.append(infoSpan, itemsContainer)
 
         document.addEventListener('mousemove', (e) => this._onMouseMove(e))
         document.addEventListener('mouseup', (e) => this._onMouseUp(e))
@@ -72,20 +72,20 @@ module.exports = class SoundList extends HTMLElement {
      * @param {Sound} sound 
      */
     addSound(sound) {
-        this.emptyIndicator.style.display = 'none'
+        this.infoSpan.style.display = 'none'
         const item = document.createElement('div')
-        item.classList.add('soundlist-item')
+        item.classList.add('item')
 
         const title = document.createElement('span')
         title.innerHTML = sound.name
 
         const desc = document.createElement('span')
-        desc.classList.add('soundlist-item-desc')
+        desc.classList.add('desc')
         if (sound.keys) desc.innerHTML = Keys.toKeyString(sound.keys)
         else desc.innerHTML = NO_KEYBIND
 
         const playingIndicator = document.createElement('div')
-        playingIndicator.classList.add('soundlist-item-playingindicator')
+        playingIndicator.classList.add('indicator')
 
         item.sound = sound
         item.append(title, desc, playingIndicator)
@@ -134,7 +134,7 @@ module.exports = class SoundList extends HTMLElement {
 
             let offsetY = e.offsetY
             let offsetX = e.offsetX
-            if (!e.target.classList.contains('soundlist-item')) {
+            if (!e.target.classList.contains('item')) {
                 offsetY = e.offsetY + e.target.offsetTop //- e.target.parentElement.offsetTop
                 offsetX = e.offsetX + e.target.offsetLeft //- e.target.parentElement.offsetLeft
             }
@@ -167,7 +167,7 @@ module.exports = class SoundList extends HTMLElement {
             return;
         }
         this._removeAll()
-        this.emptyIndicator.style.display = "none"
+        this.infoSpan.style.display = "none"
         let hasSounds = false
         sounds.forEach(sound => {
             if (!this.filter || sound.name.toLowerCase().includes(this.filter.toLowerCase())) {
@@ -195,9 +195,9 @@ module.exports = class SoundList extends HTMLElement {
     }
 
     _displayNoSoundsMessage(message) {
-        if (!message) this.emptyIndicator.style.display = "none"
-        this.emptyIndicator.style.display = null // Default display
-        this.emptyIndicator.innerHTML = message
+        if (!message) this.infoSpan.style.display = "none"
+        this.infoSpan.style.display = null // Default display
+        this.infoSpan.innerHTML = message
     }
 
     /**
@@ -265,15 +265,15 @@ module.exports = class SoundList extends HTMLElement {
             d.style.left = e.clientX - d.offsetX + 'px'
             let curr = document.elementFromPoint(e.clientX, e.clientY)
             if (curr) {
-                if (curr.classList.contains('soundlist-item') || curr.parentElement.classList.contains('soundlist-item')) {
-                    if (curr.parentElement.classList.contains('soundlist-item')) curr = curr.parentElement
+                if (curr.parentElement === this.items || curr.parentElement.parentElement === this.items) {
+                    if (curr.parentElement.parentElement === this.items) curr = curr.parentElement
                     if (MS.getElementIndex(soundList.dragDummy) > MS.getElementIndex(curr)) {
                         soundList.items.insertBefore(soundList.dragDummy, curr)
                     } else {
                         soundList.items.insertBefore(soundList.dragDummy, curr.nextElementSibling)
                     }
                 }
-                if (curr.classList.contains('soundboardlist-item')) {
+                if (curr.parentElement.id == 'soundboardlist') {
                     let soundboard = curr.soundboard
                     this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
                 }
@@ -287,13 +287,14 @@ module.exports = class SoundList extends HTMLElement {
         if (!d) return;
         if (d != null && this.dragOK) {
             d.style.position = null
+            this.items.insertBefore(d, this.dragDummy.nextElementSibling)
+            void d.offsetWidth // Trigger Reflow
             d.classList.remove('drag')
             d.style.pointerEvents = null
             d.style.width = null
             d.style.top = null
             d.style.left = null
             d.style.zIndex = null
-            this.items.insertBefore(d, this.dragDummy.nextElementSibling)
             this.dragElem = null
             this.dragDummy.style.display = 'none'
             this.dragOK = false

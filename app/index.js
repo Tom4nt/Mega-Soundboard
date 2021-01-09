@@ -22,6 +22,7 @@ const SoundboardModal = require('./elements/modals/SoundboardModal.js')
 const SettingsModal = require('./elements/modals/SettingsModal.js')
 const KeybindManager = require('./models/KeybindManager.js');
 const NewsModal = require("./elements/modals/NewsModal.js");
+const MSModal = require('./elements/modals/MSModal')
 //#endregion
 
 //#region Define Custom elements
@@ -39,13 +40,14 @@ customElements.define('ms-modal', Modal);
 customElements.define("ms-soundboardmodal", SoundboardModal);
 customElements.define("ms-soundmodal", SoundModal);
 customElements.define('ms-settings-modal', SettingsModal);
-customElements.define('ms-news-modal', NewsModal);
+customElements.define('ms-newsmodal', NewsModal);
+customElements.define('ms-msmodal', MSModal);
 //#endregion
 
 //#region Elements
-const titleBar = document.getElementById("tb")
 
 //#region Left
+const msbutton = document.getElementById('logo');
 const soundboardList = document.getElementById("soundboardlist");
 const updateButton = document.getElementById("update-button");
 //#endregion
@@ -53,7 +55,6 @@ const updateButton = document.getElementById("update-button");
 //#region Right
 const soundList = document.getElementById("soundlist")
 const addSoundButton = document.getElementById("add-sound-button")
-const addSoundsButton = document.getElementById("add-sounds-button")
 const addSoundboardButton = document.getElementById("button-addSoundboard")
 const soundlistSearchbox = document.getElementById("soundlist-searchbox")
 const soundlistSearchboxButton = document.getElementById("soundlist-searchbox-button")
@@ -81,6 +82,7 @@ const buttonMoreSettings = quickSettings.querySelector('#button-more-settings');
 //#endregion
 
 //#endregion
+
 //#endregion
 
 //#region Events
@@ -110,7 +112,7 @@ window.addEventListener("load", () => {
     })
 
     //Select saved soundboardID
-    soundboardList.selectIndex(MS.settings.selectedSoundboard)
+    soundboardList.selectSoundboardAt(MS.settings.selectedSoundboard)
 
     //Set device volumes from settings
     mainDeviceVolumeSlider.value = MS.settings.mainDeviceVolume
@@ -149,6 +151,11 @@ window.addEventListener("contextmenu", (e) => {
 
 //#region Left
 
+msbutton.addEventListener('click', () => {
+    const modal = new MSModal();
+    modal.open()
+})
+
 addSoundboardButton.addEventListener("click", (e) => {
     const modal = new SoundboardModal(SoundboardModal.Mode.ADD)
     modal.open()
@@ -174,33 +181,35 @@ soundboardList.addEventListener("soundboardselect", (e) => {
 //#region Right
 
 addSoundButton.addEventListener("click", (e) => {
-    const sb = MS.getSelectedSoundboard()
-    var modal = new SoundModal(SoundModal.Mode.ADD)
-    modal.open()
-    modal.addEventListener("add", (e) => {
-        let sound = e.detail.sound
-        sound.soundboard = sb
-        addSound(sound)
-        MS.data.save()
+    ipcRenderer.invoke('file.browse', true, 'Audio files', ['mp3', 'wav', 'ogg']).then((files) => {
+        if (!files) return
+
+        if (files.length == 1) {
+            const sb = MS.getSelectedSoundboard()
+            var modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
+            modal.open()
+            modal.addEventListener("add", (e) => {
+                let sound = e.detail.sound
+                sound.soundboard = sb
+                addSound(sound)
+                MS.data.save()
+            })
+        } else {
+            files.forEach(file => {
+                const soundName = path.basename(file, path.extname(file))
+                const sound = new Sound(soundName, file, 100, null, MS.getSelectedSoundboard())
+                addSound(sound)
+            });
+            MS.data.save()
+        }
     })
 })
 
-addSoundsButton.addEventListener('click', (e) => {
-    const files = ipcRenderer.sendSync("sound.browse", true)
-    if (!files) return
-    files.forEach(file => {
-        const soundName = path.basename(file, path.extname(file))
-        const sound = new Sound(soundName, file, 100, null, MS.getSelectedSoundboard())
-        addSound(sound)
-    });
-    MS.data.save()
-})
-
-soundlistSearchbox.addEventListener("input", (e) => {
+soundlistSearchbox.addEventListener('input', (e) => {
     soundList.filter = soundlistSearchbox.value
 })
 
-soundlistSearchboxButton.addEventListener("click", (e) => {
+soundlistSearchboxButton.addEventListener('click', (e) => {
     if (soundlistSearchbox.value) {
         soundList.filter = ""
     }
@@ -292,6 +301,7 @@ function fillDeviceLists(devices) {
 //#endregion
 
 function selectSoundboard(soundboard) {
+    if (!soundboard) return
     const currSB = MS.getSelectedSoundboard()
     setSoundlistSounds(soundboard)
     if (currSB) KeybindManager.unregisterSounds(currSB)
@@ -303,7 +313,7 @@ function selectSoundboard(soundboard) {
 }
 
 function setSoundlistSounds(soundboard) {
-    soundList.setSounds(soundboard.sounds)
+    if (soundboard) soundList.setSounds(soundboard.sounds)
 }
 
 function setKeybindsToggleSettings(state) {

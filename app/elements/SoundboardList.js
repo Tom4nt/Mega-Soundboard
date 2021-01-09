@@ -4,12 +4,20 @@ const KeybindManager = require("../models/KeybindManager.js")
 const Soundboard = require("../models/Soundboard.js")
 const Keys = require("../models/Keys.js")
 
+const DRAG_START_OFFSET = 10
+
 module.exports = class SoundboardList extends HTMLElement {
     constructor() {
         super()
     }
 
     connectedCallback() {
+        // Add drag dummy item
+        const item = document.createElement('div')
+        item.classList.add('item', 'dragdummy')
+        this.dragDummy = item
+        this.appendChild(item)
+
         MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_PLAY, (e) => {
             const elem = this._getSoundboardElement(e.detail.soundboard)
             this._updatePlayingIndicator(elem, 1)
@@ -21,6 +29,9 @@ module.exports = class SoundboardList extends HTMLElement {
         })
 
         MS.eventDispatcher.addEventListener(MS.EVENT_STOP_ALL_SOUNDS, () => { this._setAllPlayingIndicators(false) })
+
+        document.addEventListener('mousemove', (e) => this._mouseMove(e))
+        document.addEventListener('mouseup', (e) => this._mouseUp(e))
     }
 
     /**
@@ -28,51 +39,54 @@ module.exports = class SoundboardList extends HTMLElement {
      * @param {Soundboard} soundboard 
      */
     addSoundboard(soundboard) {
-        const item = document.createElement("div")
-        item.classList.add("soundboardlist-item")
+        const item = document.createElement('div')
+        item.classList.add('item')
         item.soundboard = soundboard
 
-        const indicator = document.createElement("div")
-        indicator.classList.add("soundboardlist-item-indicator")
+        const indicator = document.createElement('div')
+        indicator.classList.add('indicator')
+        item.indicator = indicator
 
-        const title = document.createElement("span")
-        title.classList.add("soundboardlist-item-title")
+        const title = document.createElement('span')
+        title.classList.add('title')
         title.innerHTML = soundboard.name
 
-        const desc = document.createElement("span")
+        const desc = document.createElement('span')
         if (soundboard.keys) desc.innerHTML = Keys.toKeyString(soundboard.keys)
-        desc.classList.add("soundboardlist-item-desc")
+        desc.classList.add('desc')
 
         item.append(indicator, title, desc)
 
-        item.addEventListener("click", () => {
-            if (!item.classList.contains("selected")) {
+        item.addEventListener('click', () => {
+            if (!item.classList.contains('selected')) {
                 this.select(item)
             }
         })
 
-        item.addEventListener("contextmenu", () => {
+        item.addEventListener('contextmenu', () => {
             const editModal = new SoundboardModal(SoundboardModal.Mode.EDIT, item.soundboard, MS.data.soundboards.length < 2)
             editModal.open()
-            editModal.addEventListener("edit", (e) => {
+            editModal.addEventListener('edit', (e) => {
                 item.soundboard = e.detail.soundboard
                 KeybindManager.registerSoundboardn(item.soundboard)
                 this.updateSoundboard(item)
                 MS.data.save()
             })
-            editModal.addEventListener("remove", (e) => {
+            editModal.addEventListener('remove', (e) => {
                 item.remove()
                 MS.data.removeSoundboard(e.detail.soundboard)
                 console.log(MS.getSelectedSoundboard())
                 if (!MS.getSelectedSoundboard()) {
                     MS.setSelectedSoundboard(0)
-                    this.selectIndex(0)
+                    this.selectSoundboardAt(0)
                 } else {
-                    this.selectIndex(MS.settings.selectedSoundboard)
+                    this.selectSoundboardAt(MS.settings.selectedSoundboard)
                 }
                 MS.data.save()
             })
         })
+
+        item.addEventListener('mousedown', (e) => this._itemMouseDown(e, item))
 
         this.appendChild(item)
     }
@@ -94,7 +108,7 @@ module.exports = class SoundboardList extends HTMLElement {
 
     select(element) {
         if (!element) {
-            this.selectIndex(0);
+            this.selectSoundboardAt(0);
             return
         }
         this.dispatchEvent(new CustomEvent("soundboardselect", { detail: { soundboard: element.soundboard } }))
@@ -104,8 +118,8 @@ module.exports = class SoundboardList extends HTMLElement {
         element.classList.add("selected")
     }
 
-    selectIndex(index) {
-        this.select(this.childNodes[index])
+    selectSoundboardAt(index) {
+        this.selectSoundboard(MS.data.soundboards[index])
     }
 
     /**
@@ -145,10 +159,11 @@ module.exports = class SoundboardList extends HTMLElement {
      * Sets the current playing indicator state for an element of the list.
      */
     _setPlayingIndicatorState(element, state) {
+        if (!element.indicator) return
         if (state) {
-            element.childNodes[1].style.fontWeight = '1000'
+            element.indicator.style.fontWeight = '1000'
         } else {
-            element.childNodes[1].style.fontWeight = null
+            element.indicator.style.fontWeight = null
         }
     }
 
@@ -164,4 +179,94 @@ module.exports = class SoundboardList extends HTMLElement {
         }
         return null
     }
+
+    //#region Drag Functions
+
+    _itemMouseDown(e, item) {
+        if (e.button != 0) return
+        this.dragElem = item
+        this.initialIndex = MS.data.soundboards.indexOf(item.soundboard)
+
+        let offsetY = e.offsetY
+        if (!e.target.classList.contains('item')) {
+            offsetY = e.offsetY + e.target.offsetTop
+        }
+
+        item.offsetY = offsetY + parseInt(getComputedStyle(item).marginTop)
+
+        item.initialY = e.clientY
+
+        this.dragging = true
+    }
+
+    _mouseMove(e) {
+        const d = this.dragElem
+        if (!d) return;
+        if ((Math.abs(d.initialY - e.clientY) > DRAG_START_OFFSET || this.dragOK) && this.dragging) {
+            if (!this.dragOK) {
+                d.style.width = d.offsetWidth + 'px'
+
+                d.style.position = 'fixed'
+                d.style.pointerEvents = 'none'
+
+                d.style.top = e.clientY - d.offsetY + 'px'
+
+                d.style.zIndex = 1
+
+                this.insertBefore(this.dragDummy, d.nextSibling)
+                this.dragDummy.style.display = 'inline-block'
+                this.dragOK = true
+            }
+
+            d.classList.add('drag')
+            d.style.top = e.clientY - d.offsetY + 'px'
+            let curr = document.elementFromPoint(d.getBoundingClientRect().x, e.clientY)
+            if (curr) {
+                if (curr.parentElement === this || curr.parentElement.parentElement === this) {
+                    if (curr.parentElement.parentElement === this) curr = curr.parentElement
+                    if (MS.getElementIndex(this.dragDummy) > MS.getElementIndex(curr)) {
+                        this.insertBefore(this.dragDummy, curr)
+                    } else {
+                        this.insertBefore(this.dragDummy, curr.nextElementSibling)
+                    }
+                }
+            }
+        }
+    }
+
+    _mouseUp(e) {
+        this.dragging = false
+        const d = this.dragElem
+        if (!d) return;
+        if (d != null && this.dragOK) {
+            d.style.position = null
+            this.insertBefore(d, this.dragDummy.nextElementSibling)
+            void d.offsetWidth // Trigger Reflow
+            d.classList.remove('drag')
+            d.style.pointerEvents = null
+            d.style.width = null
+            d.style.top = null
+            d.style.zIndex = null
+            this.dragElem = null
+            this.dragDummy.style.display = 'none'
+            this.dragOK = false
+            const newIndex = MS.getElementIndex(d) - 1
+            if (this.initialIndex != newIndex || this.initialSoundboard != MS.getSelectedSoundboard())
+                this._reorder(this.initialIndex, newIndex)
+        }
+    }
+
+    _reorder(oldIndex, newIndex) {
+        const sb = MS.data.soundboards[oldIndex]
+        const selectedSB = MS.getSelectedSoundboard()
+
+        MS.data.soundboards.splice(oldIndex, 1);
+        MS.data.soundboards.splice(newIndex, 0, sb);
+
+        MS.setSelectedSoundboard(selectedSB)
+        MS.data.save()
+        MS.settings.save()
+    }
+
+    //#endregion
 }

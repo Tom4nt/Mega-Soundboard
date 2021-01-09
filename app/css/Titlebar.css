@@ -25,6 +25,7 @@ ms-titlebar button {
     font-size: 16px;
     padding: 0 8px 0 8px;
     transition: all 0.1s;
+    border-radius: 0;
 }
 
 ms-titlebar button:focus {

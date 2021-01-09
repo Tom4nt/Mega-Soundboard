@@ -14,17 +14,7 @@ class Modal extends HTMLElement {
                 this.close()
         }
 
-        this.resizeAction = () => {
-            if (this.modal) {
-                this.modal.style.top = parseInt((this.clientHeight) / 2 - this.modal.clientHeight / 2) + 15 + "px"
-                this.modal.style.left = parseInt(this.clientWidth / 2 - this.modal.clientWidth / 2) + "px"
-            }
-        }
-
-        this.resize = this.resizeAction
-
         document.addEventListener("keyup", this.keyUp)
-        window.addEventListener("resize", this.resize)
     }
 
     //#region COMPONENTS
@@ -112,8 +102,6 @@ class Modal extends HTMLElement {
 
     disconnectedCallback() {
         document.removeEventListener("keyup", this.keyUp)
-        window.removeEventListener("resize", this.resize)
-        this.resize = null
     }
 
     getBodyElements() {
@@ -127,12 +115,10 @@ class Modal extends HTMLElement {
     }
 
     open() {
-        this.parent.appendChild(this);
-        requestAnimationFrame(() => {
-            this.modal.classList.remove("hidden")
-            this.dimmer.classList.remove("hidden")
-        })
-        this.resize();
+        this.parent.appendChild(this)
+        void this.offsetWidth // Trigger Reflow
+        this.modal.classList.remove("hidden")
+        this.dimmer.classList.remove("hidden")
         KeybindManager.lock = true
     }
 
