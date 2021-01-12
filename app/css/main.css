@@ -257,6 +257,7 @@ button:active {
 ::-webkit-scrollbar {
     background: transparent;
     width: 1px;
+    z-index: 0;
 }
 
 ::-webkit-scrollbar-thumb {

@@ -2,10 +2,9 @@ ms-soundboardlist {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+    display: block;
     max-height: calc(100% - 50px);
-    overflow-y: overlay;
+    overflow-y: auto;
 }
 
 ms-soundboardlist .item {
@@ -43,9 +42,6 @@ ms-soundboardlist .item.dragdummy {
     background-color: var(--color-normal);
     box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
 }
-
-/* ms-soundboardlist .item.drag .title {
-} */
 
 ms-soundboardlist .item .title {
     transition: all 0.2s;

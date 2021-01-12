@@ -76,7 +76,6 @@ module.exports = class SoundboardList extends HTMLElement {
             editModal.addEventListener('remove', (e) => {
                 item.remove()
                 MS.data.removeSoundboard(e.detail.soundboard)
-                console.log(MS.getSelectedSoundboard())
                 if (!MS.getSelectedSoundboard()) {
                     MS.setSelectedSoundboard(0)
                     this.selectSoundboardAt(0)
