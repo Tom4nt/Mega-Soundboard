@@ -95,3 +95,12 @@ ms-soundlist .itemcontainer .item .indicator {
 ms-soundlist .itemcontainer .item .indicator:hover {
     background-color: var(--color-greenL);
 }
+
+ms-soundlist #soundlist-dragoverlay {
+    display: none;
+    width: 100%;
+    height: 100%;
+    background-color: aliceblue;
+    position: absolute;
+    z-index: 1;
+}

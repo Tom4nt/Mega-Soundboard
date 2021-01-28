@@ -5,6 +5,7 @@ const Settings = require('../models/Settings.js');
 const { ipcRenderer } = require('electron');
 const Soundboard = require('./Soundboard.js');
 const Sound = require('./Sound.js');
+const { resolveFiles } = require('electron-updater/out/providers/Provider');
 
 class MS {
     static get SOUND_ON() { return 'res/audio/on.wav' }
@@ -25,24 +26,21 @@ class MS {
      * Plays a sound on the selected output devices.
      * @param {Sound} sound
      */
-    static playSound(sound) {
+    static async playSound(sound) {
         if (sound) {
             if (!MS.settings.overlapSounds) this.stopAllSounds()
-            const result = sound.play(() => {
+            const promise = sound.play(() => {
                 this._removeSoundFromInstancesList(sound)
                 MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_STOP, { detail: sound }))
             },
                 MS.settings.mainDeviceVolume, MS.settings.secondaryDeviceVolume, MS.settings.mainDevice, MS.settings.secondaryDevice);
 
-            if (result) {
+            return promise.then((res) => {
                 if (!MS.playingSounds.includes(sound)) {
                     MS.playingSounds.push(sound)
                     MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_SOUND_PLAY, { detail: sound }))
                 }
-                return true
-            } else {
-                return false
-            }
+            })
         }
     }
 

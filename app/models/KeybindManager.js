@@ -150,9 +150,9 @@ class KeybindManager {
     static _playSound(sound) {
         if (MS.settings.enableKeybinds && !KeybindManager.lock) {
             if (LOG) console.log("Playing sound " + sound.name + " via keybind.");
-            if (!MS.playSound(sound)) {
+            MS.playSound(sound).catch((err) => {
                 MS.playUISound(MS.SOUND_ERR)
-            }
+            })
         }
     }
 

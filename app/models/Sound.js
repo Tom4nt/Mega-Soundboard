@@ -1,5 +1,7 @@
 const fs = require("fs")
 
+const MSG_ERR_NOT_SUPPORTED = 'Could not play the sound. The file is not supported, malformed or corrupted.'
+
 module.exports = class Sound {
     constructor(name, path, volume, keys, soundboard) {
         this.name = name
@@ -45,10 +47,11 @@ module.exports = class Sound {
         return sound
     }
 
-    play(onend, volume1, volume2, device1, device2) {
+    async play(onend, volume1, volume2, device1, device2) {
         let url = this.path;
         if (!fs.existsSync(url)) {
-            return false
+            throw `'${url}' could not be found. It was moved, deleted or perhaps never existed...<br/>
+                    If the file exists make sure Mega Soundboard has permission to access it.`
         }
         let sound = new Audio(url);
         let sound2 = new Audio(url);
@@ -80,15 +83,24 @@ module.exports = class Sound {
 
         sound.volume = Math.pow((volume1 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);
         sound2.volume = Math.pow((volume2 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);
-        sound.setSinkId(device1 ? device1 : "default");
-        sound2.setSinkId(device2 ? device2 : "default");
-        sound.play();
+        sound.setSinkId(device1 ? device1 : 'default').catch(() => { console.error('Device 1 was not found.') })
+        sound2.setSinkId(device2 ? device2 : 'default').catch(() => { console.error('Device 2 was not found.') })
+
+        let promise = sound.play().catch((e) => {
+            throw MSG_ERR_NOT_SUPPORTED
+        })
+        let promises = [promise]
+
         if (device2) {
-            sound2.play();
+            let p2 = sound2.play().catch((e) => {
+                throw MSG_ERR_NOT_SUPPORTED
+            })
+            promises.push(p2)
         } else {
             this.instances.splice(this.instances.indexOf(sound2), 1);
         }
-        return true;
+
+        return Promise.all(promises)
     }
 
     stop() {

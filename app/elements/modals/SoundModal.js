@@ -4,7 +4,6 @@ const TextField = require('../TextField.js')
 const FileSelector = require('../FileSelector.js')
 const KeyRecorder = require('../KeyRecorder.js')
 const Sound = require('../../models/Sound.js')
-const MS = require('../../models/MS.js')
 
 const Mode = {
     ADD: 'add',
@@ -98,17 +97,17 @@ class SoundModal extends Modal {
                 this.sound.path = this.pathSelector.path
                 this.sound.volume = this.volumeSlider.value
                 this.sound.keys = this.playKeyRecorder.keys
-                this.dispatchEvent(new CustomEvent("edit", { detail: { sound: this.sound } }))
+                this.dispatchEvent(new CustomEvent('edit', { detail: { sound: this.sound } }))
             } else {
                 const sound = new Sound(this.nameField.text, this.pathSelector.path, this.volumeSlider.value, this.playKeyRecorder.keys)
-                this.dispatchEvent(new CustomEvent("add", { detail: { sound: sound } }))
+                this.dispatchEvent(new CustomEvent('add', { detail: { sound: sound } }))
             }
             this.close()
         }
     }
 
     removeSound() {
-        this.dispatchEvent(new CustomEvent("remove", { detail: { sound: this.sound } }))
+        this.dispatchEvent(new CustomEvent('remove', { detail: { sound: this.sound } }))
         this.close()
     }
 }

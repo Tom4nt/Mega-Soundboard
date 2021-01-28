@@ -71,7 +71,7 @@ module.exports = class SoundList extends HTMLElement {
      * Adds a sound to the list.
      * @param {Sound} sound 
      */
-    addSound(sound) {
+    addSound(sound, index) {
         this.infoSpan.style.display = 'none'
         const item = document.createElement('div')
         item.classList.add('item')
@@ -92,12 +92,12 @@ module.exports = class SoundList extends HTMLElement {
 
         item.addEventListener('click', (e) => {
             if (e.target === playingIndicator) return
-            if (!MS.playSound(sound)) {
-                new Modal('Could not play',
-                    `'${sound.path}' could not be found. It was moved, deleted or perhaps never existed...<br/>
-                    If the file exists make sure Mega Soundboard has permission to access it.`).open()
-                MS.playUISound(MS.SOUND_ERR)
-            }
+            MS.playSound(sound).catch(
+                (err) => {
+                    new Modal('Could not play', err).open()
+                    MS.playUISound(MS.SOUND_ERR)
+                }
+            )
         })
 
         item.addEventListener('auxclick', (e) => {
@@ -153,7 +153,10 @@ module.exports = class SoundList extends HTMLElement {
             this.dragging = true
         })
 
-        this.items.appendChild(item)
+        if (index === undefined || index === null)
+            this.items.appendChild(item)
+        else
+            this.items.insertBefore(item, this.items.childNodes[index])
     }
 
     setSounds(sounds) {
@@ -170,6 +173,76 @@ module.exports = class SoundList extends HTMLElement {
         return this.items.childElementCount > 1 // Drag dummy doesn't count
     }
 
+    handleFileDrag(e) {
+        if (e.dataTransfer.items.length < 1) return
+
+        // Is there any compatible sound file?
+        let valid = false
+        for (let i = 0; i < e.dataTransfer.items.length; i++) {
+            const item = e.dataTransfer.items[i]
+            if (this._isFileTypeCompatible(item.type)) {
+                valid = true
+                break
+            }
+        }
+
+        if (!valid) return
+
+        console.log(e.dataTransfer.items.length)
+
+        this.dragging = true
+
+        let below = document.elementFromPoint(e.clientX, e.clientY)
+        if (!this.dragOK) {
+            this.dragDummy.style.display = 'inline-block'
+            this.dragOK = true
+        }
+
+        if (below) {
+            if (below.parentElement === this.items || below.parentElement.parentElement === this.items) {
+                if (below.parentElement.parentElement === this.items) below = below.parentElement
+                if (MS.getElementIndex(soundList.dragDummy) > MS.getElementIndex(below)) {
+                    soundList.items.insertBefore(soundList.dragDummy, below)
+                } else {
+                    soundList.items.insertBefore(soundList.dragDummy, below.nextElementSibling)
+                }
+            }
+            if (below.parentElement.id == 'soundboardlist') {
+                let soundboard = below.soundboard
+                this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
+            }
+        }
+    }
+
+    endFileDrag(e) {
+        this.dragging = false
+        this.dragOK = false
+        this.dragDummy.style.display = null
+
+        if (!e) { // Ends without adding sound(s)
+            console.log('File(s) dragging cancelled')
+            return
+        }
+
+        const index = MS.getElementIndex(this.dragDummy)
+        const sb = MS.getSelectedSoundboard()
+
+        const soundModal = new SoundModal(SoundModal.Mode.ADD, null, e.dataTransfer.files[0].path, index)
+        soundModal.open()
+        soundModal.addEventListener('add', (e) => {
+            const sound = e.detail.sound
+            sound.soundboard = sb
+            KeybindManager.registerSound(sound)
+            sb.sounds.splice(index, 0, sound)
+            this.addSound(sound, index)
+            MS.data.save()
+        })
+    }
+
+    _isFileTypeCompatible(type) {
+        return type === 'audio/mpeg' || type === 'audio/ogg' || type === 'audio/wav'
+    }
+
     _filterSounds(sounds) {
         if (!sounds.length) {
             this._displayNoSoundsMessage(NO_SOUNDS)
@@ -180,7 +253,7 @@ module.exports = class SoundList extends HTMLElement {
         let hasSounds = false
         sounds.forEach(sound => {
             if (!this.filter || sound.name.toLowerCase().includes(this.filter.toLowerCase())) {
-                if (!this.dragOK || sound != this.dragElem.sound) {
+                if (!this.dragOK || (!this.dragElem || sound != this.dragElem.sound)) {
                     this.addSound(sound)
                     hasSounds = true
                 }

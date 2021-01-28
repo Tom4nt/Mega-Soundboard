@@ -46,6 +46,8 @@ customElements.define('ms-msmodal', MSModal);
 
 //#region Elements
 
+const fileDragOverlay = document.getElementById('filedragoverlay')
+
 //#region Left
 const msbutton = document.getElementById('logo');
 const soundboardList = document.getElementById("soundboardlist");
@@ -94,6 +96,25 @@ MS.eventDispatcher.addEventListener(MS.EVENT_TOGGLED_KEYBINDS_STATE, () => {
 KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUNDBOARD, (e) => {
     soundboardList.selectSoundboard(e.detail.soundboard)
 })
+
+window.ondragenter = (e) => {
+    if (e.relatedTarget) return
+    console.log('File or files dragged to the window.')
+}
+
+window.ondragleave = (e) => {
+    if (e.relatedTarget) return
+    soundList.endFileDrag()
+}
+
+window.ondragover = (e) => {
+    e.preventDefault()
+    soundList.handleFileDrag(e)
+}
+
+window.ondrop = (e) => {
+    soundList.endFileDrag(e)
+}
 
 //#region Window
 
@@ -156,10 +177,10 @@ msbutton.addEventListener('click', () => {
     modal.open()
 })
 
-addSoundboardButton.addEventListener("click", (e) => {
+addSoundboardButton.addEventListener('click', (e) => {
     const modal = new SoundboardModal(SoundboardModal.Mode.ADD)
     modal.open()
-    modal.addEventListener("add", (e) => {
+    modal.addEventListener('add', (e) => {
         const soundboard = e.detail.soundboard
         soundboardList.addSoundboard(soundboard)
         KeybindManager.registerSoundboardn(soundboard)
@@ -180,7 +201,7 @@ soundboardList.addEventListener("soundboardselect", (e) => {
 
 //#region Right
 
-addSoundButton.addEventListener("click", (e) => {
+addSoundButton.addEventListener('click', (e) => {
     ipcRenderer.invoke('file.browse', true, 'Audio files', ['mp3', 'wav', 'ogg']).then((files) => {
         if (!files) return
 
@@ -188,7 +209,7 @@ addSoundButton.addEventListener("click", (e) => {
             const sb = MS.getSelectedSoundboard()
             var modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
             modal.open()
-            modal.addEventListener("add", (e) => {
+            modal.addEventListener('add', (e) => {
                 let sound = e.detail.sound
                 sound.soundboard = sb
                 addSound(sound)
