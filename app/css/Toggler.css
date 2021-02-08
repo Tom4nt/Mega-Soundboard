@@ -11,6 +11,10 @@ ms-checkbox:hover .toggler-box:not(.toggled) {
     background-color: var(--color-normal);
 }
 
+ms-checkbox ms-infoballoon {
+    margin-left: 8px;
+}
+
 .toggler-box {
     background-color: var(--color-normalD);
     border: 1px solid var(--color-darkL);

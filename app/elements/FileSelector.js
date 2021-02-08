@@ -1,10 +1,12 @@
 const { ipcRenderer } = require('electron')
 const path = require('path')
+const fs = require('fs')
 
 class FileSelector extends HTMLElement {
-    constructor(hint, typeName, extensions) {
+    constructor(hint, type, typeName, extensions) {
         super()
         this.hint = hint
+        this.type = type
         this.extensions = extensions
         this.typeName = typeName
     }
@@ -25,11 +27,17 @@ class FileSelector extends HTMLElement {
     }
 
     browseFile() {
-        ipcRenderer.invoke("file.browse", false, this.typeName, this.extensions).then((paths) => {
-            if (paths) {
-                this.path = paths
-            }
-        })
+        if (this.type == FileSelector.FILE_TYPE) {
+            ipcRenderer.invoke("file.browse", false, this.typeName, this.extensions).then((paths) => {
+                if (paths) {
+                    this.path = paths
+                }
+            })
+        } else {
+            ipcRenderer.invoke('folder.browse').then((path) => {
+                if (path) this.path = path
+            })
+        }
     }
 
     get path() {
@@ -58,8 +66,36 @@ class FileSelector extends HTMLElement {
             return null
         }
     }
+
+    setLabel(label) {
+        this.input.placeholder = label
+    }
+
+    /**
+     * Verifies if the path is not empty, the file/folder exists, and if it is within the accepted extensions.
+     */
+    isPathValid() {
+        if (!fs.existsSync(this.path)) return false
+
+        let s = fs.statSync(this.path)
+        if (this.type == FileSelector.FILE_TYPE) {
+            if (s.isDirectory()) return false
+
+            let ext = path.extname(this.path).substring(1)
+
+            if (!this.extensions || this.extensions.includes(ext)) {
+                return true
+            } else return false
+
+        } else {
+            if (s.isFile()) return false
+            return true
+        }
+    }
 }
 
+FileSelector.FOLDER_TYPE = 'folder'
+FileSelector.FILE_TYPE = 'file'
 FileSelector.EVENT_VALUE_CHANGED = "value-changed"
 
 module.exports = FileSelector

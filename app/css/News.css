@@ -10,6 +10,11 @@
     padding-left: 6px;
     list-style: none;
     font-size: 14px;
+    margin-bottom: 0;
+}
+
+.news ul:not(:last-child) {
+    margin-bottom: 24px;
 }
 
 .news ul li {

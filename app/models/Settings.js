@@ -17,6 +17,12 @@ module.exports = class Settings {
         this.secondaryDeviceVolume = 100
         this.selectedSoundboard = 0
         this.latestLogViewed = 0
+        this.soundsLocation = null
+    }
+
+    getSoundsLocation() {
+        if (this.soundsLocation) return this.soundsLocation
+        else return savePath + '\\Sounds'
     }
 
     static load() {

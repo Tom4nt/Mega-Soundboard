@@ -22,7 +22,8 @@ const SoundboardModal = require('./elements/modals/SoundboardModal.js')
 const SettingsModal = require('./elements/modals/SettingsModal.js')
 const KeybindManager = require('./models/KeybindManager.js');
 const NewsModal = require("./elements/modals/NewsModal.js");
-const MSModal = require('./elements/modals/MSModal')
+const MSModal = require('./elements/modals/MSModal');
+const InfoBalloon = require("./elements/InfoBalloon.js");
 //#endregion
 
 //#region Define Custom elements
@@ -42,6 +43,7 @@ customElements.define("ms-soundmodal", SoundModal);
 customElements.define('ms-settings-modal', SettingsModal);
 customElements.define('ms-newsmodal', NewsModal);
 customElements.define('ms-msmodal', MSModal);
+customElements.define('ms-infoballoon', InfoBalloon);
 //#endregion
 
 //#region Elements
@@ -98,21 +100,23 @@ KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUN
 })
 
 window.ondragenter = (e) => {
-    if (e.relatedTarget) return
-    console.log('File or files dragged to the window.')
+    if (e.relatedTarget || MS.modalsOpen > 0) return
+    console.log('File(s) dragged to the window.')
 }
 
 window.ondragleave = (e) => {
-    if (e.relatedTarget) return
+    if (e.relatedTarget || MS.modalsOpen > 0) return
     soundList.endFileDrag()
 }
 
 window.ondragover = (e) => {
+    if (MS.modalsOpen > 0) return
     e.preventDefault()
     soundList.handleFileDrag(e)
 }
 
 window.ondrop = (e) => {
+    if (MS.modalsOpen > 0) return
     soundList.endFileDrag(e)
 }
 

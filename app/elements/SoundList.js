@@ -10,7 +10,7 @@ const NO_SOUNDS = 'This soundboard has no sounds'
 const SEARCH_EMPTY = 'No sounds with the current filter'
 const DRAG_START_OFFSET = 10
 
-module.exports = class SoundList extends HTMLElement {
+class SoundList extends HTMLElement {
     constructor() {
         super()
         this._filter = ''
@@ -46,6 +46,10 @@ module.exports = class SoundList extends HTMLElement {
 
         document.addEventListener('mousemove', (e) => this._onMouseMove(e))
         document.addEventListener('mouseup', (e) => this._onMouseUp(e))
+
+        this.onmousedown = (e) => {
+            if (e.button === 1) return false
+        }
 
         MS.eventDispatcher.addEventListener(MS.EVENT_SOUND_PLAY, (e) => {
             const sound = e.detail
@@ -101,7 +105,9 @@ module.exports = class SoundList extends HTMLElement {
         })
 
         item.addEventListener('auxclick', (e) => {
-            if (e.button === 1) MS.stopSound(sound)
+            if (e.button === 1) {
+                MS.stopSound(sound)
+            }
         })
 
         playingIndicator.addEventListener('click', () => {
@@ -188,8 +194,6 @@ module.exports = class SoundList extends HTMLElement {
 
         if (!valid) return
 
-        console.log(e.dataTransfer.items.length)
-
         this.dragging = true
 
         let below = document.elementFromPoint(e.clientX, e.clientY)
@@ -224,19 +228,36 @@ module.exports = class SoundList extends HTMLElement {
             return
         }
 
+        // Is there any compatible sound file?
+        let files = []
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            const item = e.dataTransfer.files[i]
+            if (this._isFileTypeCompatible(item.type)) {
+                files.push(item)
+            }
+        }
+
+        console.log(files)
+
+        if (files.length < 1) return
+
         const index = MS.getElementIndex(this.dragDummy)
         const sb = MS.getSelectedSoundboard()
 
-        const soundModal = new SoundModal(SoundModal.Mode.ADD, null, e.dataTransfer.files[0].path, index)
-        soundModal.open()
-        soundModal.addEventListener('add', (e) => {
-            const sound = e.detail.sound
-            sound.soundboard = sb
-            KeybindManager.registerSound(sound)
-            sb.sounds.splice(index, 0, sound)
-            this.addSound(sound, index)
-            MS.data.save()
-        })
+        if (files.length == 1) {
+            const soundModal = new SoundModal(SoundModal.Mode.ADD, null, e.dataTransfer.files[0].path)
+            soundModal.open()
+            soundModal.addEventListener('add', (e) => {
+                const sound = e.detail.sound
+                sound.soundboard = sb
+                KeybindManager.registerSound(sound)
+                sb.sounds.splice(index, 0, sound)
+                this.addSound(sound, index)
+                MS.data.save()
+            })
+        } else {
+            // TODO
+        }
     }
 
     _isFileTypeCompatible(type) {
@@ -414,3 +435,5 @@ module.exports = class SoundList extends HTMLElement {
         }))
     }
 }
+
+module.exports = SoundList

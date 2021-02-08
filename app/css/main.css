@@ -13,6 +13,7 @@
 @import 'SoundSearch.css';
 @import 'KeyRecorder.css';
 @import 'News.css';
+@import 'InfoBalloon.css';
 @font-face {
     font-family: 'MSIcons';
     src: url('../res/MSIcons.ttf?4c4ea') format('truetype');
@@ -114,6 +115,49 @@ button:active {
     background-color: var(--color-normalL);
 }
 
+/* #region Popups */
+
+#popup-layer {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.popup {
+    position: absolute;
+    background-color: var(--color-normalL);
+    font-family: 'Roboto';
+    color: var(--color-white);
+    padding: 8px;
+    font-size: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    max-width: 200px;
+    text-align: center;
+    transition: opacity 0.15s, transform 0.15s;
+    transition-timing-function: cubic-bezier(0.15, 1.14, 0.16, 1.24);
+    transform-origin: bottom center;
+}
+
+.popup::after {
+    display: inline-block;
+    content: '';
+    width: 0;
+    height: 0;
+    position: absolute;
+    bottom: -8px;
+    left: calc(50% - 8px);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--color-normalL);
+}
+
+/* #endregion */
 
 /* #region IconTextButton */
 

@@ -253,6 +253,14 @@ ipcMain.handle("file.browse", async (e, multiple, typeName, extensions) => {
     })
 })
 
+ipcMain.handle('folder.browse', async (e) => {
+    return dialog.showOpenDialog({
+        properties: ['openDirectory']
+    }).then((r) => {
+        return r.filePaths[0]
+    })
+})
+
 ipcMain.handle("sound.browse", async (e, multiple) => {
     const properties = ['openFile']
     if (multiple) properties.push('multiSelections')

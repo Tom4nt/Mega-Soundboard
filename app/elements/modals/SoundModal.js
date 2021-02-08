@@ -4,6 +4,11 @@ const TextField = require('../TextField.js')
 const FileSelector = require('../FileSelector.js')
 const KeyRecorder = require('../KeyRecorder.js')
 const Sound = require('../../models/Sound.js')
+const Toggler = require('../Toggler')
+const InfoBalloon = require('../InfoBalloon.js')
+const MS = require('../../models/MS.js')
+const p = require('path')
+const fs = require('fs')
 
 const Mode = {
     ADD: 'add',
@@ -29,7 +34,8 @@ class SoundModal extends Modal {
 
     getBodyElements() {
         this.nameField = new TextField("Name")
-        this.pathSelector = new FileSelector("Path", "Audio files", ['mp3', 'wav', 'ogg'])
+        this.moveToggle = new Toggler('Move sound', new InfoBalloon('The sound file will be moved to the location defined in Settings.'))
+        this.pathSelector = new FileSelector("Path", FileSelector.FILE_TYPE, "Audio files", ['mp3', 'wav', 'ogg'])
         this.volumeSlider = new Slider()
         this.playKeyRecorder = new KeyRecorder()
 
@@ -47,17 +53,20 @@ class SoundModal extends Modal {
             if (!this.nameField.text) this.nameField.text = this.pathSelector.getFileNameNoExtension()
         })
 
-        if (this.mode == Mode.ADD) {
-            this.pathSelector.path = this.path
-        }
-
-        return [
+        const elems = [
             this.nameField,
             this.pathSelector,
             this.volumeSlider,
             Modal.getLabel("Play"),
             this.playKeyRecorder,
         ]
+
+        if (this.mode == Mode.ADD) {
+            this.pathSelector.path = this.path
+            elems.splice(1, 0, this.moveToggle)
+        }
+
+        return elems
     }
 
     getFooterButtons() {
@@ -92,6 +101,13 @@ class SoundModal extends Modal {
         }
 
         if (valid) {
+            if (!this.pathSelector.isPathValid()) {
+                valid = false
+                this.pathSelector.warn()
+            }
+        }
+
+        if (valid) {
             if (this.mode == Mode.EDIT) {
                 this.sound.name = this.nameField.text
                 this.sound.path = this.pathSelector.path
@@ -99,8 +115,37 @@ class SoundModal extends Modal {
                 this.sound.keys = this.playKeyRecorder.keys
                 this.dispatchEvent(new CustomEvent('edit', { detail: { sound: this.sound } }))
             } else {
-                const sound = new Sound(this.nameField.text, this.pathSelector.path, this.volumeSlider.value, this.playKeyRecorder.keys)
-                this.dispatchEvent(new CustomEvent('add', { detail: { sound: sound } }))
+                let file = this.pathSelector.path
+                let folder = p.dirname(file)
+                let moveFolder = MS.settings.getSoundsLocation()
+                if (this.moveToggle.toggled && p.resolve(folder) != p.resolve(moveFolder)) {
+                    let moveFile = MS.settings.getSoundsLocation() + '\\' + p.basename(file)
+
+                    if (!fs.existsSync(moveFolder)) fs.mkdirSync(moveFolder)
+
+                    let i = 2
+                    let ext = p.extname(moveFile)
+                    let newPath = moveFile
+                    while (fs.existsSync(newPath)) {
+                        newPath = moveFile.slice(0, -ext.length) + ' (' + i + ')' + ext
+                        i++
+                    }
+                    moveFile = newPath
+
+                    fs.copyFile(file, moveFile, (err) => {
+                        if (!err) {
+                            fs.unlink(file, () => { })
+                            const sound = new Sound(this.nameField.text, moveFile, this.volumeSlider.value, this.playKeyRecorder.keys)
+                            this.dispatchEvent(new CustomEvent('add', { detail: { sound: sound } }))
+                        } else {
+                            console.log(err)
+                        }
+                    })
+
+                } else {
+                    const sound = new Sound(this.nameField.text, file, this.volumeSlider.value, this.playKeyRecorder.keys)
+                    this.dispatchEvent(new CustomEvent('add', { detail: { sound: sound } }))
+                }
             }
             this.close()
         }

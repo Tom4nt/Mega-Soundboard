@@ -1,8 +1,9 @@
 module.exports = class Checkbox extends HTMLElement {
-    constructor(label) {
+    constructor(label, infoElement) {
         super()
         this._toggled = false
         this._label = label
+        this._infoElem = infoElement
     }
 
     connectedCallback() {
@@ -26,6 +27,7 @@ module.exports = class Checkbox extends HTMLElement {
         label.classList.add("toggler-label")
 
         this.append(div, label)
+        if (this._infoElem) this.append(this._infoElem)
         this.onclick = () => {
             this.toggle()
         }

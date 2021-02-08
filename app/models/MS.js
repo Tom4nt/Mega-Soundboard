@@ -128,6 +128,40 @@ class MS {
     static _removeSoundFromInstancesList(sound) {
         MS.playingSounds.splice(MS.playingSounds.indexOf(sound), 1)
     }
+
+    static openPopup(text, x, y) {
+        let div = document.getElementById('popup-layer')
+
+        let popup = document.createElement('div')
+        popup.innerHTML = text
+        popup.classList.add('popup')
+
+        popup.style.opacity = 0
+        popup.style.transform = 'scale(0.8)'
+
+        div.appendChild(popup)
+
+        popup.style.left = x - (popup.offsetWidth / 2) + 'px'
+        popup.style.top = y - popup.offsetHeight - 22 + 'px'
+
+        popup.style.opacity = null
+        popup.style.transform = null
+
+        return popup
+    }
+
+    /**
+     * @param {HTMLElement} popupElement 
+     */
+    static closePopup(popupElement) {
+        if (popupElement) {
+            popupElement.style.opacity = 0
+            popupElement.style.transform = 'scale(0.8)'
+            popupElement.ontransitionend = () => {
+                popupElement.remove()
+            }
+        }
+    }
 }
 
 module.exports = MS
@@ -137,9 +171,13 @@ MS.latestWithLog = 1 // Increments on every version that should display the chan
 MS.devices = []
 MS.playingSounds = []
 MS.data = Data.load()
+/**
+ * @type {Settings}
+ */
 MS.settings = Settings.load()
 MS.eventDispatcher = new EventTarget()
 MS.recordingKey = false
+MS.modalsOpen = 0
 
 MS.EVENT_TOGGLED_KEYBINDS_STATE = 'toggled-keybinds-state'
 MS.EVENT_SOUND_PLAY = 'sound-play'

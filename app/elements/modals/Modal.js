@@ -120,6 +120,7 @@ class Modal extends HTMLElement {
         this.modal.classList.remove("hidden")
         this.dimmer.classList.remove("hidden")
         KeybindManager.lock = true
+        MS.modalsOpen += 1
     }
 
     close() {
@@ -129,6 +130,7 @@ class Modal extends HTMLElement {
         this.dimmer.classList.add("hidden")
         this.ontransitionend = () => this.remove();
         KeybindManager.lock = false
+        MS.modalsOpen -= 1
         delete this
     }
 }
