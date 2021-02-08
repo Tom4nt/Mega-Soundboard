@@ -21,7 +21,7 @@ Mega Soundboard is an app that allows you to organize sound files and play them 
 ### Main features
 * Arrange sounds in 'folders' called soundboards.
 * Use keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
-* Configure volume per output device, soundboard sound.
+* Configure volume per output device, soundboard and sound.
 
 ### Built With
 * [Electron](https://www.electronjs.org/)
