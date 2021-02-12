@@ -4,6 +4,7 @@ const Keys = require('../models/Keys.js')
 const MS = require('../models/MS.js')
 const SoundModal = require('./modals/SoundModal.js')
 const Modal = require('./modals/Modal.js')
+const MultiSoundModal = require('./modals/MultiSoundModal.js')
 
 const NO_KEYBIND = 'Right click to add a keybind'
 const NO_SOUNDS = 'This soundboard has no sounds'
@@ -229,34 +230,46 @@ class SoundList extends HTMLElement {
         }
 
         // Is there any compatible sound file?
-        let files = []
+        let paths = []
         for (let i = 0; i < e.dataTransfer.files.length; i++) {
             const item = e.dataTransfer.files[i]
             if (this._isFileTypeCompatible(item.type)) {
-                files.push(item)
+                paths.push(item.path)
             }
         }
 
-        console.log(files)
+        console.log(paths)
 
-        if (files.length < 1) return
+        if (paths.length < 1) return
 
         const index = MS.getElementIndex(this.dragDummy)
         const sb = MS.getSelectedSoundboard()
 
-        if (files.length == 1) {
+        if (paths.length == 1) {
             const soundModal = new SoundModal(SoundModal.Mode.ADD, null, e.dataTransfer.files[0].path)
             soundModal.open()
             soundModal.addEventListener('add', (e) => {
                 const sound = e.detail.sound
                 sound.soundboard = sb
                 KeybindManager.registerSound(sound)
-                sb.sounds.splice(index, 0, sound)
+                sb.addSound(sound, index)
                 this.addSound(sound, index)
                 MS.data.save()
             })
         } else {
-            // TODO
+            const soundsModal = new MultiSoundModal(paths)
+            soundsModal.open()
+            soundsModal.addEventListener('add', (e) => {
+                const sounds = e.detail.sounds
+                for (let i = 0; i < sounds.length; i++) {
+                    const sound = sounds[i]
+                    sound.soundboard = sb
+                    KeybindManager.registerSound(sound)
+                    sb.addSound(sound, index + i)
+                    this.addSound(sound, index + i)
+                }
+                MS.data.save()
+            })
         }
     }
 

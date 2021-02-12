@@ -33,8 +33,9 @@ class Soundboard {
         return sounds
     }
 
-    addSound(sound) {
-        this.sounds.push(sound)
+    addSound(sound, index) {
+        if (index === undefined || index === null) this.sounds.push(sound)
+        else this.sounds.splice(index, 0, sound)
     }
 
     removeSound(sound) {

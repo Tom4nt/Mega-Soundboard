@@ -24,6 +24,7 @@ const KeybindManager = require('./models/KeybindManager.js');
 const NewsModal = require("./elements/modals/NewsModal.js");
 const MSModal = require('./elements/modals/MSModal');
 const InfoBalloon = require("./elements/InfoBalloon.js");
+const MultiSoundModal = require("./elements/modals/MultiSoundModal.js");
 //#endregion
 
 //#region Define Custom elements
@@ -44,6 +45,7 @@ customElements.define('ms-settings-modal', SettingsModal);
 customElements.define('ms-newsmodal', NewsModal);
 customElements.define('ms-msmodal', MSModal);
 customElements.define('ms-infoballoon', InfoBalloon);
+customElements.define('ms-multisoundmodal', MultiSoundModal);
 //#endregion
 
 //#region Elements
@@ -208,24 +210,29 @@ soundboardList.addEventListener("soundboardselect", (e) => {
 addSoundButton.addEventListener('click', (e) => {
     ipcRenderer.invoke('file.browse', true, 'Audio files', ['mp3', 'wav', 'ogg']).then((files) => {
         if (!files) return
+        const sb = MS.getSelectedSoundboard()
 
         if (files.length == 1) {
-            const sb = MS.getSelectedSoundboard()
-            var modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
+            const modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
             modal.open()
             modal.addEventListener('add', (e) => {
                 let sound = e.detail.sound
                 sound.soundboard = sb
-                addSound(sound)
+                addSound(sound, sb)
                 MS.data.save()
             })
         } else {
-            files.forEach(file => {
-                const soundName = path.basename(file, path.extname(file))
-                const sound = new Sound(soundName, file, 100, null, MS.getSelectedSoundboard())
-                addSound(sound)
-            });
-            MS.data.save()
+            const soundsModal = new MultiSoundModal(files)
+            soundsModal.open()
+            soundsModal.addEventListener('add', (e) => {
+                const sounds = e.detail.sounds
+                for (let i = 0; i < sounds.length; i++) {
+                    const sound = sounds[i]
+                    sound.soundboard = sb
+                    addSound(sound, sb)
+                }
+                MS.data.save()
+            })
         }
     })
 })
@@ -366,10 +373,10 @@ function closeActionPanelContainers(e) {
  * Adds a sound to the selected soundboard in the sound list and data. Registers keybinds.
  * @param {Sound} sound 
  */
-function addSound(sound) {
-    soundList.addSound(sound)
+function addSound(sound, soundboard, index) {
+    soundList.addSound(sound, index)
     KeybindManager.registerSound(sound)
-    MS.getSelectedSoundboard().addSound(sound)
+    soundboard.addSound(sound, index)
 }
 
 //#endregion
