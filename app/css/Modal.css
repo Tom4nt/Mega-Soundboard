@@ -58,6 +58,10 @@
     margin: 0;
 }
 
+.modal.error .modal-header h1 {
+    color: var(--color-red-lightL)
+}
+
 .modal-body {
     padding: 8px 16px 16px 16px;
     overflow-y: auto;

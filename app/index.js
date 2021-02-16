@@ -1,8 +1,8 @@
 const { ipcRenderer } = require("electron");
-const path = require('path')
 
 const MS = require('./models/MS.js');
 const Sound = require("./models/Sound.js");
+const Soundboard = require("./models/Soundboard.js");
 
 //#region Import Custom Elements
 const Slider = require('./elements/Slider.js')
@@ -101,6 +101,28 @@ KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUN
     soundboardList.selectSoundboard(e.detail.soundboard)
 })
 
+Soundboard.eventDispatcher.addEventListener(Soundboard.events.ADDED_TO_FOLDER, e => {
+    const soundboard = e.detail.soundboard
+    const sound = e.detail.sound
+
+    if (MS.getSelectedSoundboard() === soundboard) {
+        addSound(sound, soundboard)
+    } else {
+        soundboard.addSound(sound)
+    }
+})
+
+Soundboard.eventDispatcher.addEventListener(Soundboard.events.REMOVED_FROM_FOLDER, e => {
+    const soundboard = e.detail.soundboard
+    const sound = e.detail.sound
+
+    if (MS.getSelectedSoundboard() === soundboard) {
+        removeSound(sound, soundboard)
+    } else {
+        soundboard.removeSound(sound)
+    }
+})
+
 window.ondragenter = (e) => {
     if (e.relatedTarget || MS.modalsOpen > 0) return
     console.log('File(s) dragged to the window.')
@@ -164,6 +186,13 @@ window.addEventListener("load", () => {
         MS.settings.latestLogViewed = MS.latestWithLog
         MS.settings.save()
     }
+
+    MS.addPopup('Add Sound(s)', addSoundButton, 'left')
+    MS.addPopup('Add Soundboard', addSoundboardButton, 'left')
+    MS.addPopup('Audio Devices', deviceSettingsButton)
+    MS.addPopup('Quick Settings', quickSettingsButton)
+    MS.addPopup('Stop all</br>Sounds', stopAllButton)
+    MS.addPopup('Restart and Update', updateButton, 'right')
 })
 
 window.addEventListener("click", (e) => {
@@ -208,33 +237,37 @@ soundboardList.addEventListener("soundboardselect", (e) => {
 //#region Right
 
 addSoundButton.addEventListener('click', (e) => {
-    ipcRenderer.invoke('file.browse', true, 'Audio files', ['mp3', 'wav', 'ogg']).then((files) => {
-        if (!files) return
-        const sb = MS.getSelectedSoundboard()
+    if (!MS.getSelectedSoundboard().linkedFolder) {
+        ipcRenderer.invoke('file.browse', true, 'Audio files', ['mp3', 'wav', 'ogg']).then((files) => {
+            if (!files) return
+            const sb = MS.getSelectedSoundboard()
 
-        if (files.length == 1) {
-            const modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
-            modal.open()
-            modal.addEventListener('add', (e) => {
-                let sound = e.detail.sound
-                sound.soundboard = sb
-                addSound(sound, sb)
-                MS.data.save()
-            })
-        } else {
-            const soundsModal = new MultiSoundModal(files)
-            soundsModal.open()
-            soundsModal.addEventListener('add', (e) => {
-                const sounds = e.detail.sounds
-                for (let i = 0; i < sounds.length; i++) {
-                    const sound = sounds[i]
+            if (files.length == 1) {
+                const modal = new SoundModal(SoundModal.Mode.ADD, null, files[0])
+                modal.open()
+                modal.addEventListener('add', (e) => {
+                    let sound = e.detail.sound
                     sound.soundboard = sb
                     addSound(sound, sb)
-                }
-                MS.data.save()
-            })
-        }
-    })
+                    MS.data.save()
+                })
+            } else {
+                const soundsModal = new MultiSoundModal(files)
+                soundsModal.open()
+                soundsModal.addEventListener('add', (e) => {
+                    const sounds = e.detail.sounds
+                    for (let i = 0; i < sounds.length; i++) {
+                        const sound = sounds[i]
+                        sound.soundboard = sb
+                        addSound(sound, sb)
+                    }
+                    MS.data.save()
+                })
+            }
+        })
+    } else {
+        Modal.DefaultModal.linkedSoundboard(MS.getSelectedSoundboard().linkedFolder).open()
+    }
 })
 
 soundlistSearchbox.addEventListener('input', (e) => {
@@ -345,7 +378,10 @@ function selectSoundboard(soundboard) {
 }
 
 function setSoundlistSounds(soundboard) {
-    if (soundboard) soundList.setSounds(soundboard.sounds)
+    if (soundboard) {
+        soundList.setSounds(soundboard.sounds)
+        soundList.blockAdd = soundboard.linkedFolder ? true : false
+    }
 }
 
 function setKeybindsToggleSettings(state) {
@@ -377,6 +413,13 @@ function addSound(sound, soundboard, index) {
     soundList.addSound(sound, index)
     KeybindManager.registerSound(sound)
     soundboard.addSound(sound, index)
+}
+
+function removeSound(sound, soundboard) {
+    soundList.removeSound(sound)
+    MS.stopSound(sound)
+    KeybindManager.unregisterSound(sound)
+    soundboard.removeSound(sound)
 }
 
 //#endregion

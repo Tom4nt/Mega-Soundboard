@@ -36,7 +36,7 @@ class SoundModal extends Modal {
         this.nameField = new TextField("Name")
         this.moveToggle = new Toggler('Move sound', new InfoBalloon('The sound file will be moved to the location defined in Settings.'))
         this.pathSelector = new FileSelector("Path", FileSelector.FILE_TYPE, "Audio files", ['mp3', 'wav', 'ogg'])
-        this.volumeSlider = new Slider()
+        this.volumeSlider = new Slider('Volume')
         this.playKeyRecorder = new KeyRecorder()
 
         this.playKeyRecorder.addEventListener(KeyRecorder.EVENT_START_RECORDING, () => this.lockEsc = true)
@@ -61,6 +61,10 @@ class SoundModal extends Modal {
             this.playKeyRecorder,
         ]
 
+        if (this.sound && this.sound.soundboard.linkedFolder) {
+            elems.splice(1, 1)
+        }
+
         if (this.mode == Mode.ADD) {
             this.pathSelector.path = this.path
             elems.splice(1, 0, this.moveToggle)
@@ -80,7 +84,7 @@ class SoundModal extends Modal {
             Modal.getButton(btnText, () => { this.soundAction() })
         ]
 
-        if (this.mode == Mode.EDIT) {
+        if (this.mode == Mode.EDIT && !this.sound.soundboard.linkedFolder) {
             buttons.unshift(Modal.getButton("remove", () => {
                 this.removeSound()
             }, true, true))

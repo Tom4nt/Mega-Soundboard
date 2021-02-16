@@ -3,9 +3,6 @@
 const Data = require('../models/Data.js');
 const Settings = require('../models/Settings.js');
 const { ipcRenderer } = require('electron');
-const Soundboard = require('./Soundboard.js');
-const Sound = require('./Sound.js');
-const { resolveFiles } = require('electron-updater/out/providers/Provider');
 
 class MS {
     static get SOUND_ON() { return 'res/audio/on.wav' }
@@ -24,7 +21,6 @@ class MS {
 
     /**
      * Plays a sound on the selected output devices.
-     * @param {Sound} sound
      */
     static async playSound(sound) {
         if (sound) {
@@ -44,9 +40,6 @@ class MS {
         }
     }
 
-    /**
-     * @param {Sound} sound 
-     */
     static stopSound(sound) {
         if (sound && sound.isPlaying()) {
             this._removeSoundFromInstancesList(sound)
@@ -64,9 +57,6 @@ class MS {
         MS.eventDispatcher.dispatchEvent(new CustomEvent(MS.EVENT_STOP_ALL_SOUNDS))
     }
 
-    /**
-     * @returns {Soundboard}
-     */
     static getSelectedSoundboard() {
         return this.data.soundboards[this.settings.selectedSoundboard]
     }
@@ -116,38 +106,59 @@ class MS {
         return ipcRenderer.invoke('version')
     }
 
-    /**
-     * @returns {Number}
-     */
-    static getElementIndex(element) {
-        let i = 0;
-        while ((element = element.previousElementSibling) != null) ++i;
-        return i;
-    }
-
     static _removeSoundFromInstancesList(sound) {
         MS.playingSounds.splice(MS.playingSounds.indexOf(sound), 1)
     }
 
-    static openPopup(text, x, y) {
+    static openPopup(text, rect, position) {
+        if (!position) position = 'top'
+        const middleX = rect.x + rect.width / 2
+
         let div = document.getElementById('popup-layer')
 
         let popup = document.createElement('div')
         popup.innerHTML = text
         popup.classList.add('popup')
+        if (position) popup.classList.add(position)
 
         popup.style.opacity = 0
         popup.style.transform = 'scale(0.8)'
 
         div.appendChild(popup)
 
-        popup.style.left = x - (popup.offsetWidth / 2) + 'px'
-        popup.style.top = y - popup.offsetHeight - 22 + 'px'
+        if (position != 'left' && position != 'right') popup.style.left = middleX - (popup.offsetWidth / 2) + 'px'
+        else {
+            if (position == 'left') {
+                popup.style.left = rect.x - popup.offsetWidth - 12 + 'px'
+            } else {
+                popup.style.left = rect.x + rect.width + 12 + 'px'
+            }
+        }
+
+        if (position == 'bottom') {
+            popup.style.top = rect.y + rect.height + 12 + 'px'
+        } else if (position == 'top') {
+            popup.style.top = rect.y - popup.offsetHeight - 12 + 'px'
+        } else {
+            popup.style.top = rect.y + (rect.height - popup.offsetHeight) / 2 + 'px'
+        }
 
         popup.style.opacity = null
         popup.style.transform = null
 
         return popup
+    }
+
+    static addPopup(text, element, position) {
+        let popup = null
+        element.addEventListener('mouseenter', e => {
+            const rect = element.getBoundingClientRect()
+            popup = this.openPopup(text, rect, position)
+        })
+
+        element.addEventListener('mouseleave', e => {
+            this.closePopup(popup)
+        })
     }
 
     /**
@@ -164,16 +175,11 @@ class MS {
     }
 }
 
-module.exports = MS
-
 MS.latestWithLog = 1 // Increments on every version that should display the changelog.
 
 MS.devices = []
 MS.playingSounds = []
 MS.data = Data.load()
-/**
- * @type {Settings}
- */
 MS.settings = Settings.load()
 MS.eventDispatcher = new EventTarget()
 MS.recordingKey = false
@@ -183,3 +189,5 @@ MS.EVENT_TOGGLED_KEYBINDS_STATE = 'toggled-keybinds-state'
 MS.EVENT_SOUND_PLAY = 'sound-play'
 MS.EVENT_SOUND_STOP = 'sound-stop'
 MS.EVENT_STOP_ALL_SOUNDS = 'sound-stopall'
+
+module.exports = MS

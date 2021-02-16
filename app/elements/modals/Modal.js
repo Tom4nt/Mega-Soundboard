@@ -8,6 +8,7 @@ class Modal extends HTMLElement {
         this.parent = document.getElementById("content")
         this.title = title
         this.message = message
+        this.isError = isError
 
         this.keyUp = (e) => {
             if (e.key == "Escape" && !this.lockEsc && !MS.recordingKey)
@@ -55,6 +56,7 @@ class Modal extends HTMLElement {
 
     connectedCallback() {
         this.classList.add("modal")
+        if (this.isError) this.classList.add('error')
 
         const modal = document.createElement("div")
         modal.classList.add("modal-window")
@@ -135,6 +137,14 @@ class Modal extends HTMLElement {
     }
 }
 
+class DefaultModal extends Modal {
+    static linkedSoundboard(path) {
+        return new Modal('Linked soundboard', 'This soundboard is linked to a <a href="' + path + '">folder</a>.<br/>' +
+            'Add the sound to the folder and it will appear here automatically.')
+    }
+}
+
 Modal.blockClosureKey = false
 
 module.exports = Modal
+module.exports.DefaultModal = DefaultModal

@@ -1,9 +1,10 @@
 const MS = require("../models/MS")
 
 class InfoBalloon extends HTMLElement {
-    constructor(text) {
+    constructor(text, position) {
         super()
         this._text = text
+        this._position = position
     }
 
     connectedCallback() {
@@ -12,7 +13,7 @@ class InfoBalloon extends HTMLElement {
         this.addEventListener('mouseenter', () => {
             if (this.currentPopup) return
             let rect = this.getBoundingClientRect()
-            this.currentPopup = MS.openPopup(this._text, rect.x + rect.width / 2, rect.y + rect.height / 2)
+            this.currentPopup = MS.openPopup(this._text, rect, this._position)
         })
 
         this.addEventListener('mouseleave', () => {
@@ -21,6 +22,10 @@ class InfoBalloon extends HTMLElement {
                 this.currentPopup = null
             }
         })
+    }
+
+    disconnectedCallback() {
+        MS.closePopup(this.currentPopup)
     }
 }
 

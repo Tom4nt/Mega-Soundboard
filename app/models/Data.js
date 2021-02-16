@@ -5,7 +5,7 @@ const Soundboard = require('./Soundboard.js');
 const savePath = ipcRenderer.sendSync('get.savePath')
 const dataPath = savePath + "\\Soundboards.json"
 
-module.exports = class Data {
+class Data {
     constructor() {
         this.soundboards = []
     }
@@ -15,6 +15,7 @@ module.exports = class Data {
     }
 
     removeSoundboard(soundboard) {
+        soundboard.removeFolderListener()
         this.soundboards.splice(this.soundboards.indexOf(soundboard), 1)
     }
 
@@ -34,7 +35,7 @@ module.exports = class Data {
                 let jsonData = JSON.parse(dataJSON);
                 data.soundboards = this.getSoundboardsFromData(jsonData.soundboards)
             } catch (err) {
-                app.quit();
+                console.error(err)
                 return;
             }
         }
@@ -53,5 +54,8 @@ module.exports = class Data {
     save() {
         let data = JSON.stringify(this, null, 2);
         fs.writeFileSync(dataPath, data);
+        console.log('Saved.')
     }
 }
+
+module.exports = Data

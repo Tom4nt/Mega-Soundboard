@@ -41,6 +41,7 @@
     --color-green: #2d5f2f;
     --color-greenL: #377539;
     --color-dimmer: #25252bb3;
+    --color-link: #03a9f4;
 }
 
 body, html {
@@ -93,6 +94,10 @@ button:active {
     background-color: var(--color-normal);
 }
 
+a {
+    color: var(--color-link)
+}
+
 ::-webkit-search-cancel-button {
     -webkit-appearance: none;
 }
@@ -130,18 +135,30 @@ button:active {
 
 .popup {
     position: absolute;
-    background-color: var(--color-normalL);
+    background-color: var(--color-darkL);
     font-family: 'Roboto';
     color: var(--color-white);
     padding: 8px;
     font-size: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0px 18px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     max-width: 200px;
     text-align: center;
     transition: opacity 0.15s, transform 0.15s;
     transition-timing-function: cubic-bezier(0.15, 1.14, 0.16, 1.24);
     transform-origin: bottom center;
+}
+
+.popup.bottom {
+    transform-origin: top center;
+}
+
+.popup.left {
+    transform-origin: center right;
+}
+
+.popup.right {
+    transform-origin: center left;
 }
 
 .popup::after {
@@ -154,7 +171,35 @@ button:active {
     left: calc(50% - 8px);
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-top: 8px solid var(--color-normalL);
+    border-top: 8px solid var(--color-darkL);
+}
+
+.popup.bottom::after {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--color-darkL);
+    border-top: 0;
+    top: -8px;
+}
+
+.popup.left::after {
+    border-left: 8px solid var(--color-darkL);
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-top: 8px solid transparent;
+    right: -16px;
+    top: calc(50% - 7px);
+    left: unset;
+}
+
+.popup.right::after {
+    border-left: 8px solid transparent;
+    border-right: 8px solid var(--color-darkL);
+    border-bottom: 8px solid transparent;
+    border-top: 8px solid transparent;
+    left: -16px;
+    top: calc(50% - 7px);
+    right: unset;
 }
 
 /* #endregion */

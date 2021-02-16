@@ -1,8 +1,10 @@
 const MS = require("../models/MS.js")
+const Utils = require('../models/Utils.js');
 const SoundboardModal = require("./modals/SoundboardModal.js")
 const KeybindManager = require("../models/KeybindManager.js")
 const Soundboard = require("../models/Soundboard.js")
 const Keys = require("../models/Keys.js")
+const fs = require('fs');
 
 const DRAG_START_OFFSET = 10
 
@@ -41,6 +43,7 @@ module.exports = class SoundboardList extends HTMLElement {
     addSoundboard(soundboard) {
         const item = document.createElement('div')
         item.classList.add('item')
+        if (soundboard.linkedFolder) item.classList.add('linked')
         item.soundboard = soundboard
 
         const indicator = document.createElement('div')
@@ -56,7 +59,12 @@ module.exports = class SoundboardList extends HTMLElement {
         if (soundboard.keys) desc.innerHTML = Keys.toKeyString(soundboard.keys)
         desc.classList.add('desc')
 
-        item.append(indicator, title, desc)
+        const icon = document.createElement('span')
+        if (soundboard.linkedFolder) icon.innerHTML = 'link'
+        icon.classList.add('icon')
+        MS.addPopup('This soundboard is linked to a folder', icon)
+
+        item.append(indicator, title, desc, icon)
 
         item.addEventListener('click', () => {
             if (!item.classList.contains('selected')) {
@@ -71,6 +79,12 @@ module.exports = class SoundboardList extends HTMLElement {
                 item.soundboard = e.detail.soundboard
                 KeybindManager.registerSoundboardn(item.soundboard)
                 this.updateSoundboard(item)
+                if (item.soundboard.linkedFolder) {
+                    item.soundboard.updateFolderSounds()
+                    item.soundboard.removeFolderListener()
+                    item.soundboard.setupFolderListener()
+                    this.select(item)
+                }
                 MS.data.save()
             })
             editModal.addEventListener('remove', (e) => {
@@ -93,8 +107,11 @@ module.exports = class SoundboardList extends HTMLElement {
 
     updateSoundboard(item) {
         item.childNodes[1].innerHTML = item.soundboard.name
+        item.classList.remove('linked')
+        if (item.soundboard.linkedFolder) item.classList.add('linked')
         if (item.soundboard.keys) item.childNodes[2].innerHTML = Keys.toKeyString(item.soundboard.keys)
         else item.childNodes[2].innerHTML = null
+        item.childNodes[3].innerHTML = item.soundboard.linkedFolder ? 'link' : null
     }
 
     selectSoundboard(soundboard) {
@@ -226,7 +243,7 @@ module.exports = class SoundboardList extends HTMLElement {
             if (curr) {
                 if (curr.parentElement === this || curr.parentElement.parentElement === this) {
                     if (curr.parentElement.parentElement === this) curr = curr.parentElement
-                    if (MS.getElementIndex(this.dragDummy) > MS.getElementIndex(curr)) {
+                    if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(curr)) {
                         this.insertBefore(this.dragDummy, curr)
                     } else {
                         this.insertBefore(this.dragDummy, curr.nextElementSibling)
@@ -252,7 +269,7 @@ module.exports = class SoundboardList extends HTMLElement {
             this.dragElem = null
             this.dragDummy.style.display = 'none'
             this.dragOK = false
-            const newIndex = MS.getElementIndex(d) - 1
+            const newIndex = Utils.getElementIndex(d) - 1
             if (this.initialIndex != newIndex || this.initialSoundboard != MS.getSelectedSoundboard())
                 this._reorder(this.initialIndex, newIndex)
         }

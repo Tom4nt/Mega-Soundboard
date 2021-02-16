@@ -3,6 +3,8 @@ const Slider = require('../Slider.js')
 const TextField = require('../TextField.js')
 const KeyRecorder = require('../KeyRecorder.js')
 const Soundboard = require('../../models/Soundboard.js')
+const FileSelector = require('../FileSelector.js')
+const { isValidSoundFile } = require('../../models/Utils.js')
 
 const Mode = {
     ADD: 'add',
@@ -29,22 +31,28 @@ class SoundboardModal extends Modal {
     getBodyElements() {
         this.nameInput = new TextField("Name")
         this.keysInput = new KeyRecorder()
-        this.volumeSlider = new Slider()
+        this.volumeSlider = new Slider('Volume')
+        this.lfFileSelector = new FileSelector("Linked Folder (Optional)", FileSelector.FOLDER_TYPE)
 
         if (this.mode == Mode.EDIT) {
             this.nameInput.text = this.soundboard.name
             this.keysInput.keys = this.soundboard.keys
             this.volumeSlider.value = this.soundboard.volume
+            this.lfFileSelector.path = this.soundboard.linkedFolder
         }
 
-        return [
-            /*Modal.getText("You can add sounds freely if you dont specify a linked folder."),*/
+        const items = [
             this.nameInput,
-            /*new FileSelector("Linked Folder"),*/
             this.volumeSlider,
             Modal.getLabel("Set Active"),
             this.keysInput,
         ]
+
+        if (this.mode == Mode.ADD || this.soundboard.linkedFolder || this.soundboard.sounds.length < 1) {
+            items.splice(1, 0, this.lfFileSelector)
+        }
+
+        return items
     }
 
     getFooterButtons() {
@@ -69,14 +77,21 @@ class SoundboardModal extends Modal {
             this.nameInput.warn()
             valid = false
         }
+
+        if (!this.lfFileSelector.isPathValid() && this.lfFileSelector.path) {
+            this.lfFileSelector.warn()
+            valid = false
+        }
+
         if (valid) {
             if (this.mode == Mode.ADD) {
-                const soundboard = new Soundboard(this.nameInput.text, this.keysInput.keys, this.volumeSlider.value)
+                const soundboard = new Soundboard(this.nameInput.text, this.keysInput.keys, this.volumeSlider.value, this.lfFileSelector.path)
                 this.dispatchEvent(new CustomEvent("add", { detail: { soundboard: soundboard } }))
             } else {
                 this.soundboard.name = this.nameInput.text
                 this.soundboard.keys = this.keysInput.keys
                 this.soundboard.volume = this.volumeSlider.value
+                this.soundboard.linkedFolder = this.lfFileSelector.path
                 this.dispatchEvent(new CustomEvent("edit", { detail: { soundboard: this.soundboard } }))
             }
             this.close()

@@ -5,6 +5,7 @@ const MS = require('../models/MS.js')
 const SoundModal = require('./modals/SoundModal.js')
 const Modal = require('./modals/Modal.js')
 const MultiSoundModal = require('./modals/MultiSoundModal.js')
+const Utils = require('../models/Utils.js')
 
 const NO_KEYBIND = 'Right click to add a keybind'
 const NO_SOUNDS = 'This soundboard has no sounds'
@@ -17,6 +18,7 @@ class SoundList extends HTMLElement {
         this._filter = ''
         this.sounds = []
         this.dragElem = null
+        this.blockAdd = false
     }
 
     get filter() {
@@ -99,7 +101,7 @@ class SoundList extends HTMLElement {
             if (e.target === playingIndicator) return
             MS.playSound(sound).catch(
                 (err) => {
-                    new Modal('Could not play', err).open()
+                    new Modal('Could not play', err, true).open()
                     MS.playUISound(MS.SOUND_ERR)
                 }
             )
@@ -166,6 +168,17 @@ class SoundList extends HTMLElement {
             this.items.insertBefore(item, this.items.childNodes[index])
     }
 
+    removeSound(sound) {
+        for (let i = 0; i < this.items.childElementCount; i++) {
+            const item = this.items.children[i];
+            if (item.sound === sound) {
+                item.remove()
+                if (!this.hasSounds()) this._displayNoSoundsMessage(NO_SOUNDS)
+                return
+            }
+        }
+    }
+
     setSounds(sounds) {
         this.sounds = sounds
         if (sounds.length < 1) {
@@ -198,7 +211,7 @@ class SoundList extends HTMLElement {
         this.dragging = true
 
         let below = document.elementFromPoint(e.clientX, e.clientY)
-        if (!this.dragOK) {
+        if (!this.dragOK && !this.blockAdd) {
             this.dragDummy.style.display = 'inline-block'
             this.dragOK = true
         }
@@ -206,7 +219,7 @@ class SoundList extends HTMLElement {
         if (below) {
             if (below.parentElement === this.items || below.parentElement.parentElement === this.items) {
                 if (below.parentElement.parentElement === this.items) below = below.parentElement
-                if (MS.getElementIndex(soundList.dragDummy) > MS.getElementIndex(below)) {
+                if (Utils.getElementIndex(soundList.dragDummy) > Utils.getElementIndex(below)) {
                     soundList.items.insertBefore(soundList.dragDummy, below)
                 } else {
                     soundList.items.insertBefore(soundList.dragDummy, below.nextElementSibling)
@@ -214,7 +227,9 @@ class SoundList extends HTMLElement {
             }
             if (below.parentElement.id == 'soundboardlist') {
                 let soundboard = below.soundboard
-                this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
+                if (!soundboard.linkedFolder) {
+                    this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
+                }
             }
         }
     }
@@ -223,6 +238,11 @@ class SoundList extends HTMLElement {
         this.dragging = false
         this.dragOK = false
         this.dragDummy.style.display = null
+
+        if (this.blockAdd) {
+            Modal.DefaultModal.linkedSoundboard(MS.getSelectedSoundboard().linkedFolder).open()
+            return
+        }
 
         if (!e) { // Ends without adding sound(s)
             console.log('File(s) dragging cancelled')
@@ -242,7 +262,7 @@ class SoundList extends HTMLElement {
 
         if (paths.length < 1) return
 
-        const index = MS.getElementIndex(this.dragDummy)
+        const index = Utils.getElementIndex(this.dragDummy)
         const sb = MS.getSelectedSoundboard()
 
         if (paths.length == 1) {
@@ -383,15 +403,15 @@ class SoundList extends HTMLElement {
             if (curr) {
                 if (curr.parentElement === this.items || curr.parentElement.parentElement === this.items) {
                     if (curr.parentElement.parentElement === this.items) curr = curr.parentElement
-                    if (MS.getElementIndex(soundList.dragDummy) > MS.getElementIndex(curr)) {
+                    if (Utils.getElementIndex(soundList.dragDummy) > Utils.getElementIndex(curr)) {
                         soundList.items.insertBefore(soundList.dragDummy, curr)
                     } else {
                         soundList.items.insertBefore(soundList.dragDummy, curr.nextElementSibling)
                     }
                 }
-                if (curr.parentElement.id == 'soundboardlist') {
+                if (curr.parentElement.id == 'soundboardlist' && !this.blockAdd) {
                     let soundboard = curr.soundboard
-                    this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
+                    if (!soundboard.linkedFolder) this.dispatchEvent(new CustomEvent('soundboardselect', { detail: { soundboard } }))
                 }
             }
         }
@@ -414,7 +434,7 @@ class SoundList extends HTMLElement {
             this.dragElem = null
             this.dragDummy.style.display = 'none'
             this.dragOK = false
-            const newIndex = MS.getElementIndex(d) - 1
+            const newIndex = Utils.getElementIndex(d) - 1
             if (this.initialIndex != newIndex || this.initialSoundboard != MS.getSelectedSoundboard()) {
                 this._reorderSound(this.initialIndex, newIndex)
             }

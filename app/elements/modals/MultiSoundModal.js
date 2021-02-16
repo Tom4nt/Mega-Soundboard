@@ -11,7 +11,7 @@ class MultiSoundModal extends Modal {
         super()
         this.sounds = []
         this.paths = paths
-        super.title = 'Add multiple sounds'
+        super.title = 'Adding ' + paths.length + ' sounds'
     }
 
     getBodyElements() {

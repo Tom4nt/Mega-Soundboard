@@ -71,3 +71,11 @@ ms-soundboardlist .item .desc {
     line-height: 1.45;
     flex-shrink: 0;
 }
+
+ms-soundboardlist .item.linked .desc {
+    margin-right: 6px;
+}
+
+ms-soundboardlist .item .icon {
+    color: var(--color-white);
+}
