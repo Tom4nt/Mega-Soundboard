@@ -239,11 +239,6 @@ class SoundList extends HTMLElement {
         this.dragOK = false
         this.dragDummy.style.display = null
 
-        if (this.blockAdd) {
-            Modal.DefaultModal.linkedSoundboard(MS.getSelectedSoundboard().linkedFolder).open()
-            return
-        }
-
         if (!e) { // Ends without adding sound(s)
             console.log('File(s) dragging cancelled')
             return
@@ -261,6 +256,11 @@ class SoundList extends HTMLElement {
         console.log(paths)
 
         if (paths.length < 1) return
+
+        if (this.blockAdd) {
+            Modal.DefaultModal.linkedSoundboard(MS.getSelectedSoundboard().linkedFolder).open()
+            return
+        }
 
         const index = Utils.getElementIndex(this.dragDummy)
         const sb = MS.getSelectedSoundboard()

@@ -4,9 +4,11 @@ const MS = require('../models/MS');
 module.exports = class Titlebar extends HTMLElement {
     constructor() {
         super();
+
         ipcRenderer.on("win.maximize", () => {
             this.resizeWindowHandle(true);
-        });
+        })
+
         ipcRenderer.on('win.unmaximize', () => {
             this.resizeWindowHandle(false);
         })

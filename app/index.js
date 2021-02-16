@@ -454,4 +454,12 @@ ipcRenderer.on("settings.enableKeybinds", function (e, state) {
     setKeybindsToggleSettings(state)
 })
 
+ipcRenderer.on('win.focus', () => {
+    document.body.classList.add('focused')
+})
+
+ipcRenderer.on('win.blur', () => {
+    document.body.classList.remove('focused')
+})
+
 //#endregion

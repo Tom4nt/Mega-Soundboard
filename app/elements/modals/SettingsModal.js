@@ -26,7 +26,7 @@ class SettingsModal extends Modal {
         soundsLocationFileSelector.path = MS.settings.getSoundsLocation()
 
         const elements = [
-            Modal.getLabel("Stop Sounds"),
+            Modal.getLabel("Stop all Sounds"),
             stopSoundsRecorder,
             Modal.getLabel("Enable/Disable keybinds"),
             keybindsStateRecorder,

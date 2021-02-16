@@ -95,6 +95,14 @@ function createWindow() {
         win.webContents.send('win.unmaximize')
     })
 
+    win.on('focus', () => {
+        win.webContents.send('win.focus')
+    })
+
+    win.on('blur', () => {
+        win.webContents.send('win.blur')
+    })
+
     win.setMenu(MainMenu);
 
     win.loadFile('app/index.html');

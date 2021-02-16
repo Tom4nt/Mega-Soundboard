@@ -48,6 +48,13 @@ class MS {
         }
     }
 
+    static stopSounds(soundboard) {
+        for (var i = MS.playingSounds.length - 1; i >= 0; i--) {
+            const sound = MS.playingSounds[i]
+            if (sound.soundboard === soundboard) this.stopSound(sound)
+        }
+    }
+
     static stopAllSounds() {
         for (var i = 0; i < MS.playingSounds.length; i++) {
             MS.playingSounds[i].stop()

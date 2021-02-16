@@ -32,6 +32,10 @@ module.exports = class SoundboardList extends HTMLElement {
 
         MS.eventDispatcher.addEventListener(MS.EVENT_STOP_ALL_SOUNDS, () => { this._setAllPlayingIndicators(false) })
 
+        this.onmousedown = (e) => {
+            if (e.button === 1) return false
+        }
+
         document.addEventListener('mousemove', (e) => this._mouseMove(e))
         document.addEventListener('mouseup', (e) => this._mouseUp(e))
     }
@@ -72,6 +76,12 @@ module.exports = class SoundboardList extends HTMLElement {
             }
         })
 
+        item.addEventListener('auxclick', (e) => {
+            if (e.button === 1) {
+                MS.stopSounds(item.soundboard)
+            }
+        })
+
         item.addEventListener('contextmenu', () => {
             const editModal = new SoundboardModal(SoundboardModal.Mode.EDIT, item.soundboard, MS.data.soundboards.length < 2)
             editModal.open()
@@ -83,7 +93,7 @@ module.exports = class SoundboardList extends HTMLElement {
                     item.soundboard.updateFolderSounds()
                     item.soundboard.removeFolderListener()
                     item.soundboard.setupFolderListener()
-                    this.select(item)
+                    if (MS.getSelectedSoundboard() === item.soundboard) this.select(item)
                 }
                 MS.data.save()
             })

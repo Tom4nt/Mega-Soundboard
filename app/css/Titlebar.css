@@ -7,16 +7,21 @@ ms-titlebar {
 }
 
 ms-titlebar span {
-    color: var(--color-white);
+    color: var(--color-grayL);
     display: inline-block;
     font-family: Roboto;
     font-size: 14px;
     padding: 7px 0 0 8px;
+    transition: all 0.1s;
+}
+
+body.focused ms-titlebar span {
+    color: var(--color-white);
 }
 
 ms-titlebar button {
     border: none;
-    color: var(--color-white);
+    color: var(--color-grayL);
     background-color: transparent;
     height: 30px;
     -webkit-app-region: no-drag;
@@ -26,6 +31,10 @@ ms-titlebar button {
     padding: 0 8px 0 8px;
     transition: all 0.1s;
     border-radius: 0;
+}
+
+body.focused ms-titlebar button {
+    color: var(--color-white);
 }
 
 ms-titlebar button:focus {

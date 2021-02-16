@@ -4,7 +4,6 @@ const TextField = require('../TextField.js')
 const KeyRecorder = require('../KeyRecorder.js')
 const Soundboard = require('../../models/Soundboard.js')
 const FileSelector = require('../FileSelector.js')
-const { isValidSoundFile } = require('../../models/Utils.js')
 
 const Mode = {
     ADD: 'add',
@@ -33,6 +32,11 @@ class SoundboardModal extends Modal {
         this.keysInput = new KeyRecorder()
         this.volumeSlider = new Slider('Volume')
         this.lfFileSelector = new FileSelector("Linked Folder (Optional)", FileSelector.FOLDER_TYPE)
+
+        this.lfFileSelector.addEventListener(FileSelector.EVENT_VALUE_CHANGED, e => {
+            const val = e.detail
+            if (this.nameInput.text.length < 1) this.nameInput.text = this.lfFileSelector.getFileNameNoExtension()
+        })
 
         if (this.mode == Mode.EDIT) {
             this.nameInput.text = this.soundboard.name
