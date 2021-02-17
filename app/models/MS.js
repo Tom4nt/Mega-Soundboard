@@ -182,7 +182,7 @@ class MS {
     }
 }
 
-MS.latestWithLog = 1 // Increments on every version that should display the changelog.
+MS.latestWithLog = 2 // Increments on every version that should display the changelog.
 
 MS.devices = []
 MS.playingSounds = []
