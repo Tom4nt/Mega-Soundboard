@@ -6,11 +6,12 @@ const Utils = require('../models/Utils.js');
 class Soundboard {
     constructor(name, keys, volume, linkedFolder) {
         this.name = name
-        this.sounds = []
-        this.keys = keys
-        if (volume < 1) volume = 100
         this.volume = volume
+        if (!volume) volume = 100
+        this.keys = keys
         this.linkedFolder = linkedFolder
+        if (!linkedFolder) this.linkedFolder = null
+        this.sounds = []
         if (linkedFolder) {
             this.updateFolderSounds()
             this.setupFolderListener()

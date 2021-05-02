@@ -89,14 +89,15 @@ module.exports = class SoundboardList extends HTMLElement {
                 item.soundboard = e.detail.soundboard
                 KeybindManager.registerSoundboardn(item.soundboard)
                 this.updateSoundboard(item)
+                item.soundboard.removeFolderListener()
                 if (item.soundboard.linkedFolder) {
                     item.soundboard.updateFolderSounds()
-                    item.soundboard.removeFolderListener()
                     item.soundboard.setupFolderListener()
                     if (MS.getSelectedSoundboard() === item.soundboard) this.select(item)
                 }
                 MS.data.save()
             })
+
             editModal.addEventListener('remove', (e) => {
                 item.remove()
                 MS.data.removeSoundboard(e.detail.soundboard)

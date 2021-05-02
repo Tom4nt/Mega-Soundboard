@@ -9,7 +9,7 @@ module.exports = class Sound {
         this.volume = volume
         this.keys = keys
 
-        this.soundboard = soundboard // Reference to the soundboard where this sound is
+        this.soundboard = soundboard
         this.instances = []
         this.playing = false
     }
@@ -55,8 +55,6 @@ module.exports = class Sound {
         }
         let sound = new Audio(url);
         let sound2 = new Audio(url);
-        this.instances.push(sound, sound2);
-        this.playing = true
 
         console.log("Added and playing 2 instances of " + this.name + ".")
 
@@ -83,13 +81,16 @@ module.exports = class Sound {
 
         sound.volume = Math.pow((volume1 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);
         sound2.volume = Math.pow((volume2 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);
-        sound.setSinkId(device1 ? device1 : 'default').catch(() => { console.error('Device 1 was not found.') })
-        sound2.setSinkId(device2 ? device2 : 'default').catch(() => { console.error('Device 2 was not found.') })
+        sound.setSinkId(device1 ? device1 : 'default').catch(() => { console.error('Device 1 was not found.') });
+        sound2.setSinkId(device2 ? device2 : 'default').catch(() => { console.error('Device 2 was not found.') });
 
         let promise = sound.play().catch((e) => {
             throw MSG_ERR_NOT_SUPPORTED
         })
         let promises = [promise]
+
+        this.instances.push(sound, sound2);
+        this.playing = true;
 
         if (device2) {
             let p2 = sound2.play().catch((e) => {

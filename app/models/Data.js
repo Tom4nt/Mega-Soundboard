@@ -27,7 +27,7 @@ class Data {
         }
 
         if (!fs.existsSync(dataPath)) {
-            let sb = new Soundboard("Default")
+            let sb = new Soundboard("Default", null, 100, null)
             data.addSoundboard(sb)
         } else {
             let dataJSON = fs.readFileSync(dataPath);

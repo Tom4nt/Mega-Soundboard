@@ -310,6 +310,7 @@ app.on("ready", function () {
 
 app.on("will-quit", function () {
     ioHook.unregisterAllShortcuts();
+    ioHook.stop();
 });
 
 //#endregion
