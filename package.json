@@ -12,13 +12,13 @@
     "author": "Tom4nt",
     "license": "ISC",
     "devDependencies": {
-        "electron": "^11.1.0",
+        "electron": "^11.4.8",
         "electron-builder": "^21.2.0"
     },
     "dependencies": {
         "electron-reload": "^1.5.0",
-        "electron-updater": "^4.3.5",
-        "iohook": "^0.7.2",
+        "electron-updater": "^4.3.9",
+        "iohook": "0.9.0",
         "typeface-roboto": "0.0.75"
     },
     "build": {
@@ -32,7 +32,7 @@
         "publish": {
             "provider": "github",
             "owner": "Tom4nt",
-            "private": "true",
+            "private": "false",
             "releaseType": "release"
         },
         "fileAssociations": {

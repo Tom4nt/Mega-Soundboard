@@ -27,7 +27,7 @@ const InfoBalloon = require("./elements/InfoBalloon.js");
 const MultiSoundModal = require("./elements/modals/MultiSoundModal.js");
 //#endregion
 
-//#region Define Custom elements
+//#region Define Custom Elements
 customElements.define("ms-slider", Slider);
 customElements.define('ms-titlebar', Titlebar);
 customElements.define("ms-keyrecorder", KeyRecorder)
