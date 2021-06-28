@@ -140,7 +140,7 @@ class Modal extends HTMLElement {
 class DefaultModal extends Modal {
     static linkedSoundboard(path) {
         return new Modal('Linked soundboard', 'This soundboard is linked to a <a href="' + path + '">folder</a>.<br/>' +
-            'Add the sound to the folder and it will appear here automatically.')
+            'Add sounds to the folder they will appear here automatically.')
     }
 }
 

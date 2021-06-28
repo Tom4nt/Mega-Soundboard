@@ -39,7 +39,7 @@ class MultiSoundModal extends Modal {
         for (let i = 0; i < this.paths.length; i++) {
             const file = this.paths[i]
             const folder = p.dirname(file)
-            const soundName = p.basename(file, path.extname(file))
+            const soundName = p.basename(file, p.extname(file))
 
             if (this.moveToggle.toggled && p.resolve(folder) != p.resolve(moveFolder)) {
                 let moveFile = MS.settings.getSoundsLocation() + '\\' + p.basename(file)
