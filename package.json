@@ -12,7 +12,7 @@
     "author": "Tom4nt",
     "license": "ISC",
     "devDependencies": {
-        "electron": "^11.4.8",
+        "electron": "^11.5.0",
         "electron-builder": "^21.2.0"
     },
     "dependencies": {
