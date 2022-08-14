@@ -12,12 +12,17 @@
     "author": "Tom4nt",
     "license": "ISC",
     "devDependencies": {
+        "@types/node": "^18.7.1",
+        "@typescript-eslint/eslint-plugin": "^5.33.0",
+        "@typescript-eslint/parser": "^5.33.0",
         "electron": "^15.5.5",
-        "electron-builder": "^21.2.0"
+        "electron-builder": "^21.2.0",
+        "electron-reload": "^2.0.0-alpha.1",
+        "eslint": "^8.21.0",
+        "typescript": "^4.7.4"
     },
     "dependencies": {
-        "electron-reload": "^1.5.0",
-        "electron-updater": "^4.3.9",
+        "electron-updater": "^5.2.1",
         "iohook": "0.9.0",
         "typeface-roboto": "0.0.75"
     },
