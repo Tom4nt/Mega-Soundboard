@@ -1,0 +1,1 @@
+export default abstract class DropDownItem extends HTMLElement { }

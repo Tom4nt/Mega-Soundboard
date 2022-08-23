@@ -1,6 +1,6 @@
 <!-- PROJECT LOGO -->
 <p align="center">
-  <img src="app/res/icon.ico" alt="Logo" width="80" height="80">
+  <img src="res/icon.ico" alt="Logo" width="80" height="80">
   <h3 align="center">Mega Soundboard</h3>
 
   <p align="center">

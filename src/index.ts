@@ -1,26 +1,17 @@
 import { ipcRenderer } from "electron";
-
-const MS = require("./models/MS.js");
-import { Sound } from "./models/Sound.js";
-const Soundboard = require("./models/Soundboard.js");
+import { MS, Soundboard, KeybindManager } from "./Models";
+import * as Elements from "./Elements";
 
 //#region Import Custom Elements
-const Slider = require("./elements/Slider.js");
-const Titlebar = require("./elements/Titlebar.js");
-const KeyRecorder = require("./elements/KeyRecorder.js");
-const SoundList = require("./elements/SoundList.js");
 const TextField = require("./elements/TextField.js");
 const FileSelector = require("./elements/FileSelector.js");
-const Checkbox = require("./elements/Toggler.js");
 const Dropdown = require("./elements/Dropdown.js");
 const IconButton = require("./elements/IconButton.js");
 const SoundboardList = require("./elements/SoundboardList.js");
 const Modal = require("./elements/modals/Modal.js");
-
 const SoundModal = require("./elements/modals/SoundModal.js");
 const SoundboardModal = require("./elements/modals/SoundboardModal.js");
 const SettingsModal = require("./elements/modals/SettingsModal.js");
-const KeybindManager = require("./models/KeybindManager.js");
 const NewsModal = require("./elements/modals/NewsModal.js");
 const MSModal = require("./elements/modals/MSModal");
 const InfoBalloon = require("./elements/InfoBalloon.js");
@@ -28,13 +19,8 @@ const MultiSoundModal = require("./elements/modals/MultiSoundModal.js");
 //#endregion
 
 //#region Define Custom Elements
-customElements.define("ms-slider", Slider);
-customElements.define("ms-titlebar", Titlebar);
-customElements.define("ms-keyrecorder", KeyRecorder);
-customElements.define("ms-soundlist", SoundList);
 customElements.define("ms-textfield", TextField);
 customElements.define("ms-fileselector", FileSelector);
-customElements.define("ms-checkbox", Checkbox);
 customElements.define("ms-dropdown", Dropdown);
 customElements.define("ms-iconbutton", IconButton);
 customElements.define("ms-soundboardlist", SoundboardList);
@@ -73,16 +59,16 @@ const quickSettingsButton = document.getElementById("btnquicksettings");
 const stopAllButton = document.getElementById("button-stopAll");
 
 //#region Devices
-const mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice");
-const secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice");
-const mainDeviceVolumeSlider = deviceSettings.querySelector("#slider-mainDeviceVolume");
-const secondaryDeviceVolumeSlider = deviceSettings.querySelector("#slider-secondaryDeviceVolume");
+const mainDeviceDropdown = deviceSettings?.querySelector("#dropdown-mainDevice");
+const secondaryDeviceDropdown = deviceSettings?.querySelector("#dropdown-secondaryDevice");
+const mainDeviceVolumeSlider = deviceSettings?.querySelector("#slider-mainDeviceVolume");
+const secondaryDeviceVolumeSlider = deviceSettings?.querySelector("#slider-secondaryDeviceVolume");
 //#endregion
 
 //#region QuickSettings
-const enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds");
-const overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds");
-const buttonMoreSettings = quickSettings.querySelector("#button-more-settings");
+const enabeKeybindsToggler = quickSettings?.querySelector<Toggler>("#toggler-enableKeybinds");
+const overlapSoundsToggler = quickSettings?.querySelector("#toggler-overlapSounds");
+const buttonMoreSettings = quickSettings?.querySelector("#button-more-settings");
 //#endregion
 
 //#endregion
@@ -93,114 +79,78 @@ const buttonMoreSettings = quickSettings.querySelector("#button-more-settings");
 
 //#region Events
 
-MS.eventDispatcher.addEventListener(MS.EVENT_TOGGLED_KEYBINDS_STATE, () => {
-    enabeKeybindsToggler.toggled = MS.settings.enableKeybinds;
-});
+Soundboard.addToFolder.addHandler(e => {
+    const soundboard = e.soundboard;
+    const sound = e.sound;
 
-KeybindManager.eventDispatcher.addEventListener(KeybindManager.EVENT_SELECT_SOUNDBOARD, (e) => {
-    soundboardList.selectSoundboard(e.detail.soundboard);
-});
-
-Soundboard.eventDispatcher.addEventListener(Soundboard.events.ADDED_TO_FOLDER, e => {
-    const soundboard = e.detail.soundboard;
-    const sound = e.detail.sound;
-
-    if (MS.getSelectedSoundboard() === soundboard) {
+    if (MS.instance.getSelectedSoundboard() === soundboard) {
         addSound(sound, soundboard);
     } else {
         soundboard.addSound(sound);
     }
 });
 
-Soundboard.eventDispatcher.addEventListener(Soundboard.events.REMOVED_FROM_FOLDER, e => {
-    const soundboard = e.detail.soundboard;
-    const sound = e.detail.sound;
+Soundboard.removeFromFolder.addHandler(e => {
+    const soundboard = e.soundboard;
+    const sound = e.sound;
 
-    if (MS.getSelectedSoundboard() === soundboard) {
+    if (MS.instance.getSelectedSoundboard() === soundboard) {
         removeSound(sound, soundboard);
     } else {
         soundboard.removeSound(sound);
     }
 });
 
-window.ondragenter = (e) => {
-    if (e.relatedTarget || MS.modalsOpen > 0) return;
-    console.log("File(s) dragged to the window.");
+window.ondragenter = (e): void => {
+    if (e.relatedTarget || MS.instance.modalsOpen > 0) return;
 };
 
-window.ondragleave = (e) => {
-    if (e.relatedTarget || MS.modalsOpen > 0) return;
+window.ondragleave = (e): void => {
+    if (e.relatedTarget || MS.instance.modalsOpen > 0) return;
     soundList.endFileDrag();
 };
 
-window.ondragover = (e) => {
-    if (MS.modalsOpen > 0) return;
+window.ondragover = (e): void => {
+    if (MS.instance.modalsOpen > 0) return;
     e.preventDefault();
     soundList.handleFileDrag(e);
 };
 
-window.ondrop = (e) => {
-    if (MS.modalsOpen > 0) return;
+window.ondrop = (e): void => {
+    if (MS.instance.modalsOpen > 0) return;
     soundList.endFileDrag(e);
 };
 
 //#region Window
 
+window.addEventListener("load", () => void init());
+window.addEventListener("click", (e) => closeActionPanelContainers(e));
+window.addEventListener("contextmenu", (e) => closeActionPanelContainers(e));
+
+// TODO: Create element for this
 window.addEventListener("load", () => {
-    MS.data.soundboards.forEach(soundboard => {
-        KeybindManager.registerSoundboardn(soundboard);
-        soundboardList.addSoundboard(soundboard);
+    const btn_soundSearch = document.getElementById("soundlist-searchbox-button");
+    const inp_soundSearch = document.getElementById("soundlist-searchbox");
+
+    btn_soundSearch.addEventListener("click", () => {
+        if (inp_soundSearch.classList.contains("open")) {
+            inp_soundSearch.classList.remove("open");
+            inp_soundSearch.value = "";
+            btn_soundSearch.innerHTML = "search";
+        } else {
+            inp_soundSearch.classList.add("open");
+            inp_soundSearch.focus();
+            btn_soundSearch.innerHTML = "close";
+        }
     });
 
-    MS.initDevices((devices) => {
-        console.log(devices);
-
-        fillDeviceLists(devices);
-        mainDeviceDropdown.selectData(MS.settings.mainDevice ? MS.settings.mainDevice : "default");
-        secondaryDeviceDropdown.selectData(MS.settings.secondaryDevice);
+    document.addEventListener("click", (e) => {
+        if (!e.path.includes(inp_soundSearch) && !e.path.includes(btn_soundSearch) && inp_soundSearch.value == "") {
+            inp_soundSearch.classList.remove("open");
+            inp_soundSearch.value = "";
+            btn_soundSearch.innerHTML = "search";
+        }
     });
-
-    //Select saved soundboardID
-    soundboardList.selectSoundboardAt(MS.settings.selectedSoundboard);
-
-    //Set device volumes from settings
-    mainDeviceVolumeSlider.value = MS.settings.mainDeviceVolume;
-    secondaryDeviceVolumeSlider.value = MS.settings.secondaryDeviceVolume;
-
-    //Fill quick settings
-    enabeKeybindsToggler.toggled = MS.settings.enableKeybinds;
-    overlapSoundsToggler.toggled = MS.settings.overlapSounds;
-
-    //Send quick settings states to main
-    ipcRenderer.send("settings.enableKeybinds", enabeKeybindsToggler.toggled);
-    ipcRenderer.send("settings.overlapSounds", overlapSoundsToggler.toggled);
-
-    //Register global settings keybinds
-    KeybindManager.registerAction(MS.settings.stopSoundsKeys, () => { MS.stopAllSounds(); }, "stop-sounds");
-    KeybindManager.registerAction(MS.settings.enableKeybindsKeys, () => { MS.toggleKeybindsState(); }, "toggle-keybinds-state");
-
-    // Decide whether to show the changelog or not
-    if (MS.latestWithLog > MS.settings.latestLogViewed && MS.settings.latestLogViewed >= 0) {
-        const modal = new NewsModal();
-        modal.open();
-        MS.settings.latestLogViewed = MS.latestWithLog;
-        MS.settings.save();
-    }
-
-    MS.addPopup("Add Sound(s)", addSoundButton, "left");
-    MS.addPopup("Add Soundboard", addSoundboardButton, "left");
-    MS.addPopup("Audio Devices", deviceSettingsButton);
-    MS.addPopup("Quick Settings", quickSettingsButton);
-    MS.addPopup("Stop all</br>Sounds", stopAllButton);
-    MS.addPopup("Restart and Update", updateButton, "right");
-});
-
-window.addEventListener("click", (e) => {
-    closeActionPanelContainers(e);
-});
-
-window.addEventListener("contextmenu", (e) => {
-    closeActionPanelContainers(e);
 });
 
 //#endregion
@@ -349,6 +299,63 @@ buttonMoreSettings.addEventListener("click", (e) => {
 
 //#region Functions
 
+async function init(): Promise<void> {
+    await MS.init();
+
+    MS.instance.eventDispatcher.addEventListener(MSEvent.EVENT_TOGGLED_KEYBINDS_STATE, () => {
+        if (enabeKeybindsToggler) {
+            enabeKeybindsToggler.isOn = MS.instance.settings.enableKeybinds;
+        }
+    });
+
+    KeybindManager.instance.eventDispatcher.addEventListener(KeybindManagerEvent.EVENT_SELECT_SOUNDBOARD, (e) => {
+        soundboardList.selectSoundboard(e.detail.soundboard);
+    });
+
+    fillDeviceLists(MS.instance.devices);
+    mainDeviceDropdown.selectData(MS.settings.mainDevice ? MS.settings.mainDevice : "default");
+    secondaryDeviceDropdown.selectData(MS.settings.secondaryDevice);
+
+    MS.instance.data.soundboards.forEach(soundboard => {
+        KeybindManager.registerSoundboardn(soundboard);
+        soundboardList.addSoundboard(soundboard);
+    });
+
+    //Select saved soundboardID
+    soundboardList.selectSoundboardAt(MS.settings.selectedSoundboard);
+
+    //Set device volumes from settings
+    mainDeviceVolumeSlider.value = MS.settings.mainDeviceVolume;
+    secondaryDeviceVolumeSlider.value = MS.settings.secondaryDeviceVolume;
+
+    //Fill quick settings
+    enabeKeybindsToggler.toggled = MS.settings.enableKeybinds;
+    overlapSoundsToggler.toggled = MS.settings.overlapSounds;
+
+    //Send quick settings states to main
+    ipcRenderer.send("settings.enableKeybinds", enabeKeybindsToggler.toggled);
+    ipcRenderer.send("settings.overlapSounds", overlapSoundsToggler.toggled);
+
+    //Register global settings keybinds
+    KeybindManager.registerAction(MS.settings.stopSoundsKeys, () => { MS.stopAllSounds(); }, "stop-sounds");
+    KeybindManager.registerAction(MS.settings.enableKeybindsKeys, () => { MS.toggleKeybindsState(); }, "toggle-keybinds-state");
+
+    // Decide whether to show the changelog or not
+    if (MS.latestWithLog > MS.settings.latestLogViewed && MS.settings.latestLogViewed >= 0) {
+        const modal = new NewsModal();
+        modal.open();
+        MS.settings.latestLogViewed = MS.latestWithLog;
+        MS.settings.save();
+    }
+
+    MS.addPopup("Add Sound(s)", addSoundButton, "left");
+    MS.addPopup("Add Soundboard", addSoundboardButton, "left");
+    MS.addPopup("Audio Devices", deviceSettingsButton);
+    MS.addPopup("Quick Settings", quickSettingsButton);
+    MS.addPopup("Stop all</br>Sounds", stopAllButton);
+    MS.addPopup("Restart and Update", updateButton, "right");
+}
+
 //#region Devices
 
 function fillDeviceLists(devices) {
@@ -409,13 +416,13 @@ function closeActionPanelContainers(e) {
  * Adds a sound to the selected soundboard in the sound list and data. Registers keybinds.
  * @param {Sound} sound 
  */
-function addSound(sound, soundboard, index) {
+function addSound(sound: Sound, soundboard: Soundboard, index?: number): void {
     soundList.addSound(sound, index);
     KeybindManager.registerSound(sound);
     soundboard.addSound(sound, index);
 }
 
-function removeSound(sound, soundboard) {
+function removeSound(sound: Sound, soundboard: Soundboard): void {
     soundList.removeSound(sound);
     MS.stopSound(sound);
     KeybindManager.unregisterSound(sound);

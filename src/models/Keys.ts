@@ -1,6 +1,10 @@
-const keycodes = {
+type KeyMap = {
+    [code: number]: string;
+}
+
+const keycodes: KeyMap = {
     1: "ESC",
-    5: "F1",
+    59: "F1",
     60: "F2",
     61: "F3",
     62: "F4",
@@ -104,7 +108,6 @@ const keycodes = {
     205: "Cursor Right",
     82: "Numpad 0",
     83: "Numpad .",
-    59: "F1",
     3637: "Numpad /",
     0: "\\",
     61011: "Del",
@@ -147,15 +150,15 @@ const keycodes = {
     57421: "Numpad Right"
 };
 
-module.exports = class Keys {
-    static getKeyName(key) {
-        return keycodes[key]
+export default class Keys {
+    static getKeyName(keyCode: number): string {
+        return keycodes[keyCode];
     }
 
-    static toKeyString(keyarray) {
-        var keysstring = "";
+    static toKeyString(keyarray: number[]): string {
+        let keysstring = "";
         if (keyarray.length > 0) {
-            for (var i = 0; i < keyarray.length; i++) {
+            for (let i = 0; i < keyarray.length; i++) {
                 if (i < keyarray.length - 1) {
                     keysstring = keysstring.concat(keycodes[keyarray[i]] + " + ");
                 } else
@@ -167,13 +170,13 @@ module.exports = class Keys {
         return keysstring;
     }
 
-    static toKeyStringArray(keyarray) {
-        if (!keyarray) return []
-        let keyArray = []
+    static toKeyStringArray(keyarray: number[]): string[] {
+        if (!keyarray) return [];
+        const keyArray = [];
         for (let i = 0; i < keyarray.length; i++) {
             const key = keyarray[i];
-            keyArray.push(keycodes[key])
+            keyArray.push(keycodes[key]);
         }
-        return keyArray
+        return keyArray;
     }
 }

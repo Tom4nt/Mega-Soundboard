@@ -1,11 +1,17 @@
 import * as fs from "fs"; // TODO: Remove fs reference
+import IEquatable from "../util/IEquatable";
+import Soundboard from "./Soundboard";
 import Utils from "./Utils";
 
 const MSG_ERR_NOT_SUPPORTED = "Could not play the sound. The file is not supported, malformed or corrupted.";
+const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
-type JSONSound = { name: string, path: string, volume: number, keys: string[] };
+type JSONSound = { name: string, path: string, volume: number, keys: number[] };
 
-export default class Sound {
+export default class Sound implements IEquatable<Sound> {
+    private soundboard: Soundboard | null = null;
+    get connectedSoundboard(): Soundboard | null { return this.soundboard; }
+
     playing: boolean;
     mediaElements: HTMLMediaElement[];
 
@@ -13,11 +19,21 @@ export default class Sound {
         public name: string,
         public path: string,
         public volume: number,
-        public keys: string[],
-        public askParentVolume: () => number) {
+        public keys: number[]) {
 
         this.mediaElements = [];
         this.playing = false;
+    }
+
+    equals(to: Sound): boolean {
+        return this.name === to.name &&
+            this.path === to.path &&
+            this.volume === to.volume &&
+            this.keys === to.keys;
+    }
+
+    connectToSoundboard(soundboard: Soundboard): void {
+        this.soundboard = soundboard;
     }
 
     toJSON(): JSONSound {
@@ -29,12 +45,12 @@ export default class Sound {
         };
     }
 
-    static fromData(data: Map<string, unknown>, onAskParentVolume: () => number): Sound {
+    static fromData(data: Map<string, unknown>): Sound {
         // Defaults
         let name = "¯\\_(ツ)_/¯";
         let path = "¯\\_(ツ)_/¯";
         let volume = 100;
-        let keys: string[] = [];
+        let keys: number[] = [];
 
         if (typeof data.get("name") === "string") name = data.get("name") as string;
 
@@ -44,9 +60,9 @@ export default class Sound {
         if (typeof data.get("volume") === "number") volume = data.get("volume") as number;
 
         const keysRes = Utils.tryGetValue(data, ["keys", "shortcut"], v => Utils.isKeys(v));
-        if (keysRes) keys = data.get("keys") as string[];
+        if (keysRes) keys = data.get("keys") as number[];
 
-        return new Sound(name, path, volume, keys, onAskParentVolume);
+        return new Sound(name, path, volume, keys);
     }
 
     async play(onend: (sound: Sound) => void, volume1: number, volume2: number, device1: string, device2: string): Promise<void> {
@@ -78,7 +94,8 @@ export default class Sound {
             }
         });
 
-        const soundboardVolume = this.askParentVolume();
+        if (!this.connectedSoundboard) throw MSG_ERR_NOT_CONNECTED;
+        const soundboardVolume = this.connectedSoundboard.volume;
 
         sound.volume = Math.pow((volume1 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);
         sound2.volume = Math.pow((volume2 / 100) * (this.volume / 100) * (soundboardVolume / 100), 2);

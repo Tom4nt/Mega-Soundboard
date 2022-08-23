@@ -1,26 +1,22 @@
 import { ipcRenderer } from "electron";
-import Data from "./Data";
-import Settings from "./Settings";
-import Sound from "./Sound";
-import Soundboard from "./Soundboard";
-
-enum MSEvent {
-    EVENT_TOGGLED_KEYBINDS_STATE = "toggled-keybinds-state",
-    EVENT_SOUND_PLAY = "sound-play",
-    EVENT_SOUND_STOP = "sound-stop",
-    EVENT_STOP_ALL_SOUNDS = "sound-stopall"
-}
-
-enum UISoundPath {
-    ON = "res/audio/on.wav",
-    OFF = "res/audio/off.wav",
-    ERROR = "res/audio/error.wav"
-}
-
-type PopupPosition = "top" | "bottom" | "left" | "right"
+import { Event, ExposedEvent } from "../util/Event";
+import { Data, Settings, Side, Sound, Soundboard, UISoundPath } from "../Models";
 
 /** MEGA SOUNDBOARD SINGLETON */
 export default class MS {
+    recordingKey = false;
+    modalsOpen = 0;
+    uiSound: HTMLMediaElement | null = null;
+
+    get onToggleKeybindsState(): ExposedEvent<void> { return this._onToggleKeybindsState.expose(); }
+    get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
+    get onStopSound(): ExposedEvent<Sound> { return this._onStopSound.expose(); }
+    get onStopAllSounds(): ExposedEvent<void> { return this._onStopAllSounds.expose(); }
+
+    private readonly _onToggleKeybindsState = new Event<void>();
+    private readonly _onPlaySound = new Event<Sound>();
+    private readonly _onStopSound = new Event<Sound>();
+    private readonly _onStopAllSounds = new Event<void>();
 
     static readonly latestWithLog = 2; // Increments on every version that should display the changelog.
 
@@ -36,17 +32,13 @@ export default class MS {
     readonly playingSounds: Sound[] = [];
     readonly eventDispatcher = new EventTarget();
 
-    recordingKey = false;
-    modalsOpen = 0;
-    uiSound: HTMLMediaElement | null = null;
-
     constructor(
         public readonly data: Data,
         public readonly settings: Settings,
         public readonly devices: MediaDeviceInfo[]
     ) { }
 
-    async init(): Promise<void> {
+    static async init(): Promise<void> {
         const result = await Promise.all([Data.load(), Settings.load(), this.getMediaDevices()]);
         MS.instance = new MS(result[0], result[1], result[2]);
     }
@@ -70,21 +62,21 @@ export default class MS {
 
             if (!this.playingSounds.includes(sound)) {
                 this.playingSounds.push(sound);
-                this.eventDispatcher.dispatchEvent(new CustomEvent(MSEvent.EVENT_SOUND_PLAY, { detail: sound }));
+                this._onPlaySound.raise(sound);
             }
         }
     }
 
     handleSoundEnd(sound: Sound): void {
         this.removeSoundFromInstancesList(sound);
-        this.eventDispatcher.dispatchEvent(new CustomEvent(MSEvent.EVENT_SOUND_STOP, { detail: sound }));
+        this._onStopSound.raise(sound);
     }
 
     stopSound(sound: Sound): void {
         if (sound && sound.isPlaying()) {
             this.removeSoundFromInstancesList(sound);
             sound.stop();
-            this.eventDispatcher.dispatchEvent(new CustomEvent(MSEvent.EVENT_SOUND_STOP, { detail: sound }));
+            this._onStopSound.raise(sound);
         }
     }
 
@@ -102,7 +94,7 @@ export default class MS {
             this.playingSounds.splice(i, 1);
             i--;
         }
-        this.eventDispatcher.dispatchEvent(new CustomEvent(MSEvent.EVENT_STOP_ALL_SOUNDS));
+        this._onStopAllSounds.raise();
     }
 
     getSelectedSoundboard(): Soundboard | null {
@@ -124,7 +116,7 @@ export default class MS {
         const isEnabled = !this.settings.enableKeybinds;
         this.settings.enableKeybinds = isEnabled;
         ipcRenderer.send("settings.enableKeybinds", isEnabled);
-        this.eventDispatcher.dispatchEvent(new CustomEvent(MSEvent.EVENT_TOGGLED_KEYBINDS_STATE));
+        this._onToggleKeybindsState.raise();
 
         if (isEnabled) {
             void this.playUISound(UISoundPath.ON);
@@ -133,7 +125,7 @@ export default class MS {
         }
     }
 
-    async getMediaDevices(): Promise<MediaDeviceInfo[]> {
+    static async getMediaDevices(): Promise<MediaDeviceInfo[]> {
         let devices = await navigator.mediaDevices.enumerateDevices();
         devices = devices.filter(device =>
             device.kind == "audiooutput" &&
@@ -147,7 +139,7 @@ export default class MS {
         ipcRenderer.send("win.minToTray", value);
     }
 
-    async getVersion(): Promise<string> {
+    static async getVersion(): Promise<string> {
         return ipcRenderer.invoke("version") as Promise<string>;
     }
 
@@ -155,7 +147,8 @@ export default class MS {
         this.playingSounds.splice(this.playingSounds.indexOf(sound), 1);
     }
 
-    openPopup(text: string, rect: DOMRect, position?: PopupPosition): HTMLDivElement {
+    // TODO: Create a TooltipManager to hold Tooltip related logic.
+    static openPopup(text: string, rect: DOMRect, position?: Side): HTMLDivElement {
         if (!position) position = "top";
         const middleX = rect.x + rect.width / 2;
 
@@ -203,20 +196,20 @@ export default class MS {
         return popup;
     }
 
-    addPopup(text: string, element: HTMLElement, position?: PopupPosition): void {
+    static addPopup(text: string, element: HTMLElement, position?: Side): void {
         let popup: HTMLDivElement | null = null;
 
         element.addEventListener("mouseenter", () => {
             const rect = element.getBoundingClientRect();
-            popup = this.openPopup(text, rect, position);
+            popup = MS.openPopup(text, rect, position);
         });
 
         element.addEventListener("mouseleave", () => {
-            if (popup) this.closePopup(popup);
+            if (popup) MS.closePopup(popup);
         });
     }
 
-    private closePopup(popupElement: HTMLDivElement): void {
+    static closePopup(popupElement: HTMLDivElement): void {
         if (popupElement) {
             popupElement.style.opacity = "0";
             popupElement.style.transform = "scale(0.8)";

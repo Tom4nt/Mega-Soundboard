@@ -1,4 +1,5 @@
 import * as p from "path";
+import { promises as fs, constants as fsConstants, PathLike } from "fs";
 
 export default class Utils {
 
@@ -33,11 +34,23 @@ export default class Utils {
         return res;
     }
 
+    static getFileNameNoExtension(path: string): string {
+        return p.basename(path, p.extname(path));
+    }
+
     /** Checks if a value is valid for keys */
     static isKeys(value: unknown): boolean {
         if (!Array.isArray(value)) return false;
         const array: Array<unknown> = value;
-        return array.every(i => typeof i === "string");
+        return array.every(i => typeof i === "number");
     }
 
+    static async fileExists(path: PathLike): Promise<boolean> {
+        try {
+            await fs.access(path, fsConstants.F_OK);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
 }

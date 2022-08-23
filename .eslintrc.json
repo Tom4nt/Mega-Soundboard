@@ -20,6 +20,7 @@
         "semi": "error",
         "quotes": "warn",
         "consistent-return": "error",
+        "class-methods-use-this": "warn",
         "@typescript-eslint/explicit-function-return-type": "error"
     }
 }

@@ -1,25 +1,26 @@
 import * as fs from "fs"; // TODO: Remove reference.
 import * as p from "path"; // TODO: Remove reference.
-import Sound from "./Sound";
-import Utils from "./Utils";
+import { Event, ExposedEvent } from "../util/Event";
+import { Sound, Utils } from "../Models";
+import IEquatable from "../util/IEquatable";
 
-// type SoundboardEvent = ["removedfromfolder", "addedtofolder"];
+type SoundboardEventArgs = { soundboard: Soundboard, sound: Sound };
 
-export enum SoundboardEvent {
-    REMOVED_FROM_FOLDER = "removedfromfolder",
-    ADDED_TO_FOLDER = "addedtofolder"
-}
+export default class Soundboard implements IEquatable<Soundboard> {
+    // TODO: Remove dependency on events
+    public static get addToFolder(): ExposedEvent<SoundboardEventArgs> { return this.onAddToFolder.expose(); }
+    public static get removeFromFolder(): ExposedEvent<SoundboardEventArgs> { return this.onRemoveFromFolder.expose(); }
 
-export default class Soundboard {
-    static eventDispatcher: EventTarget = new EventTarget();
+    private static readonly onAddToFolder = new Event<SoundboardEventArgs>();
+    private static readonly onRemoveFromFolder = new Event<SoundboardEventArgs>();
 
     private fileWatcher: fs.FSWatcher | null = null;
 
     constructor();
-    constructor(name: string, keys: string[], volume: number, linkedFolder: string | null, sounds: Sound[]);
+    constructor(name: string, keys: number[], volume: number, linkedFolder: string | null, sounds: Sound[]);
     constructor(
         public name: string = "Default",
-        public keys: string[] = [],
+        public keys: number[] = [],
         public volume: number = 100,
         public linkedFolder: string | null = null,
         public sounds: Sound[] = []) {
@@ -32,12 +33,19 @@ export default class Soundboard {
         }
     }
 
+    equals(to: Soundboard): boolean {
+        return this.name === to.name &&
+            this.keys === to.keys &&
+            this.volume === to.volume &&
+            this.linkedFolder === to.linkedFolder;
+    }
+
     static fromSoundboardData(data: Map<string, unknown>): Soundboard {
         let name = "¯\\_(ツ)_/¯";
         if (typeof data.get("name") === "string") name = data.get("name") as string;
 
-        let keys: string[] = [];
-        if (Utils.isKeys(data.get("keys"))) keys = data.get("keys") as string[];
+        let keys: number[] = [];
+        if (Utils.isKeys(data.get("keys"))) keys = data.get("keys") as number[];
 
         let volume = 100;
         if (typeof data.get("volume") === "number") volume = data.get("volume") as number;
@@ -64,7 +72,8 @@ export default class Soundboard {
         const sounds: Sound[] = [];
         data.forEach(sound => {
             if (typeof sound === "object") {
-                const s = Sound.fromData(sound as Map<string, unknown>, () => this.volume);
+                const s = Sound.fromData(sound as Map<string, unknown>);
+                s.connectToSoundboard(this);
                 sounds.push(s);
             }
         });
@@ -85,7 +94,9 @@ export default class Soundboard {
             if (Utils.isValidSoundFile(path)) {
                 const soundWithPath = this.getSoundWithPath(path);
                 if (!soundWithPath && fs.statSync(path).isFile()) {
-                    this.sounds.push(new Sound(p.basename(file, p.extname(file)), path, 100, [], () => this.volume));
+                    const s = new Sound(p.basename(file, p.extname(file)), path, 100, []);
+                    s.connectToSoundboard(this);
+                    this.sounds.push();
                 }
             }
         }
@@ -123,17 +134,16 @@ export default class Soundboard {
                     const stats = fs.statSync(path);
                     if (!stats.isFile() || !Utils.isValidSoundFile(path)) return;
                     console.log("Added " + file);
-                    const sound = new Sound(Utils.getNameFromFile(file), path, 100, [], () => this.volume);
-                    const detail = { soundboard: this, sound: sound };
-                    Soundboard.eventDispatcher.dispatchEvent(new CustomEvent(SoundboardEvent.ADDED_TO_FOLDER, { detail }));
+                    const sound = new Sound(Utils.getNameFromFile(file), path, 100, []);
+                    sound.connectToSoundboard(this);
+                    Soundboard.onAddToFolder.raise({ soundboard: this, sound: sound });
                 }
                 else {
                     if (!Utils.isValidSoundFile(path)) return;
                     const sound = this.getSoundWithPath(path);
                     if (sound) {
                         console.log("Removed " + file);
-                        const detail = { soundboard: this, sound: sound };
-                        Soundboard.eventDispatcher.dispatchEvent(new CustomEvent(SoundboardEvent.REMOVED_FROM_FOLDER, { detail }));
+                        Soundboard.onRemoveFromFolder.raise({ soundboard: this, sound: sound });
                     }
                 }
             });
@@ -152,8 +162,8 @@ export default class Soundboard {
         return null;
     }
 
-    addSound(sound: Sound, index: number): void {
-        if (index === undefined || index === null) this.sounds.push(sound);
+    addSound(sound: Sound, index?: number): void {
+        if (!index) this.sounds.push(sound);
         else this.sounds.splice(index, 0, sound);
     }
 

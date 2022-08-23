@@ -252,11 +252,7 @@ ipcMain.handle("file.browse", async (e, multiple, typeName: string, extensions: 
             }
         ]
     }).then((r) => {
-        if (r.filePaths && r.filePaths[0]) {
-            return multiple ? r.filePaths : r.filePaths[0];
-        } else {
-            return null;
-        }
+        return r.filePaths;
     });
 });
 
