@@ -21,6 +21,7 @@
         "quotes": "warn",
         "consistent-return": "error",
         "class-methods-use-this": "warn",
-        "@typescript-eslint/explicit-function-return-type": "error"
+        "@typescript-eslint/explicit-function-return-type": "error",
+        "@typescript-eslint/no-unnecessary-condition": "warn"
     }
 }

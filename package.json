@@ -2,11 +2,13 @@
     "name": "mega-soundboard",
     "version": "0.5.2",
     "description": "Mega Soundboard",
-    "main": "main.js",
+    "main": "dist/main.js",
     "scripts": {
-        "start": "electron .",
-        "build": "electron-builder",
-        "pub": "electron-builder -p=always"
+        "start": "npm run build && electron .",
+        "build": "npm run copy && tsc --build",
+        "pack": "npm run build && electron-builder",
+        "pub": "npm run build && electron-builder -p=always",
+        "copy": "copyfiles src/res/**/* out -u 1"
     },
     "repository": "https://github.com/Tom4nt/Mega-Soundboard",
     "author": "Tom4nt",
@@ -15,6 +17,7 @@
         "@types/node": "^18.7.1",
         "@typescript-eslint/eslint-plugin": "^5.33.0",
         "@typescript-eslint/parser": "^5.33.0",
+        "copyfiles": "^2.4.1",
         "electron": "^15.5.5",
         "electron-builder": "^21.2.0",
         "electron-reload": "^2.0.0-alpha.1",
@@ -29,10 +32,9 @@
     "build": {
         "appId": "com.tom4nt.megasoundboard",
         "productName": "Mega Soundboard",
-        "icon": "app/res/icon.ico",
+        "icon": "res/icon.ico",
         "files": [
-            "**/*",
-            "app/res"
+            "src/**/*"
         ],
         "publish": {
             "provider": "github",
@@ -48,8 +50,8 @@
     },
     "iohook": {
         "targets": [
-            "node-72",
-            "electron-85"
+            "node-93",
+            "electron-98"
         ],
         "platforms": [
             "win32",
