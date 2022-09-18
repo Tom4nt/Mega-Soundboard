@@ -1,5 +1,4 @@
 import { Modal } from "../modals";
-import { promises as fs } from "fs"; // TODO: Remove reference
 
 export default class NewsModal extends Modal {
     private content!: string;
@@ -10,11 +9,17 @@ export default class NewsModal extends Modal {
     }
 
     /** Async factory method */
-    static async load(): Promise<NewsModal> {
+    static load(): NewsModal {
         const modal = new NewsModal();
         // TODO: Make this a main process task
-        modal.content = await fs.readFile(__dirname + "/../../news.html", "utf-8");
+        // modal.content = await fs.readFile(__dirname + "/../../news.html", "utf-8");
+        modal.content = "";
         return modal;
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    protected canClose(): boolean {
+        return true;
     }
 
     getContent(): HTMLElement {

@@ -4,6 +4,7 @@ import { promises as fs, constants as fsConst } from "fs"; // TODO: Remove refer
 const savePath = ipcRenderer.sendSync("get.savePath") as string;
 const dataPath = savePath + "\\Settings.json";
 
+// TODO: I/O to the main process
 export default class Settings {
     minToTray = true;
     stopSoundsKeys: number[] = [];

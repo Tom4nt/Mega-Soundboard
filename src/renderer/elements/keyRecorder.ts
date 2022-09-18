@@ -1,6 +1,5 @@
-import { ipcRenderer, IpcRendererEvent } from "electron"; // TODO: Remove reference
+import Keys from "../../shared/keys";
 import { Event, ExposedEvent } from "../../shared/events";
-import { MS, Keys } from "../../shared/models";
 
 const NO_KEY_DESC = "No Keybind";
 
@@ -8,7 +7,7 @@ export default class KeyRecorder extends HTMLElement {
     private labelElement!: HTMLSpanElement;
     private indicatorElement!: HTMLSpanElement;
 
-    private isRecording = false;
+    private _isRecording = false;
     private recordingBuffer: number[] = [];
 
     private _onStartRecording = new Event<void>;
@@ -29,7 +28,9 @@ export default class KeyRecorder extends HTMLElement {
         if (this.isConnected) this.setDisplayedKeys(Keys.toKeyStringArray(keys));
     }
 
-    handleKeyDown = (_e: IpcRendererEvent, key: number): void => {
+    get isRecording(): boolean { return this._isRecording; }
+
+    handleKeyDown = (key: number): void => {
         if (!this.isRecording) return;
         if (!this.recordingBuffer.includes(key)) {
             this.recordingBuffer.push(key);
@@ -37,7 +38,7 @@ export default class KeyRecorder extends HTMLElement {
         this.keys = [];
     };
 
-    handleKeyUp = (_e: IpcRendererEvent, key: number): void => {
+    handleKeyUp = (key: number): void => {
         if (!this.isRecording) return;
         this.recordingBuffer.splice(this.recordingBuffer.indexOf(key), 1);
     };
@@ -65,8 +66,9 @@ export default class KeyRecorder extends HTMLElement {
             } else this.stop();
         };
 
-        ipcRenderer.on("key.down", this.handleKeyDown);
-        ipcRenderer.on("key.up", this.handleKeyUp);
+        // TODO: Replace with preloader events
+        // ipcRenderer.on("key.down", this.handleKeyDown);
+        // ipcRenderer.on("key.up", this.handleKeyUp);
 
         this.oncontextmenu = (): void => { this.clear(); };
 
@@ -74,33 +76,34 @@ export default class KeyRecorder extends HTMLElement {
     }
 
     protected disconnectedCallback(): void {
-        ipcRenderer.removeListener("key.down", this.handleKeyDown);
-        ipcRenderer.removeListener("key.up", this.handleKeyUp);
+        // TODO: Replace with preloader events
+        // ipcRenderer.removeListener("key.down", this.handleKeyDown);
+        // ipcRenderer.removeListener("key.up", this.handleKeyUp);
         this.oncontextmenu = null;
     }
 
     start(): void {
         if (this.isRecording) return;
-        this.isRecording = true;
+        this._isRecording = true;
         this.classList.add("recording");
         this.labelElement.innerHTML = "Recording...";
         this.indicatorElement.innerHTML = "Stop recording";
-        MS.instance.recordingKey = true;
+        // MS.instance.recordingKey = true; // TODO: Check if necessary
 
         this._onStartRecording.raise();
-        ipcRenderer.send("key.startRecording");
+        // ipcRenderer.send("key.startRecording"); // TODO: Handle key recording via preload
     }
 
     stop(): void {
         if (!this.isRecording) return;
-        this.isRecording = false;
+        this._isRecording = false;
         this.classList.remove("recording");
         this.labelElement.innerHTML = NO_KEY_DESC;
         this.indicatorElement.innerHTML = "Record keybind";
-        MS.instance.recordingKey = false;
+        // MS.instance.recordingKey = false; // TODO: Check if necessary
 
         this._onStopRecording.raise();
-        ipcRenderer.send("key.stopRecording");
+        // ipcRenderer.send("key.stopRecording"); // TODO: Handle key recording via preload
     }
 
     setDisplayedKeys(keys: string[]): void {

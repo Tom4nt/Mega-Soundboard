@@ -1,4 +1,6 @@
-import { Keys, MS, Soundboard } from "../../shared/models";
+import Keys from "../../shared/keys";
+import { Soundboard } from "../../shared/models";
+import TooltipWrapper from "../util/tooltipWrapper";
 
 export default class SoundboardItem extends HTMLElement {
     private indicatorElement!: HTMLDivElement;
@@ -39,7 +41,8 @@ export default class SoundboardItem extends HTMLElement {
         const icon = document.createElement("span");
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
         icon.classList.add("icon");
-        MS.addPopup("This soundboard is linked to a folder", icon);
+
+        new TooltipWrapper(icon, "top", "This soundboard is linked to a folder");
 
         this.append(indicator, title, desc, icon);
     }

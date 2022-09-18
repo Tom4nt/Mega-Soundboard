@@ -1,6 +1,8 @@
-import { KeybindManager, MS, Sound, Soundboard, Utils } from "../../shared/models";
+import { Sound, Soundboard } from "../../shared/models";
 import { DefaultModals, MultiSoundModal, SoundModal } from "../modals";
 import { SoundItem } from "../elements";
+import Utils from "../util/utils";
+import { Event, ExposedEvent } from "../../shared/events";
 
 const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
@@ -11,12 +13,19 @@ type DragStateInfo = {
     offsetY: number,
     initialX: number,
     initialY: number,
-    initialSoundIndex: number,
-    initialSoundboard: Soundboard,
+}
+
+type MoveRequestArgs = {
+    sound: Sound,
+    newSoundboard: Soundboard,
+    newIndex: number,
 }
 
 export default class SoundList extends HTMLElement {
     sounds: Sound[] = [];
+
+    get onMoveRequest(): ExposedEvent<MoveRequestArgs> { return this._onMoveRequest.expose(); }
+    _onMoveRequest = new Event<MoveRequestArgs>();
 
     private dragElement: SoundItem | null = null;
     private infoElement!: HTMLSpanElement;
@@ -63,46 +72,47 @@ export default class SoundList extends HTMLElement {
             return true;
         };
 
-        MS.instance.onPlaySound.addHandler(sound => {
-            const elem = this.getSoundElement(sound);
-            elem?.setPlayingState(true);
-        });
+        // TODO: Handle events on index.ts.
+        // MSR.instance.audioManager.onPlaySound.addHandler(sound => {
+        //     const elem = this.getSoundElement(sound);
+        //     elem?.setPlayingState(true);
+        // });
 
-        MS.instance.onStopSound.addHandler(sound => {
-            const elem = this.getSoundElement(sound);
-            elem?.setPlayingState(false);
-        });
+        // MSR.instance.audioManager.onStopSound.addHandler(sound => {
+        //     const elem = this.getSoundElement(sound);
+        //     elem?.setPlayingState(false);
+        // });
 
-        MS.instance.onStopAllSounds.addHandler(() => {
-            for (let i = 0; i < this.containerElement.childElementCount; i++) {
-                const elem = this.containerElement.childNodes[i];
-                if (elem instanceof SoundItem) elem.setPlayingState(false);
-            }
-        });
+        // MSR.instance.audioManager.onStopAllSounds.addHandler(() => {
+        //     for (let i = 0; i < this.containerElement.childElementCount; i++) {
+        //         const elem = this.containerElement.childNodes[i];
+        //         if (elem instanceof SoundItem) elem.setPlayingState(false);
+        //     }
+        // });
     }
 
     addSound(sound: Sound, index: number | null = null): void {
         const item = new SoundItem(sound);
 
         item.addEventListener("contextmenu", () => {
-            const modal = new SoundModal(sound);
-            modal.open(this); // TODO: Use Modal Manager.
+            // TODO: handle on index.ts
+            // const modal = new SoundModal(sound);
+            // modal.open();
 
-            modal.addEventListener("edit", () => {
-                item.update();
-                void KeybindManager.instance.registerSound(sound);
-                void MS.instance.data.save();
-            });
+            // modal.onSave.addHandler(() => {
+            //     item.update();
+            //     void KeybindManager.instance.registerSound(sound);
+            //     void MS.instance.data.save();
+            // });
 
-            modal.addEventListener("remove", () => {
-                item.remove();
-                MS.instance.stopSound(sound);
-                if (!this.hasSounds()) this.displayNoSoundsMessage(NO_SOUNDS);
-                // TODO: Do in main process.
-                void KeybindManager.instance.unregisterSound(sound);
-                MS.instance.getSelectedSoundboard().removeSound(sound);
-                void MS.instance.data.save();
-            });
+            // modal.addEventListener("remove", () => {
+            //     item.remove();
+            //     MS.instance.stopSound(sound);
+            //     if (!this.hasSounds()) this.displayNoSoundsMessage(NO_SOUNDS);
+            //     void KeybindManager.instance.unregisterSound(sound);
+            //     MS.instance.getSelectedSoundboard().removeSound(sound);
+            //     void MS.instance.data.save();
+            // });
         });
 
         item.addEventListener("mousedown", (e) => {
@@ -116,16 +126,11 @@ export default class SoundList extends HTMLElement {
                 offsetX = e.offsetX + e.target.offsetLeft;
             }
 
-            const currentSB = MS.instance.getSelectedSoundboard();
-
-            // TODO: Remake reorder logic. Soundboard.sounds should not be accessed this way.
             this.dragStateInfo = {
                 offsetX: offsetX + parseInt(getComputedStyle(item).marginLeft),
                 offsetY: offsetY + parseInt(getComputedStyle(item).marginTop),
                 initialX: e.clientX,
                 initialY: e.clientY,
-                initialSoundIndex: currentSB.sounds.indexOf(sound),
-                initialSoundboard: currentSB,
             };
         });
 
@@ -162,9 +167,11 @@ export default class SoundList extends HTMLElement {
         return this.containerElement.childElementCount > 1; // Drag dummy doesn't count
     }
 
+    // TODO: Change to generic dragHandle and use it for sound drag too
     handleFileDrag(e: DragEvent): void {
         if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
 
+        // TODO: Check on index.ts
         // Is there any compatible sound file?
         let valid = false;
         for (let i = 0; i < e.dataTransfer.items.length; i++) {
@@ -226,42 +233,43 @@ export default class SoundList extends HTMLElement {
 
         if (paths.length < 1) return;
 
-        const currentSoundboard = MS.instance.getSelectedSoundboard();
-        if (currentSoundboard.linkedFolder) {
-            DefaultModals.linkedSoundboard(currentSoundboard.linkedFolder).open(this); // TODO: Use Modal Manager
-            return;
-        }
+        // const currentSoundboard = MS.instance.getSelectedSoundboard();
+        // if (currentSoundboard.linkedFolder) {
+        //     DefaultModals.errSoundboardIsLinked(currentSoundboard.linkedFolder).open();
+        //     return;
+        // }
 
-        const index = Utils.getElementIndex(this.dragDummyElement);
+        // const index = Utils.getElementIndex(this.dragDummyElement);
 
-        if (paths.length == 1) {
-            const soundPath = e.dataTransfer.files[0].path;
-            const name = Utils.getNameFromFile(soundPath);
-            const newSound = new Sound(name, soundPath, 100, []);
-            newSound.connectToSoundboard(currentSoundboard);
-            const soundModal = new SoundModal(newSound);
-            soundModal.open(this); // TODO: Use Modal Manager.
-            soundModal.onSave.addHandler((sound) => { // TODO: Handle elsewhere.
-                void KeybindManager.instance.registerSound(sound);
-                currentSoundboard.addSound(sound, index);
-                this.addSound(sound, index);
-                void MS.instance.data.save();
-            });
+        // TODO: Handle on index.ts
+        // if (paths.length == 1) {
+        //     const soundPath = e.dataTransfer.files[0].path;
+        //     const name = Utils.getNameFromFile(soundPath);
+        //     const newSound = new Sound(name, soundPath, 100, []);
+        //     newSound.connectToSoundboard(currentSoundboard);
+        //     const soundModal = new SoundModal(newSound);
+        //     soundModal.open(this); // TODO: Use Modal Manager.
+        //     soundModal.onSave.addHandler((sound) => { // TODO: Handle elsewhere.
+        //         void KeybindManager.instance.registerSound(sound);
+        //         currentSoundboard.addSound(sound, index);
+        //         this.addSound(sound, index);
+        //         void MS.instance.data.save();
+        //     });
 
-        } else {
-            const soundsModal = new MultiSoundModal(paths);
-            soundsModal.open(this); // TODO: Use Modal Manager.
-            soundsModal.onAdded.addHandler((sounds) => { // TODO: Handle elsewhere.
-                for (let i = 0; i < sounds.length; i++) {
-                    const sound = sounds[i];
-                    sound.connectToSoundboard(currentSoundboard);
-                    void KeybindManager.instance.registerSound(sound);
-                    currentSoundboard.addSound(sound, index + i);
-                    this.addSound(sound, index + i);
-                }
-                void MS.instance.data.save();
-            });
-        }
+        // } else {
+        //     const soundsModal = new MultiSoundModal(paths);
+        //     soundsModal.open();
+        //     soundsModal.onAdded.addHandler((sounds) => { // TODO: Handle elsewhere.
+        //         for (let i = 0; i < sounds.length; i++) {
+        //             const sound = sounds[i];
+        //             sound.connectToSoundboard(currentSoundboard);
+        //             void KeybindManager.instance.registerSound(sound);
+        //             currentSoundboard.addSound(sound, index + i);
+        //             this.addSound(sound, index + i);
+        //         }
+        //         void MS.instance.data.save();
+        //     });
+        // }
     }
 
     // TODO: Move this.
@@ -286,7 +294,8 @@ export default class SoundList extends HTMLElement {
             }
         }
 
-        this.updatePlayingStates();
+        // TODO: Do not destroy elements. Move them so the state is preserved.
+        // this.updatePlayingStates();
         if (!hasSounds && !this.canDrag) this.displayNoSoundsMessage(SEARCH_EMPTY);
     }
 
@@ -318,14 +327,14 @@ export default class SoundList extends HTMLElement {
         return null;
     }
 
-    /** Updates the displayed playing states on the list elements based on currently playing sounds. */
-    private updatePlayingStates(): void {
-        const playing = MS.instance.playingSounds;
-        for (let i = 0; i < playing.length; i++) {
-            const elem = this.getSoundElement(playing[i]);
-            if (elem) elem.setPlayingState(true);
-        }
-    }
+    // TODO: Update from index.ts for individual sounds and send parameter for state.
+    // private updatePlayingStates(): void {
+    // const playing = MS.instance.playingSounds;
+    // for (let i = 0; i < playing.length; i++) {
+    //     const elem = this.getSoundElement(playing[i]);
+    //     if (elem) elem.setPlayingState(true);
+    // }
+    // }
 
     private onMouseMove(e: MouseEvent): void {
         const d = this.dragElement;
@@ -386,38 +395,39 @@ export default class SoundList extends HTMLElement {
         this.dragElement = null;
         this.dragDummyElement.style.display = "none";
         this.canDrag = false;
-        const newIndex = Utils.getElementIndex(d) - 1;
-        if (i.initialSoundIndex != newIndex || !i.initialSoundboard.equals(MS.instance.getSelectedSoundboard())) {
-            SoundList.reorderSound(i.initialSoundIndex, newIndex, i);
-        }
+        // const newIndex = Utils.getElementIndex(d) - 1;
+        // TODO: Raise sound move request event
+        // if (i.initialSoundIndex != newIndex || !i.initialSoundboard.equals(MS.instance.getSelectedSoundboard())) {
+        //     SoundList.reorderSound(i.initialSoundIndex, newIndex, i);
+        // }
     }
 
-    // TODO: Remake and move to main process. Raise event here.
-    private static reorderSound(oldIndex: number, newIndex: number, dragInfo: DragStateInfo): void {
-        const currSB = MS.instance.getSelectedSoundboard();
-        const initSBSounds = dragInfo.initialSoundboard.sounds;
-        const currSBSounds = currSB.sounds;
-        const sound = initSBSounds[oldIndex];
+    // TODO: Remake and move to main process
+    // private static reorderSound(oldIndex: number, newIndex: number, dragInfo: DragStateInfo): void {
+    //     const currSB = MS.instance.getSelectedSoundboard();
+    //     const initSBSounds = dragInfo.initialSoundboard.sounds;
+    //     const currSBSounds = currSB.sounds;
+    //     const sound = initSBSounds[oldIndex];
 
-        initSBSounds.splice(oldIndex, 1);
-        currSBSounds.splice(newIndex, 0, sound);
+    //     initSBSounds.splice(oldIndex, 1);
+    //     currSBSounds.splice(newIndex, 0, sound);
 
-        // Register keybind again if it's a different soundboard
-        if (!dragInfo.initialSoundboard.equals(currSB)) {
-            sound.connectToSoundboard(currSB);
-            void KeybindManager.instance.registerSound(sound);
-        }
+    //     // Register keybind again if it's a different soundboard
+    //     if (!dragInfo.initialSoundboard.equals(currSB)) {
+    //         sound.connectToSoundboard(currSB);
+    //         void KeybindManager.instance.registerSound(sound);
+    //     }
 
-        void MS.instance.data.save();
+    //     void MS.instance.data.save();
 
-        // this.dispatchEvent(new CustomEvent("reorder", {
-        //     detail: {
-        //         sound,
-        //         oldIndex,
-        //         newIndex,
-        //         oldSoundboard: this.initialSoundboard,
-        //         newSoundboard: MS.getSelectedSoundboard()
-        //     }
-        // }));
-    }
+    //     this.dispatchEvent(new CustomEvent("reorder", {
+    //         detail: {
+    //             sound,
+    //             oldIndex,
+    //             newIndex,
+    //             oldSoundboard: this.initialSoundboard,
+    //             newSoundboard: MS.getSelectedSoundboard()
+    //         }
+    //     }));
+    // }
 }

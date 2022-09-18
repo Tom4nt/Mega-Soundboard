@@ -1,7 +1,8 @@
 import { ipcRenderer } from "electron";
-import { MS, Sound, Soundboard, UISoundPath } from "../shared/models";
+import { Sound, Soundboard } from "../shared/models";
 import { Event, ExposedEvent } from "../shared/events";
 
+// TODO: Remake.
 export enum KeybindManagerEvent {
     EVENT_SELECT_SOUNDBOARD = "soundboard-select",
     EVENT_SOUND_PLAY = "sound-play"
@@ -41,7 +42,7 @@ export default class KeybindManager {
         await this.unregisterSoundboard(soundboard);
         const id = await ipcRenderer.invoke("key.register", soundboard.keys) as number;
         console.log(`Registered ${soundboard.name} with the id of ${id}`);
-        this.actions[id] = (): Promise<void> => Promise.resolve(this._selectSoundboard(soundboard));
+        // this.actions[id] = (): Promise<void> => Promise.resolve(this._selectSoundboard(soundboard));
         this.soundboards.push({ id: id, soundboard: soundboard });
     }
 
@@ -64,7 +65,7 @@ export default class KeybindManager {
         await this.unregisterSound(sound);
         const id = await ipcRenderer.invoke("key.register", sound.keys) as number;
         console.log(`Registered ${sound.name} with the id of ${id}`);
-        this.actions[id] = async (): Promise<void> => await this._playSound(sound);
+        // this.actions[id] = async (): Promise<void> => await this._playSound(sound);
         this.sounds.push({ id: id, sound: sound });
     }
 
@@ -161,21 +162,21 @@ export default class KeybindManager {
         if (id) this.actionIDs.splice(id, 1);
     }
 
-    async _playSound(sound: Sound): Promise<void> {
-        if (MS.instance.settings.enableKeybinds && !this.lock) {
-            console.log("Playing sound " + sound.name + " via keybind.");
-            try {
-                await MS.instance.playSound(sound);
-            } catch (error) {
-                await MS.instance.playUISound(UISoundPath.ERROR);
-            }
-        }
-    }
+    // async _playSound(sound: Sound): Promise<void> {
+    //     if (MS.instance.settings.enableKeybinds && !this.lock) {
+    //         console.log("Playing sound " + sound.name + " via keybind.");
+    //         try {
+    //             MSR.instance.audioManager.playSound(sound.path);
+    //         } catch (error) {
+    //             await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
+    //         }
+    //     }
+    // }
 
-    _selectSoundboard(soundboard: Soundboard): void {
-        if (MS.instance.settings.enableKeybinds && !this.lock) {
-            console.log("Selecting Soundboard " + soundboard.name + " via keybind.");
-            this._onSelectSoundboard.raise(soundboard);
-        }
-    }
+    // _selectSoundboard(soundboard: Soundboard): void {
+    //     if (MS.instance.settings.enableKeybinds && !this.lock) {
+    //         console.log("Selecting Soundboard " + soundboard.name + " via keybind.");
+    //         this._onSelectSoundboard.raise(soundboard);
+    //     }
+    // }
 }

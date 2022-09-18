@@ -1,13 +1,18 @@
-// declare global {
-interface HTMLMediaElement {
-    setSinkId(sinkId: string): Promise<undefined>
-}
+import { ExposedEvent } from "../shared/events";
+import { Sound } from "../shared/models";
 
-interface Window {
-    api: API
-}
+declare global {
+    interface HTMLMediaElement {
+        setSinkId(sinkId: string): Promise<undefined>
+    }
 
-interface API {
-    temp: number
+    interface Window {
+        events: Events
+    }
+
+    interface Events {
+        onKeybindsStateChanged: ExposedEvent<boolean>,
+        onSoundAdded: ExposedEvent<Sound>,
+        onSoundRemoved: ExposedEvent<Sound>,
+    }
 }
-// }

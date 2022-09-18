@@ -3,21 +3,11 @@ import { promises as fs, constants as fsConstants, PathLike } from "fs";
 
 export default class Utils {
 
+    static validSoundExts = ["mp3", "wav", "ogg"];
+
     static isValidSoundFile(path: string): boolean {
         const ext = p.extname(path);
-        if (ext == ".mp3" || ext == ".wav" || ext == ".ogg") {
-            return true;
-        }
-        else return false;
-    }
-
-    static getElementIndex(element: Element): number {
-        let i = 0;
-        while (element.previousElementSibling != null) {
-            element = element.previousElementSibling;
-            ++i;
-        }
-        return i;
+        return this.validSoundExts.includes(`.${ext}`);
     }
 
     static getNameFromFile(path: string): string {
@@ -45,7 +35,7 @@ export default class Utils {
         return array.every(i => typeof i === "number");
     }
 
-    static async pathExists(path: PathLike): Promise<boolean> {
+    static async isPathOK(path: PathLike): Promise<boolean> {
         try {
             await fs.access(path, fsConstants.F_OK);
             return true;

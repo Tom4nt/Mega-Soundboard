@@ -10,6 +10,7 @@ import FileSelector from "./elements/fileSelector";
 import SoundboardItem from "./elements/soundboardItem";
 import SoundboardList from "./elements/soundboardList";
 import Dropdown from "./elements/dropdown";
+import Tooltip from "./elements/tooltip";
 
 export {
     KeyRecorder,
@@ -23,16 +24,8 @@ export {
     FileSelector,
     SoundboardItem,
     SoundboardList,
-    Dropdown
+    Dropdown,
+    Tooltip,
 };
 
-customElements.define("ms-slider", Slider);
-customElements.define("ms-titlebar", Titlebar);
-customElements.define("ms-keyrecorder", KeyRecorder);
-customElements.define("ms-toggler", Toggler);
-customElements.define("ms-soundlist", SoundList);
-customElements.define("ms-soundboardlist", SoundboardList);
-customElements.define("ms-sound", SoundItem);
-customElements.define("ms-dropdown", Dropdown);
-
-// TODO: Define all
+// TODO: Define custom elements in their respective files (customElements.define())

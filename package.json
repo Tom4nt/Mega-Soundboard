@@ -6,7 +6,7 @@
     "scripts": {
         "start": "npm run build && electron .",
         "build": "npm run copy && tsc --build",
-        "pack": "npm run build && electron-builder",
+        "dist": "npm run build && electron-builder",
         "pub": "npm run build && electron-builder -p=always",
         "copy": "copyfiles src/res/**/* out -u 1"
     },

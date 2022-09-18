@@ -1,7 +1,7 @@
 import { FileSelector, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Soundboard, Utils } from "../../shared/models";
+import { Soundboard } from "../../shared/models";
 
 export default class SoundboardModal extends Modal {
     private nameElement!: TextField;
@@ -27,7 +27,8 @@ export default class SoundboardModal extends Modal {
         this.folderElement = new FileSelector("Linked Folder (Optional)", "folder");
 
         this.folderElement.onValueChanged.addHandler(() => {
-            if (!this.nameElement.value) this.nameElement.value = Utils.getFileNameNoExtension(this.folderElement.value);
+            // TODO: Send to the main process to get a name from the path
+            // if (!this.nameElement.value) this.nameElement.value = Utils.getFileNameNoExtension(this.folderElement.value);
         });
 
         if (this.loadedSoundboard) {
@@ -67,6 +68,10 @@ export default class SoundboardModal extends Modal {
             buttons.unshift(Modal.getButton("remove", () => { this.removeSoundboard(); }, true, true));
 
         return buttons;
+    }
+
+    protected canClose(): boolean {
+        return !this.keysElement.isRecording;
     }
 
     private async save(): Promise<void> {

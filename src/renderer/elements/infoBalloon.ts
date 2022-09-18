@@ -1,14 +1,13 @@
-import TooltipElement from "./tooltipElement";
 import { Side } from "../../shared/models";
+import TooltipWrapper from "../util/tooltipWrapper";
 
-export default class InfoBalloon extends TooltipElement {
-    constructor(text: string, side: Side) {
+export default class InfoBalloon extends HTMLElement {
+    constructor(readonly tooltipText: string, readonly side: Side) {
         super();
-        this.side = side;
-        this.tooltipText = text;
     }
 
     protected connectedCallback(): void {
+        new TooltipWrapper(this, this.side, this.tooltipText);
         this.innerHTML = "i";
     }
 }

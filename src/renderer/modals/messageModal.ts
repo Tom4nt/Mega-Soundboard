@@ -7,6 +7,11 @@ export default class MessageModal extends Modal {
         this.modalTitle = title;
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    protected canClose(): boolean {
+        return true;
+    }
+
     protected getContent(): HTMLElement {
         const p = document.createElement("p");
         p.innerHTML = this.text;

@@ -1,4 +1,3 @@
-import Data from "./models/data";
 import Settings from "./models/settings";
 import Sound from "./models/sound";
 import Soundboard from "./models/soundboard";
@@ -12,7 +11,6 @@ export enum UISoundPath {
 export type Side = "top" | "bottom" | "left" | "right"
 
 export {
-    Data,
     Settings,
     Sound,
     Soundboard,

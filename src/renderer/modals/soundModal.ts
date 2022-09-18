@@ -1,8 +1,6 @@
-import * as p from "path"; // TODO: Remove reference.
-import { promises as fs, constants as fsConstants } from "fs"; // TODO: Remove reference.
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
-import { MS, Sound, Utils } from "../../shared/models";
+import { Sound } from "../../shared/models";
 import { Event, ExposedEvent } from "../../shared/events";
 
 export default class SoundModal extends Modal {
@@ -30,6 +28,10 @@ export default class SoundModal extends Modal {
         // TODO: Set "remove sound" visibility accorting to loaded sound (!isLinked).
     }
 
+    protected canClose(): boolean {
+        return !this.keysElement.isRecording;
+    }
+
     getContent(): HTMLElement {
         this.nameElement = new TextField("Name");
         this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
@@ -48,7 +50,8 @@ export default class SoundModal extends Modal {
         }
 
         this.pathElement.onValueChanged.addHandler((v) => {
-            this.nameElement.value = Utils.getFileNameNoExtension(v);
+            // TODO
+            // this.nameElement.value = Utils.getFileNameNoExtension(v);
         });
 
         const elems: HTMLElement[] = [
@@ -106,32 +109,33 @@ export default class SoundModal extends Modal {
                 // this.dispatchEvent(new CustomEvent("edit", { detail: { sound: this.sound } }));
 
             } else { // Add Sound. // TODO: Move to main process.
-                const file = this.pathElement.value;
-                const folder = p.dirname(file);
-                const targetFolder = MS.instance.settings.getSoundsLocation();
-                if (this.moveElement.isOn && p.resolve(folder) != p.resolve(targetFolder)) {
-                    let targetFile = p.join(MS.instance.settings.getSoundsLocation(), p.basename(file));
+                // const file = this.pathElement.value;
+                // const folder = p.dirname(file);
+                // const targetFolder = MS.instance.settings.getSoundsLocation();
+                if (this.moveElement.isOn /*&& p.resolve(folder) != p.resolve(targetFolder)*/) {
+                    //     let targetFile = p.join(MS.instance.settings.getSoundsLocation(), p.basename(file));
+                    const targetFile = "TODO";
 
-                    try {
-                        await fs.access(targetFolder, fsConstants.F_OK);
-                    } catch (error) {
-                        await fs.mkdir(targetFolder);
-                    }
+                    //     try {
+                    //         await fs.access(targetFolder, fsConstants.F_OK);
+                    //     } catch (error) {
+                    //         await fs.mkdir(targetFolder);
+                    //     }
 
-                    let i = 2;
-                    const ext = p.extname(targetFile);
-                    while (await Utils.pathExists(targetFile)) {
-                        targetFile = `${targetFile.slice(0, -ext.length)} (${i})${ext}`;
-                        i++;
-                    }
+                    //     let i = 2;
+                    //     const ext = p.extname(targetFile);
+                    //     while (await Utils.pathExists(targetFile)) {
+                    //         targetFile = `${targetFile.slice(0, -ext.length)} (${i})${ext}`;
+                    //         i++;
+                    //     }
 
-                    try {
-                        await fs.copyFile(file, targetFile);
-                    } catch (error) {
-                        console.log(error);
-                    }
+                    //     try {
+                    //         await fs.copyFile(file, targetFile);
+                    //     } catch (error) {
+                    //         console.log(error);
+                    //     }
 
-                    await fs.unlink(file);
+                    //     await fs.unlink(file);
                     const sound = new Sound(this.nameElement.value, targetFile, this.volumeElement.value, this.keysElement.keys);
                     this._onSave.raise(sound);
 

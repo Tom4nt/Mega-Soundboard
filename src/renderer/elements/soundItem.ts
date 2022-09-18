@@ -1,5 +1,5 @@
-import { MessageModal } from "../modals";
-import { Keys, MS, Sound, UISoundPath } from "../../shared/models";
+import Keys from "../../shared/keys";
+import { Sound } from "../../shared/models";
 
 // TODO: Extend future "DraggableElement"
 export default class SoundItem extends HTMLElement {
@@ -28,28 +28,30 @@ export default class SoundItem extends HTMLElement {
 
         this.append(this.titleElement, this.detailsElement, playingIndicator);
 
-        const handleSoundClick = async (e: MouseEvent): Promise<void> => {
-            if (e.target === playingIndicator) return;
-            try {
-                await MS.instance.playSound(this.sound);
-            } catch (error) {
-                const errorText = typeof error == "string" ? error : "Error";
-                new MessageModal("Could not play", errorText, true).open(this); // TODO: Cannot set parent here. Must use a Modal Manager.
-                await MS.instance.playUISound(UISoundPath.ERROR);
-            }
-        };
+        // TODO: Handle on index.ts
 
-        this.addEventListener("click", e => void handleSoundClick(e));
+        // const handleSoundClick = async (e: MouseEvent): Promise<void> => {
+        //     if (e.target === playingIndicator) return;
+        //     try {
+        //         await MS.instance.playSound(this.sound);
+        //     } catch (error) {
+        //         const errorText = typeof error == "string" ? error : "Error";
+        //         new MessageModal("Could not play", errorText, true).open();
+        //         await MS.instance.playUISound(UISoundPath.ERROR);
+        //     }
+        // };
 
-        this.addEventListener("auxclick", e => {
-            if (e.button === 1) {
-                MS.instance.stopSound(this.sound);
-            }
-        });
+        // this.addEventListener("click", e => void handleSoundClick(e));
 
-        playingIndicator.addEventListener("click", () => {
-            MS.instance.stopSound(this.sound);
-        });
+        // this.addEventListener("auxclick", e => {
+        //     if (e.button === 1) {
+        //         MS.instance.stopSound(this.sound);
+        //     }
+        // });
+
+        // playingIndicator.addEventListener("click", () => {
+        //     MS.instance.stopSound(this.sound);
+        // });
     }
 
     setPlayingState(playingState: boolean): void {

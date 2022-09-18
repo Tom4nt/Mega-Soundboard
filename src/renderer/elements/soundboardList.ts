@@ -1,6 +1,8 @@
 import { SoundboardItem } from "../elements";
-import { MS, Soundboard, Utils } from "../../shared/models";
+import { Soundboard } from "../../shared/models";
 import { Event, ExposedEvent } from "../../shared/events";
+import MSR from "../msr";
+import Utils from "../util/utils";
 
 const DRAG_START_OFFSET = 10;
 
@@ -13,7 +15,6 @@ interface DragInfo {
 export default class SoundboardList extends HTMLElement {
     private currentDragInfo: DragInfo | null = null;
     private dragDummy!: HTMLDivElement;
-    private startDragIndex!: number;
     private isMouseDown = false;
     private canDrag = false;
 
@@ -36,19 +37,19 @@ export default class SoundboardList extends HTMLElement {
         this.dragDummy = item;
         this.appendChild(item);
 
-        MS.instance.onPlaySound.addHandler(s => {
+        MSR.instance.audioManager.onPlaySound.addHandler(s => {
             if (!s.connectedSoundboard) return;
             const elem = this.getSoundboardElement(s.connectedSoundboard);
             elem?.updatePlayingIndicator(1);
         });
 
-        MS.instance.onStopSound.addHandler(s => {
+        MSR.instance.audioManager.onStopSound.addHandler(s => {
             if (!s.connectedSoundboard) return;
             const elem = this.getSoundboardElement(s.connectedSoundboard);
             elem?.updatePlayingIndicator(-1);
         });
 
-        MS.instance.onStopAllSounds.addHandler(() => this.setAllPlayingIndicators(false));
+        MSR.instance.audioManager.onStopAllSounds.addHandler(() => this.setAllPlayingIndicators(false));
 
         this.onmousedown = (e): boolean => {
             if (e.button === 1) return false;
@@ -73,11 +74,13 @@ export default class SoundboardList extends HTMLElement {
 
         sbElement.addEventListener("auxclick", (e) => {
             if (e.button === 1) {
-                MS.instance.stopSounds(sbElement.soundboard);
+                // TODO: Raise event
+                // MSR.instance.audioManager.stopSounds(sbElement.soundboard);
             }
         });
 
         sbElement.addEventListener("contextmenu", () => {
+            // TODO: Raise event
             // const editModal = new SoundboardModal(SoundboardModal.Mode.EDIT, item.soundboard, MS.data.soundboards.length < 2);
             // editModal.open();
             // editModal.addEventListener("edit", (e) => {
@@ -123,7 +126,8 @@ export default class SoundboardList extends HTMLElement {
     }
 
     selectSoundboardAt(index: number): void {
-        this.select(MS.instance.data.soundboards[index]);
+        const res = Array.from(this.getItems());
+        this.select(res[index].soundboard);
     }
 
     /** Updates the information about playing sounds in a soundboard. */
@@ -133,10 +137,7 @@ export default class SoundboardList extends HTMLElement {
         elem.updatePlayingIndicator(increment);
     }
 
-    /**
-     * Returns the element from the list representing a specific soundboard.
-     * Returns null if no element is found.
-     */
+    /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
     private getSoundboardElement(soundboard: Soundboard): SoundboardItem | null {
         for (const item of this.getItems()) {
             if (item.soundboard.equals(soundboard)) return item;
@@ -155,7 +156,6 @@ export default class SoundboardList extends HTMLElement {
 
     private itemMouseDown(e: MouseEvent, item: SoundboardItem): void {
         if (e.button != 0) return;
-        this.startDragIndex = MS.instance.data.soundboards.indexOf(item.soundboard);
 
         let offsetY = e.offsetY;
         if (e.target instanceof HTMLElement && !e.target.classList.contains("item")) {
@@ -218,24 +218,27 @@ export default class SoundboardList extends HTMLElement {
             this.currentDragInfo = null;
             this.dragDummy.style.display = "none";
             this.canDrag = false;
-            const newIndex = Utils.getElementIndex(d.element) - 1;
-            if (this.startDragIndex && this.startDragIndex != newIndex)
-                void SoundboardList.reorder(this.startDragIndex, newIndex);
+            const currIndex = Utils.getElementIndex(d.element);
+            const newIndex = Utils.getElementIndex(this.dragDummy) - 1;
+            if (currIndex != newIndex) {
+                // TODO: Call Reorder
+                // void SoundboardList.reorder(this.startDragIndex, newIndex);
+            }
         }
     }
 
     // TODO: This shouldn't be here.
-    private static async reorder(oldIndex: number, newIndex: number): Promise<void> {
-        const sb = MS.instance.data.soundboards[oldIndex];
-        const selectedSB = MS.instance.getSelectedSoundboard();
+    // private static async reorder(oldIndex: number, newIndex: number): Promise<void> {
+    //     const sb = MS.instance.data.soundboards[oldIndex];
+    //     const selectedSB = MS.instance.getSelectedSoundboard();
 
-        MS.instance.data.soundboards.splice(oldIndex, 1);
-        MS.instance.data.soundboards.splice(newIndex, 0, sb);
+    //     MS.instance.data.soundboards.splice(oldIndex, 1);
+    //     MS.instance.data.soundboards.splice(newIndex, 0, sb);
 
-        MS.instance.setSelectedSoundboard(selectedSB);
-        await MS.instance.data.save();
-        await MS.instance.settings.save();
-    }
+    //     MS.instance.setSelectedSoundboard(selectedSB);
+    //     await MS.instance.data.save();
+    //     await MS.instance.settings.save();
+    // }
 
     //#endregion
 }

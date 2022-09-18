@@ -1,4 +1,4 @@
-import { KeybindManager, MS } from "../../shared/models";
+import MSR from "../msr";
 
 export default abstract class Modal extends HTMLElement {
     static blockClosureKey = false;
@@ -25,7 +25,7 @@ export default abstract class Modal extends HTMLElement {
     }
 
     keyUpHandler = (e: KeyboardEvent): void => {
-        if (e.key == "Escape" && this.canCloseWithKey && !MS.instance.recordingKey)
+        if (e.key == "Escape" && this.canCloseWithKey && this.canClose())
             this.close();
     };
 
@@ -107,25 +107,37 @@ export default abstract class Modal extends HTMLElement {
 
     protected abstract getContent(): HTMLElement;
     protected abstract getFooterButtons(): HTMLButtonElement[];
+    protected abstract canClose(): boolean;
 
-    open(parentElement: HTMLElement): void {
-        parentElement.appendChild(this);
-        void this.offsetWidth; // Trigger Reflow
-        this.windowElement.classList.remove("hidden");
-        this.dimmerElement.classList.remove("hidden");
-
-        // TODO: Create a ModalManager to manage open modals and key locks instead of handling that in KeybindManager and MS.
-        KeybindManager.instance.lock = true;
-        MS.instance.modalsOpen += 1;
+    open(): void {
+        MSR.instance.modalManager.openModal(this);
+        void this.show();
     }
 
     close(): void {
+        void this.hide();
+        MSR.instance.modalManager.closeModal(this);
+    }
+
+    /** Promise completes after the animation finishes. */
+    private show(): Promise<void> {
+        void this.offsetWidth; // Triggers Reflow
+        this.windowElement.classList.remove("hidden");
+        this.dimmerElement.classList.remove("hidden");
+
+        return new Promise(r => {
+            this.addEventListener("transitionend", () => r());
+        });
+    }
+
+    /** Promise completes after the animation finishes. */
+    private hide(): Promise<void> {
         this.dispatchEvent(new CustomEvent("close"));
         this.windowElement.classList.add("hidden");
         this.dimmerElement.classList.add("hidden");
-        this.ontransitionend = (): void => this.remove();
 
-        KeybindManager.instance.lock = false;
-        MS.instance.modalsOpen -= 1;
+        return new Promise(r => {
+            this.addEventListener("transitionend", () => r());
+        });
     }
 }

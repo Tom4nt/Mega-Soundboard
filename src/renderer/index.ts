@@ -1,8 +1,11 @@
 // import { ipcRenderer } from "electron"; // TODO: Remove reference.
-import { MS, Soundboard, KeybindManager, Sound, Utils } from "../shared/models";
+import { Soundboard, Sound } from "../shared/models";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, MultiSoundModal, NewsModal, SettingsModal, SoundboardModal, SoundModal } from "./modals";
+import MSR from "./msr";
+
+const MSRi = MSR.instance;
 
 //#region Elements
 
@@ -49,22 +52,22 @@ const buttonMoreSettings = quickSettings.querySelector("#button-more-settings") 
 
 //#region Events
 
-Soundboard.addToFolder.addHandler(e => {
-    const soundboard = e.soundboard;
-    const sound = e.sound;
+window.events.onSoundAdded.addHandler(sound => {
+    const soundboard = sound.connectedSoundboard;
+    if (!soundboard) throw Error("A Sound cannot be added because it is not connected to a Soundboard.");
 
-    if (MS.instance.getSelectedSoundboard() === soundboard) {
+    if (MSRi.getSelectedSoundboard().equals(soundboard)) {
         void addSound(sound, soundboard);
     } else {
         soundboard.addSound(sound);
     }
 });
 
-Soundboard.removeFromFolder.addHandler(e => {
-    const soundboard = e.soundboard;
-    const sound = e.sound;
+window.events.onSoundRemoved.addHandler(sound => {
+    const soundboard = sound.connectedSoundboard;
+    if (!soundboard) throw Error("A Sound cannot be removed because it is not connected to a Soundboard.");
 
-    if (MS.instance.getSelectedSoundboard() === soundboard) {
+    if (MSRi.getSelectedSoundboard() === soundboard) {
         void removeSound(sound, soundboard);
     } else {
         soundboard.removeSound(sound);
@@ -72,22 +75,22 @@ Soundboard.removeFromFolder.addHandler(e => {
 });
 
 window.ondragenter = (e): void => {
-    if (e.relatedTarget || MS.instance.modalsOpen > 0) return;
+    if (e.relatedTarget || MSRi.modalManager.hasOpenModal) return;
 };
 
 window.ondragleave = (e): void => {
-    if (e.relatedTarget || MS.instance.modalsOpen > 0) return;
+    if (e.relatedTarget || MSRi.modalManager.hasOpenModal) return;
     soundList.endFileDrag(e);
 };
 
 window.ondragover = (e): void => {
-    if (MS.instance.modalsOpen > 0) return;
+    if (MSRi.modalManager.hasOpenModal) return;
     e.preventDefault();
     soundList.handleFileDrag(e);
 };
 
 window.ondrop = (e): void => {
-    if (MS.instance.modalsOpen > 0) return;
+    if (MSRi.modalManager.hasOpenModal) return;
     soundList.endFileDrag(e);
 };
 
@@ -128,18 +131,18 @@ window.addEventListener("load", () => {
 //#region Left
 
 msbutton.addEventListener("click", () => {
-    const modal = new MSModal();
-    modal.open(document.body); // TODO: Use Modal Manager.
+    new MSModal().open();
 });
 
 addSoundboardButton.addEventListener("click", () => {
     const modal = new SoundboardModal(null);
-    modal.open(document.body); // TODO: Use Modal Manager.
-    modal.onSaved.addHandler((soundboard) => {
-        soundboardList.addSoundboard(soundboard);
-        void KeybindManager.instance.registerSoundboardn(soundboard);
-        MS.instance.data.addSoundboard(soundboard);
-        void MS.instance.data.save();
+    modal.open();
+    modal.onSaved.addHandler(soundboard => {
+        /// TODO: Send "addSoundboard" event to preload
+        // soundboardList.addSoundboard(soundboard);
+        // void KeybindManager.instance.registerSoundboardn(soundboard);
+        // MS.instance.data.addSoundboard(soundboard);
+        // void MS.instance.data.save();
     });
 });
 
@@ -191,7 +194,7 @@ soundlistSearchboxButton.addEventListener("click", () => {
 //#region Action Panel
 
 stopAllButton.addEventListener("click", () => {
-    MS.instance.stopAllSounds();
+    MSRi.audioManager.stopAllSounds();
 });
 
 deviceSettingsButton.addEventListener("click", () => {
@@ -207,17 +210,25 @@ overlapSoundsToggler.onToggle.addHandler((t) => {
     void setOverlapSoundsSettings(t.isOn);
 });
 
-mainDeviceVolumeSlider.onValueChange.addHandler((s) => MS.instance.settings.mainDeviceVolume = s.value);
-secondaryDeviceVolumeSlider.onValueChange.addHandler((s) => MS.instance.settings.secondaryDeviceVolume = s.value);
-
-mainDeviceDropdown.onSelectedItem.addHandler((item) => {
-    if (item instanceof DropdownDeviceItem)
-        MS.instance.settings.mainDevice = item.device ?? "default";
+mainDeviceVolumeSlider.onValueChange.addHandler(s => {
+    // TODO: Send via preload
+    // return MSRi.settings.mainDeviceVolume = s.value;
+});
+secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
+    // TODO: Send via preload
+    // return MSRi.settings.secondaryDeviceVolume = s.value;
 });
 
-secondaryDeviceDropdown.onSelectedItem.addHandler((item) => {
-    if (item instanceof DropdownDeviceItem)
-        MS.instance.settings.secondaryDevice = item.device;
+mainDeviceDropdown.onSelectedItem.addHandler(item => {
+    // if (item instanceof DropdownDeviceItem)
+    // TODO: Send via preload
+    // MS.instance.settings.mainDevice = item.device ?? "default";
+});
+
+secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
+    // if (item instanceof DropdownDeviceItem)
+    // TODO: Send via preload
+    // MS.instance.settings.secondaryDevice = item.device;
 });
 
 enabeKeybindsToggler.onToggle.addHandler((t) => {
@@ -227,9 +238,7 @@ enabeKeybindsToggler.onToggle.addHandler((t) => {
 
 buttonMoreSettings.addEventListener("click", () => {
     quickSettings.classList.add("closed");
-    void MS.instance.settings.save();
-    const modal = new SettingsModal();
-    modal.open(document.body); // TODO: Use Modal Manager.
+    new SettingsModal().open();
 });
 
 //#endregion
@@ -239,93 +248,96 @@ buttonMoreSettings.addEventListener("click", () => {
 //#region Functions
 
 async function init(): Promise<void> {
-    await MS.init();
+    // TODO: Listen to preload event for this
+    // MS.instance.onToggleKeybindsState.addHandler(() => {
+    //     enabeKeybindsToggler.isOn = MS.instance.settings.enableKeybinds;
+    // });
 
-    MS.instance.onToggleKeybindsState.addHandler(() => {
-        enabeKeybindsToggler.isOn = MS.instance.settings.enableKeybinds;
-    });
+    // TODO: Listen to preload event
+    // KeybindManager.instance.onSelectSoundboard.addHandler((soundboard) => {
+    //     soundboardList.select(soundboard);
+    // });
 
-    KeybindManager.instance.onSelectSoundboard.addHandler((soundboard) => {
-        soundboardList.select(soundboard);
-    });
+    // fillDeviceLists(MS.instance.devices); // TODO: Get devices from preload and select them in the dropdowns
+    // mainDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === MS.instance.settings.mainDevice);
+    // secondaryDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === MS.instance.settings.secondaryDevice);
 
-    fillDeviceLists(MS.instance.devices);
-    mainDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === MS.instance.settings.mainDevice);
-    secondaryDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === MS.instance.settings.secondaryDevice);
+    // TODO: Get all soundboards from preload and fill the list
+    // for (const soundboard of MS.instance.data.soundboards) {
+    //     void KeybindManager.instance.registerSoundboardn(soundboard);
+    //     soundboardList.addSoundboard(soundboard);
+    // }
 
-    for (const soundboard of MS.instance.data.soundboards) {
-        void KeybindManager.instance.registerSoundboardn(soundboard);
-        soundboardList.addSoundboard(soundboard);
-    }
+    //Select saved soundboard ID
+    // TODO: Get from preload
+    // soundboardList.selectSoundboardAt(MS.instance.settings.selectedSoundboard);
 
-    //Select saved soundboardID
-    soundboardList.selectSoundboardAt(MS.instance.settings.selectedSoundboard);
-
-    //Set device volumes from settings
-    mainDeviceVolumeSlider.value = MS.instance.settings.mainDeviceVolume;
-    secondaryDeviceVolumeSlider.value = MS.instance.settings.secondaryDeviceVolume;
-
-    //Fill quick settings
-    enabeKeybindsToggler.isOn = MS.instance.settings.enableKeybinds;
-    overlapSoundsToggler.isOn = MS.instance.settings.overlapSounds;
-
-    //Send quick settings states to main
+    // Send quick settings states to main // TODO: Manage in the main process
     // ipcRenderer.send("settings.enableKeybinds", enabeKeybindsToggler.isOn);
     // ipcRenderer.send("settings.overlapSounds", overlapSoundsToggler.isOn);
 
-    //Register global settings keybinds
-    await KeybindManager.instance.registerAction(MS.instance.settings.stopSoundsKeys, () => MS.instance.stopAllSounds(), "stop-sounds");
-    await KeybindManager.instance.registerAction(MS.instance.settings.enableKeybindsKeys, () => MS.instance.toggleKeybindsState(), "toggle-keybinds-state");
+    // Register global settings keybinds // TODO: Move to main
+    // await KeybindManager.instance.registerAction(MS.instance.settings.stopSoundsKeys, () => MS.instance.stopAllSounds(), "stop-sounds");
+    // await KeybindManager.instance.registerAction(MS.instance.settings.enableKeybindsKeys, () => MS.instance.toggleKeybindsState(), "toggle-keybinds-state");
 
-    // Decide whether to show the changelog or not
-    if (MS.latestWithLog > MS.instance.settings.latestLogViewed && MS.instance.settings.latestLogViewed >= 0) {
+    // TODO: Make "shouldShowChangelog" preload event
+    const shouldShowChangelog = false; // MS.latestWithLog > MS.instance.settings.latestLogViewed && MS.instance.settings.latestLogViewed >= 0;
+    if (shouldShowChangelog) {
         const modal = await NewsModal.load();
-        modal.open(document.body); // TODO: Use Modal Manager
-        MS.instance.settings.latestLogViewed = MS.latestWithLog;
-        await MS.instance.settings.save();
+        modal.open();
+        // MS.instance.settings.latestLogViewed = MS.latestWithLog;
+        // await MS.instance.settings.save();
+        // TODO: Flag "logShown" (preload)
     }
 
     // TODO: Buttons should handle their own popups.
-    MS.addPopup("Add Sound(s)", addSoundButton, "left");
-    MS.addPopup("Add Soundboard", addSoundboardButton, "left");
-    MS.addPopup("Audio Devices", deviceSettingsButton);
-    MS.addPopup("Quick Settings", quickSettingsButton);
-    MS.addPopup("Stop all</br>Sounds", stopAllButton);
-    MS.addPopup("Restart and Update", updateButton, "right");
+    // MS.addPopup("Add Sound(s)", addSoundButton, "left");
+    // MS.addPopup("Add Soundboard", addSoundboardButton, "left");
+    // MS.addPopup("Audio Devices", deviceSettingsButton);
+    // MS.addPopup("Quick Settings", quickSettingsButton);
+    // MS.addPopup("Stop all</br>Sounds", stopAllButton);
+    // MS.addPopup("Restart and Update", updateButton, "right");
 }
 
 async function addNewSounds(): Promise<void> {
-    const currentSBLinkedFolder = MS.instance.getSelectedSoundboard().linkedFolder;
+    const currentSBLinkedFolder = MSRi.getSelectedSoundboard().linkedFolder;
     if (!currentSBLinkedFolder) {
+        // TODO: Get files from preloader
         const files = await Promise.resolve([] as string[]); // await ipcRenderer.invoke("file.browse", true, "Audio files", ["mp3", "wav", "ogg"]) as string[];
 
-        const sb = MS.instance.getSelectedSoundboard();
+        const sb = MSRi.getSelectedSoundboard();
 
         if (files.length == 1) {
             const soundPath = files[0];
-            const newSound = new Sound(Utils.getNameFromFile(soundPath), soundPath, 100, []);
+
+            // TODO: "getSoundForFile" event
+            // const newSound = new Sound(Utils.getNameFromFile(soundPath), soundPath, 100, []);
+            const newSound = new Sound("", soundPath, 100, []);
+
             newSound.connectToSoundboard(sb);
             const modal = new SoundModal(newSound);
-            modal.open(document.body); // TODO: Use Modal Manager
-            modal.onSave.addHandler(async (sound) => {
-                await addSound(sound, sb);
-                await MS.instance.data.save();
+            modal.open();
+            modal.onSave.addHandler(async sound => {
+                // await addSound(sound, sb);
+                // TODO: Add via preload
+                // await MS.instance.data.save();
             });
 
         } else {
-            const soundsModal = new MultiSoundModal(files);
-            soundsModal.open(document.body); // TODO: Use Modal Manager
-            soundsModal.onAdded.addHandler(async (sounds) => {
-                const tasks: Promise<void>[] = [];
+            const multiSoundModal = new MultiSoundModal(files);
+            multiSoundModal.open();
+            multiSoundModal.onAdded.addHandler(sounds => {
                 for (const sound of sounds) {
                     sound.connectToSoundboard(sb);
-                    tasks.push(addSound(sound, sb));
+                    // tasks.push(addSound(sound, sb));
                 }
-                await Promise.all([...tasks, MS.instance.data.save()]);
+                // TODO: Single preload event to add all sounds.
+                // await Promise.all([...tasks, MS.instance.data.save()]);
             });
         }
+
     } else {
-        DefaultModals.linkedSoundboard(currentSBLinkedFolder).open(document.body); // TODO: Use Modal Manager
+        DefaultModals.errSoundboardIsLinked(currentSBLinkedFolder).open();
     }
 }
 
@@ -346,17 +358,20 @@ function fillDeviceLists(devices: MediaDeviceInfo[]): void {
 
 //#endregion
 
-async function selectSoundboard(soundboard: Soundboard): Promise<void> {
-    const currSB = MS.instance.getSelectedSoundboard();
-    setSoundlistSounds(soundboard);
-    const tasks: Promise<void>[] = [];
-    tasks.push(KeybindManager.instance.unregisterSounds(currSB));
-    MS.instance.setSelectedSoundboard(soundboard);
-    for (const sound of soundboard.sounds) {
-        tasks.push(KeybindManager.instance.registerSound(sound));
-    }
-    tasks.push(MS.instance.settings.save());
-    await Promise.all(tasks);
+function selectSoundboard(soundboard: Soundboard): void {
+    // TODO: Send "selectSoundboard" event to preload
+    // TODO: Get sounds to load to the list via preload
+
+    // const currSB = MSRi.getSelectedSoundboard();
+    // setSoundlistSounds(soundboard);
+    // const tasks: Promise<void>[] = [];
+    // tasks.push(KeybindManager.instance.unregisterSounds(currSB));
+    // MS.instance.setSelectedSoundboard(soundboard);
+    // for (const sound of soundboard.sounds) {
+    // tasks.push(KeybindManager.instance.registerSound(sound));
+    // }
+    // tasks.push(MS.instance.settings.save());
+    // await Promise.all(tasks);
 }
 
 function setSoundlistSounds(soundboard: Soundboard): void {
@@ -365,41 +380,40 @@ function setSoundlistSounds(soundboard: Soundboard): void {
 }
 
 async function setKeybindsToggleSettings(state: boolean): Promise<void> {
-    MS.instance.settings.enableKeybinds = state;
-    await MS.instance.settings.save();
+    // MS.instance.settings.enableKeybinds = state;
+    // await MS.instance.settings.save();
+    // TODO: Send to preload
 }
 
 async function setOverlapSoundsSettings(state: boolean): Promise<void> {
-    MS.instance.settings.overlapSounds = state;
-    await MS.instance.settings.save();
+    // MS.instance.settings.overlapSounds = state;
+    // await MS.instance.settings.save();
+    // TODO: Send to preload
 }
 
-async function closeActionPanelContainers(e: MouseEvent): Promise<void> {
+function closeActionPanelContainers(e: MouseEvent): void {
     if (!e.composedPath().includes(deviceSettings) && e.target != deviceSettingsButton && !deviceSettings.classList.contains("closed")) {
         deviceSettings.classList.add("closed");
-        await MS.instance.settings.save();
     }
     if (!e.composedPath().includes(quickSettings) && e.target != quickSettingsButton && !quickSettings.classList.contains("closed")) {
         quickSettings.classList.add("closed");
-        await MS.instance.settings.save();
     }
 }
 
-/**
- * Adds a sound to the selected soundboard in the sound list and data. Registers keybinds.
- * @param {Sound} sound 
- */
+/** Adds a sound to the selected soundboard in the sound list and data. Registers keybinds. */
 async function addSound(sound: Sound, soundboard: Soundboard, index?: number): Promise<void> {
-    soundList.addSound(sound, index);
-    soundboard.addSound(sound, index);
-    await KeybindManager.instance.registerSound(sound);
+    // soundList.addSound(sound, index);
+    // soundboard.addSound(sound, index);
+    // await KeybindManager.instance.registerSound(sound);
+    // TODO: Send event to preload.
 }
 
 async function removeSound(sound: Sound, soundboard: Soundboard): Promise<void> {
-    soundList.removeSound(sound);
-    MS.instance.stopSound(sound);
-    soundboard.removeSound(sound);
-    await KeybindManager.instance.unregisterSound(sound);
+    // soundList.removeSound(sound);
+    // MSRi.audioManager.stopSound(sound.path);
+    // soundboard.removeSound(sound);
+    // await KeybindManager.instance.unregisterSound(sound);
+    // TODO: Send event to preload.
 }
 
 //#endregion

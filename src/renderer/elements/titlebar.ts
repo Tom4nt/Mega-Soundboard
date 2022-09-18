@@ -1,20 +1,20 @@
-import { MS } from "../../shared/models";
-import { ipcRenderer } from "electron"; // TODO: Remove reference
-
 export default class Titlebar extends HTMLElement {
     private dragAreaElement!: HTMLDivElement;
     private sizeButton!: HTMLButtonElement;
 
+    private isMaximized = false;
+
     constructor() {
         super();
 
-        ipcRenderer.on("win.maximize", () => {
-            this.updateSizeElements(true);
-        });
+        // TODO: Listen to preload events. Set isMaximized
+        // ipcRenderer.on("win.maximize", () => {
+        //     this.updateSizeElements(true);
+        // });
 
-        ipcRenderer.on("win.unmaximize", () => {
-            this.updateSizeElements(false);
-        });
+        // ipcRenderer.on("win.unmaximize", () => {
+        //     this.updateSizeElements(false);
+        // });
     }
 
     connectedCallback(): void {
@@ -32,40 +32,29 @@ export default class Titlebar extends HTMLElement {
         btnClose.tabIndex = -1;
         btnClose.innerHTML = "close";
         btnClose.classList.add("red");
-        btnClose.onclick = (): void => {
-            Titlebar.closeWindow();
-        };
+        // TODO: Send events on button click
+        // btnClose.onclick = (): void => {
+        //     Titlebar.closeWindow();
+        // };
 
         btnSize.tabIndex = -1;
         btnSize.innerHTML = "fullscreen";
-        btnSize.onclick = (): void => {
-            Titlebar.resizeWindow();
-        };
+        // btnSize.onclick = (): void => {
+        //     Titlebar.resizeWindow();
+        // };
         this.sizeButton = btnSize;
 
         btnMin.tabIndex = -1;
         btnMin.innerHTML = "minimize";
-        btnMin.onclick = (): void => {
-            Titlebar.minimizeWindow();
-        };
+        // btnMin.onclick = (): void => {
+        //     Titlebar.minimizeWindow();
+        // };
 
         this.append(title, dragArea, btnClose, btnSize, btnMin);
     }
 
-    private static closeWindow(): void {
-        ipcRenderer.send("win.close");
-    }
-
-    private static resizeWindow(): void {
-        ipcRenderer.send("win.size");
-    }
-
-    private static minimizeWindow(): void {
-        ipcRenderer.send("win.min", MS.instance.settings.minToTray);
-    }
-
-    updateSizeElements(isMaximized: boolean): void {
-        if (isMaximized) {
+    update(): void {
+        if (this.isMaximized) {
             this.sizeButton.innerHTML = "fullscreen_exit";
             this.dragAreaElement.style.top = "0";
         } else {
