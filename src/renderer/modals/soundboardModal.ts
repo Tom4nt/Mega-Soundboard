@@ -15,7 +15,7 @@ export default class SoundboardModal extends Modal {
     public get onRemove(): ExposedEvent<Soundboard> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Soundboard>();
 
-    constructor(private readonly loadedSoundboard: Soundboard | null) {
+    constructor(private readonly loadedSoundboard?: Soundboard) {
         super(false);
         this.modalTitle = loadedSoundboard ? "Edit Soundboard" : "Add Soundboard";
     }

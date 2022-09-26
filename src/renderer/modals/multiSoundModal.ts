@@ -10,10 +10,10 @@ export default class MultiSoundModal extends Modal {
     get onAdded(): ExposedEvent<Sound[]> { return this._onAdded.expose(); }
     private readonly _onAdded = new Event<Sound[]>();
 
-    constructor(private paths: string[]) {
+    constructor(private count: number) {
         super(false);
         this.sounds = [];
-        this.modalTitle = `Adding ${paths.length} sounds`;
+        this.modalTitle = `Adding ${count} sounds`;
     }
 
     // eslint-disable-next-line class-methods-use-this

@@ -1,4 +1,4 @@
-import { Side } from "../../shared/models";
+import { Side } from "../models";
 
 export default class Tooltip extends HTMLElement {
 

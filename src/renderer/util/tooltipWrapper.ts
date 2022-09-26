@@ -1,5 +1,5 @@
-import { Side } from "../../shared/models";
 import { Tooltip } from "../elements";
+import { Side } from "../models";
 
 export default class TooltipWrapper {
     readonly tooltip: Tooltip;

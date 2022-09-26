@@ -19,10 +19,10 @@ export default class SoundModal extends Modal {
     public get onRemove(): ExposedEvent<Sound> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Sound>();
 
-    constructor(sound: Sound | null) {
+    constructor(sound?: Sound) {
         super(false);
         this.modalTitle = sound ? "Edit Sound" : "Add Sound";
-        this.loadedSound = sound;
+        if (sound) this.loadedSound = sound;
         // TODO: Hide and show elements according to loaded sound. Loaded: hide moveElement and check if sound is linked (remove pathElement).
         // TODO: Change ok button text after loading a sound or null.
         // TODO: Set "remove sound" visibility accorting to loaded sound (!isLinked).

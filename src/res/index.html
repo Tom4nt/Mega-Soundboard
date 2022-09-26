@@ -30,8 +30,7 @@
 
         <div id="panel-right">
             <div id="soundlist-actions">
-                <button id="soundlist-searchbox-button" class="icon-button">search</button>
-                <input type="search" id="soundlist-searchbox">
+                <ms-searchbox id="searchbox"></ms-searchbox>
                 <button id="add-sound-button" class="icon-button" style="float: right;">add</button>
             </div>
             <ms-soundlist id="soundlist"></ms-soundlist>
@@ -69,7 +68,7 @@
     </div>
 </body>
 
-<script>var exports = {};</script>
+<script>var exports = {};</script> <!-- TODO: Bad -->
 <script type="module">
     require("../dist/index.js")
 </script>

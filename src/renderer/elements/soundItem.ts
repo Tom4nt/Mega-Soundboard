@@ -1,11 +1,20 @@
 import Keys from "../../shared/keys";
+import { UISoundPath } from "../models";
 import { Sound } from "../../shared/models";
+import { MessageModal, SoundModal } from "../modals";
+import MSR from "../msr";
+import Draggable from "./draggable";
+import Utils from "../util/utils";
 
-// TODO: Extend future "DraggableElement"
-export default class SoundItem extends HTMLElement {
+export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
+
+    // eslint-disable-next-line class-methods-use-this
+    protected get classDuringDrag(): string {
+        return "drag";
+    }
 
     constructor(public readonly sound: Sound) {
         super();
@@ -25,33 +34,44 @@ export default class SoundItem extends HTMLElement {
         playingIndicator.classList.add("indicator");
 
         this.update();
-
         this.append(this.titleElement, this.detailsElement, playingIndicator);
 
-        // TODO: Handle on index.ts
+        const handleSoundClick = async (e: MouseEvent): Promise<void> => {
+            if (e.target === playingIndicator) return;
+            try {
+                await MSR.instance.audioManager.playSound(this.sound);
+            } catch (error) {
+                new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
+                await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
+            }
+        };
 
-        // const handleSoundClick = async (e: MouseEvent): Promise<void> => {
-        //     if (e.target === playingIndicator) return;
-        //     try {
-        //         await MS.instance.playSound(this.sound);
-        //     } catch (error) {
-        //         const errorText = typeof error == "string" ? error : "Error";
-        //         new MessageModal("Could not play", errorText, true).open();
-        //         await MS.instance.playUISound(UISoundPath.ERROR);
-        //     }
-        // };
+        this.addEventListener("click", e => void handleSoundClick(e));
 
-        // this.addEventListener("click", e => void handleSoundClick(e));
+        this.addEventListener("auxclick", e => {
+            if (e.button === 1) {
+                MSR.instance.audioManager.stopSound(this.sound.uuid);
+            }
+        });
 
-        // this.addEventListener("auxclick", e => {
-        //     if (e.button === 1) {
-        //         MS.instance.stopSound(this.sound);
-        //     }
-        // });
+        this.addEventListener("contextmenu", () => {
+            const modal = new SoundModal(this.sound);
+            modal.open();
 
-        // playingIndicator.addEventListener("click", () => {
-        //     MS.instance.stopSound(this.sound);
-        // });
+            modal.onSave.addHandler(() => {
+                // TODO: Save on main process. Listen and update here
+            });
+
+            modal.addEventListener("remove", () => {
+                // TODO: Remove on main process. Listen, stop sound and delete this.
+            });
+        });
+
+        playingIndicator.addEventListener("click", () => {
+            MSR.instance.audioManager.stopSound(this.sound.uuid);
+        });
+
+        this.addGlobalListeners();
     }
 
     setPlayingState(playingState: boolean): void {
@@ -67,5 +87,17 @@ export default class SoundItem extends HTMLElement {
     update(): void {
         this.titleElement.innerHTML = this.sound.name;
         this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);
+    }
+
+    private addGlobalListeners(): void {
+        MSR.instance.audioManager.onPlaySound.addHandler(sound => {
+            if (sound.equals(this.sound))
+                this.setPlayingState(true);
+        });
+
+        MSR.instance.audioManager.onStopSound.addHandler(uuid => {
+            if (uuid == this.sound.uuid)
+                this.setPlayingState(false);
+        });
     }
 }

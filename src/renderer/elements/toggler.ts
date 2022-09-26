@@ -4,17 +4,15 @@ import { Event, ExposedEvent } from "../../shared/events";
 export default class Toggler extends HTMLElement {
     private _isOn = false;
     private labelText = "";
-    private infoElement: InfoBalloon | null;
     private containerElement!: HTMLDivElement;
     private pointerElement!: HTMLDivElement;
 
     private _onToggle = new Event<Toggler>();
     public get onToggle(): ExposedEvent<Toggler> { return this._onToggle.expose(); }
 
-    constructor(label: string, infoElement: InfoBalloon | null = null) {
+    constructor(label: string, private infoElement?: InfoBalloon) {
         super();
         this.labelText = label;
-        this.infoElement = infoElement;
     }
 
     protected connectedCallback(): void {

@@ -3,6 +3,9 @@ import { Event, ExposedEvent } from "../../shared/events";
 
 const NO_KEY_DESC = "No Keybind";
 
+// TODO: Handle keybind recording in the main process.
+// Create events like "startRecording" and "stopRecording" here and "keybindRecordingProgress" in the main process.
+
 export default class KeyRecorder extends HTMLElement {
     private labelElement!: HTMLSpanElement;
     private indicatorElement!: HTMLSpanElement;
@@ -66,7 +69,6 @@ export default class KeyRecorder extends HTMLElement {
             } else this.stop();
         };
 
-        // TODO: Replace with preloader events
         // ipcRenderer.on("key.down", this.handleKeyDown);
         // ipcRenderer.on("key.up", this.handleKeyUp);
 
@@ -76,7 +78,6 @@ export default class KeyRecorder extends HTMLElement {
     }
 
     protected disconnectedCallback(): void {
-        // TODO: Replace with preloader events
         // ipcRenderer.removeListener("key.down", this.handleKeyDown);
         // ipcRenderer.removeListener("key.up", this.handleKeyUp);
         this.oncontextmenu = null;
@@ -88,10 +89,7 @@ export default class KeyRecorder extends HTMLElement {
         this.classList.add("recording");
         this.labelElement.innerHTML = "Recording...";
         this.indicatorElement.innerHTML = "Stop recording";
-        // MS.instance.recordingKey = true; // TODO: Check if necessary
-
         this._onStartRecording.raise();
-        // ipcRenderer.send("key.startRecording"); // TODO: Handle key recording via preload
     }
 
     stop(): void {
@@ -100,10 +98,7 @@ export default class KeyRecorder extends HTMLElement {
         this.classList.remove("recording");
         this.labelElement.innerHTML = NO_KEY_DESC;
         this.indicatorElement.innerHTML = "Record keybind";
-        // MS.instance.recordingKey = false; // TODO: Check if necessary
-
         this._onStopRecording.raise();
-        // ipcRenderer.send("key.stopRecording"); // TODO: Handle key recording via preload
     }
 
     setDisplayedKeys(keys: string[]): void {

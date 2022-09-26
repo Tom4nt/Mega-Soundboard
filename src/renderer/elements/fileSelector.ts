@@ -1,7 +1,4 @@
-import { ipcRenderer } from "electron"; // TODO: Remove reference
 import { Event, ExposedEvent } from "../../shared/events";
-import { promises as fs, constants as fsConstants } from "fs"; // TODO: Remove reference.
-import path = require("path"); // TODO: Remove reference.
 
 export default class FileSelector extends HTMLElement {
     readonly hint: string;
@@ -51,13 +48,13 @@ export default class FileSelector extends HTMLElement {
 
     async browseFile(): Promise<void> {
         if (this.type == "file") {
-            const paths = await ipcRenderer.invoke("file.browse", false, this.typeName, this.extensions) as string[];
+            const paths = await window.functions.browseFile(false, this.typeName, this.extensions);
             if (paths.length > 0) {
                 this.value = paths[0];
             }
         }
         else {
-            const path = await ipcRenderer.invoke("folder.browse") as string;
+            const path = await window.functions.browseFolder();
             if (path) this.value = path;
         }
     }
@@ -68,25 +65,5 @@ export default class FileSelector extends HTMLElement {
         setTimeout(() => {
             this.inputElement.classList.remove("warn");
         }, 400);
-    }
-
-    /** Verifies if the path is not empty, the file/folder exists, and if it is within the accepted extensions. */
-    async isPathValid(): Promise<boolean> {
-        try {
-            await fs.access(this.value, fsConstants.F_OK);
-        } catch (error) {
-            return false;
-        }
-
-        const s = await fs.stat(this.value);
-        if (this.type == "file") {
-            if (s.isDirectory()) return false;
-
-            const ext = path.extname(this.value).substring(1);
-            return this.extensions.includes(ext) || this.extensions.length == 0;
-
-        } else {
-            return s.isDirectory();
-        }
     }
 }

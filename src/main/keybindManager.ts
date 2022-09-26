@@ -9,6 +9,12 @@ export enum KeybindManagerEvent {
 }
 
 export default class KeybindManager {
+
+    // TODO
+    // Register global settings keybinds
+    // await KeybindManager.instance.registerAction(MS.instance.settings.stopSoundsKeys, () => MS.instance.stopAllSounds(), "stop-sounds");
+    // await KeybindManager.instance.registerAction(MS.instance.settings.enableKeybindsKeys, () => MS.instance.toggleKeybindsState(), "toggle-keybinds-state");
+
     eventDispatcher = new EventTarget();
 
     lock = false;
@@ -21,9 +27,8 @@ export default class KeybindManager {
     private soundboards: { id: number, soundboard: Soundboard }[] = [];
     private actionIDs: { id: number, code: string }[] = [];
 
-    private static _instance: KeybindManager | null = new KeybindManager();
+    private static _instance: KeybindManager = new KeybindManager();
     static get instance(): KeybindManager {
-        if (!this._instance) throw "KeybindManager was not initialized";
         return this._instance;
     }
     private static set instance(value: KeybindManager) {

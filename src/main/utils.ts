@@ -44,8 +44,33 @@ export default class Utils {
         }
     }
 
+    /** Verifies if the path is not empty, the file/folder exists, and if it is within the accepted extensions. */
+    static async isPathValid(path: PathLike, type: "file" | "folder", validExtensions: string[]): Promise<boolean> {
+        if (! await this.isPathOK(path)) return false;
+
+        const s = await fs.stat(path);
+        if (type == "file") {
+            if (s.isDirectory()) return false;
+
+            const ext = p.extname(path.toString()).substring(1);
+            return validExtensions.includes(ext) || validExtensions.length == 0;
+
+        } else {
+            return s.isDirectory();
+        }
+    }
+
     static objectToMap(object: object): Map<string, unknown> {
         const entries = Object.entries(object);
         return new Map<string, unknown>(entries);
+    }
+
+    static async getMediaDevices(): Promise<MediaDeviceInfo[]> {
+        let devices = await navigator.mediaDevices.enumerateDevices();
+        devices = devices.filter(device =>
+            device.kind == "audiooutput" &&
+            device.deviceId != "communications"
+        );
+        return devices;
     }
 }

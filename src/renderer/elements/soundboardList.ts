@@ -4,19 +4,10 @@ import { Event, ExposedEvent } from "../../shared/events";
 import MSR from "../msr";
 import Utils from "../util/utils";
 
-const DRAG_START_OFFSET = 10;
-
-interface DragInfo {
-    element: SoundboardItem;
-    offsetY: number;
-    initialY: number;
-}
-
 export default class SoundboardList extends HTMLElement {
-    private currentDragInfo: DragInfo | null = null;
+    private selectedItem?: SoundboardItem;
+    private dragElement: SoundboardItem | null = null;
     private dragDummy!: HTMLDivElement;
-    private isMouseDown = false;
-    private canDrag = false;
 
     private readonly _onSelectSoundboard = new Event<Soundboard>();
     get onSelectSoundboard(): ExposedEvent<Soundboard> { return this._onSelectSoundboard.expose(); }
@@ -44,69 +35,41 @@ export default class SoundboardList extends HTMLElement {
         });
 
         MSR.instance.audioManager.onStopSound.addHandler(s => {
-            if (!s.connectedSoundboard) return;
-            const elem = this.getSoundboardElement(s.connectedSoundboard);
+            const sb = this.getSelectedSoundboard();
+            if (!sb) return;
+            const sound = sb.sounds.find(x => x.uuid = s);
+            if (!sound) return;
+            const elem = this.getSoundboardElement(sb);
             elem?.updatePlayingIndicator(-1);
         });
-
-        MSR.instance.audioManager.onStopAllSounds.addHandler(() => this.setAllPlayingIndicators(false));
 
         this.onmousedown = (e): boolean => {
             if (e.button === 1) return false;
             return true;
         };
 
-        document.addEventListener("mousemove", (e) => this.mouseMove(e));
-        document.addEventListener("mouseup", () => this.mouseUp());
+        this.addEventListener("dragover", this.handleDragOver);
+    }
+
+    getSelectedSoundboard(): Soundboard | null {
+        if (this.selectedItem)
+            return this.selectedItem.soundboard;
+        return null;
     }
 
     addSoundboard(soundboard: Soundboard): void {
         const sbElement = new SoundboardItem(soundboard);
-        sbElement.addEventListener("mousedown", (e) => this.itemMouseDown(e, sbElement));
+        sbElement.addEventListener("dragstart", () => {
+            this.dragElement = sbElement;
+            this.showDragDummy();
+        });
 
-        // TODO: Business logic should not be handled here.
+        sbElement.addEventListener("dragend", this.handleDrop);
 
         sbElement.addEventListener("click", () => {
             if (!sbElement.isSelected) {
                 this.select(sbElement.soundboard);
             }
-        });
-
-        sbElement.addEventListener("auxclick", (e) => {
-            if (e.button === 1) {
-                // TODO: Raise event
-                // MSR.instance.audioManager.stopSounds(sbElement.soundboard);
-            }
-        });
-
-        sbElement.addEventListener("contextmenu", () => {
-            // TODO: Raise event
-            // const editModal = new SoundboardModal(SoundboardModal.Mode.EDIT, item.soundboard, MS.data.soundboards.length < 2);
-            // editModal.open();
-            // editModal.addEventListener("edit", (e) => {
-            //     item.soundboard = e.detail.soundboard;
-            //     KeybindManager.registerSoundboardn(item.soundboard);
-            //     this.updateElements(item);
-            //     item.soundboard.removeFolderListener();
-            //     if (item.soundboard.linkedFolder) {
-            //         item.soundboard.updateFolderSounds();
-            //         item.soundboard.setupFolderListener();
-            //         if (MS.getSelectedSoundboard() === item.soundboard) this.select(item);
-            //     }
-            //     MS.data.save();
-            // });
-
-            // editModal.addEventListener("remove", (e) => {
-            //     item.remove();
-            //     MS.data.removeSoundboard(e.detail.soundboard);
-            //     if (!MS.getSelectedSoundboard()) {
-            //         MS.setSelectedSoundboard(0);
-            //         this.selectSoundboardAt(0);
-            //     } else {
-            //         this.selectSoundboardAt(MS.settings.selectedSoundboard);
-            //     }
-            //     MS.data.save();
-            // });
         });
 
         this.appendChild(sbElement);
@@ -115,12 +78,12 @@ export default class SoundboardList extends HTMLElement {
     select(soundboard: Soundboard): void {
         let selected = false;
         for (const item of this.getItems()) {
-            item.isSelected = item.soundboard.equals(soundboard);
-            selected = true;
+            if (item.soundboard.equals(soundboard)) {
+                this.selectItem(item);
+                selected = true;
+            }
         }
-        if (selected)
-            this._onSelectSoundboard.raise(soundboard);
-        else {
+        if (!selected) {
             this.selectSoundboardAt(0);
         }
     }
@@ -135,6 +98,19 @@ export default class SoundboardList extends HTMLElement {
         const elem = this.getSoundboardElement(soundboard);
         if (!elem) return;
         elem.updatePlayingIndicator(increment);
+    }
+
+    private hideDragDummy(): void {
+        this.dragDummy.style.display = "";
+    }
+
+    private showDragDummy(): void {
+        this.dragDummy.style.display = "inline-block";
+    }
+
+    private selectItem(item: SoundboardItem): void {
+        item.isSelected = true;
+        this._onSelectSoundboard.raise(item.soundboard);
     }
 
     /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
@@ -152,93 +128,34 @@ export default class SoundboardList extends HTMLElement {
         }
     }
 
-    //#region Drag Functions
+    // Handlers
 
-    private itemMouseDown(e: MouseEvent, item: SoundboardItem): void {
-        if (e.button != 0) return;
+    private handleDragOver = (e: DragEvent): void => {
+        const target = document.elementFromPoint(this.getBoundingClientRect().x, e.clientY);
 
-        let offsetY = e.offsetY;
-        if (e.target instanceof HTMLElement && !e.target.classList.contains("item")) {
-            offsetY = e.offsetY + e.target.offsetTop;
-        }
+        if (!target) return;
+        if (!(target instanceof SoundboardItem)) return;
 
-        offsetY = offsetY + parseInt(getComputedStyle(item).marginTop);
-
-        this.currentDragInfo = { element: item, offsetY: offsetY, initialY: e.clientY };
-        this.isMouseDown = true;
-    }
-
-    private mouseMove(e: MouseEvent): void {
-        const d = this.currentDragInfo;
-        if (!d) return;
-        if ((Math.abs(d.initialY - e.clientY) > DRAG_START_OFFSET || this.canDrag) && this.isMouseDown) {
-            if (!this.canDrag) {
-                d.element.style.width = `${d.element.offsetWidth}px`;
-
-                d.element.style.position = "fixed";
-                d.element.style.pointerEvents = "none";
-
-                d.element.style.top = `${e.clientY - d.offsetY}px`;
-                d.element.style.zIndex = "1";
-
-                this.insertBefore(this.dragDummy, d.element.nextSibling);
-                this.dragDummy.style.display = "inline-block";
-                this.canDrag = true;
+        if (this.dragElement) {
+            if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
+                this.insertBefore(this.dragDummy, target);
+            } else {
+                this.insertBefore(this.dragDummy, target.nextElementSibling);
             }
-
-            d.element.classList.add("drag");
-            d.element.style.top = `${e.clientY - d.offsetY}px`;
-            let curr = document.elementFromPoint(d.element.getBoundingClientRect().x, e.clientY);
-            if (curr) {
-                if (curr.parentElement === this || curr.parentElement?.parentElement === this) {
-                    if (curr.parentElement.parentElement === this) curr = curr.parentElement;
-                    if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(curr)) {
-                        this.insertBefore(this.dragDummy, curr);
-                    } else {
-                        this.insertBefore(this.dragDummy, curr.nextElementSibling);
-                    }
-                }
-            }
+        } else {
+            this.selectItem(target);
         }
-    }
+    };
 
-    private mouseUp(): void {
-        this.isMouseDown = false;
-        const d = this.currentDragInfo;
-        if (!d) return;
-        if (this.canDrag) {
-            d.element.style.position = "";
-            this.insertBefore(d.element, this.dragDummy.nextElementSibling);
-            void d.element.offsetWidth; // Trigger Reflow
-            d.element.classList.remove("drag");
-            d.element.style.pointerEvents = "";
-            d.element.style.width = "";
-            d.element.style.top = "";
-            d.element.style.zIndex = "";
-            this.currentDragInfo = null;
-            this.dragDummy.style.display = "none";
-            this.canDrag = false;
-            const currIndex = Utils.getElementIndex(d.element);
-            const newIndex = Utils.getElementIndex(this.dragDummy) - 1;
-            if (currIndex != newIndex) {
-                // TODO: Call Reorder
-                // void SoundboardList.reorder(this.startDragIndex, newIndex);
-            }
-        }
-    }
+    private handleDrop = (): void => {
+        const sb = this.getSelectedSoundboard();
+        if (!this.dragElement || !sb) return;
 
-    // TODO: This shouldn't be here.
-    // private static async reorder(oldIndex: number, newIndex: number): Promise<void> {
-    //     const sb = MS.instance.data.soundboards[oldIndex];
-    //     const selectedSB = MS.instance.getSelectedSoundboard();
+        this.insertBefore(this.dragElement, this.dragDummy.nextElementSibling);
+        const newIndex = Utils.getElementIndex(this.dragElement);
 
-    //     MS.instance.data.soundboards.splice(oldIndex, 1);
-    //     MS.instance.data.soundboards.splice(newIndex, 0, sb);
+        window.actions.moveSoundboard(sb.uuid, newIndex);
 
-    //     MS.instance.setSelectedSoundboard(selectedSB);
-    //     await MS.instance.data.save();
-    //     await MS.instance.settings.save();
-    // }
-
-    //#endregion
+        this.hideDragDummy();
+    };
 }

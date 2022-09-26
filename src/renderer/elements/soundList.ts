@@ -1,50 +1,16 @@
-import { Sound, Soundboard } from "../../shared/models";
-import { DefaultModals, MultiSoundModal, SoundModal } from "../modals";
+import { Sound } from "../../shared/models";
 import { SoundItem } from "../elements";
 import Utils from "../util/utils";
-import { Event, ExposedEvent } from "../../shared/events";
 
 const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
-const DRAG_START_OFFSET = 10;
-
-type DragStateInfo = {
-    offsetX: number,
-    offsetY: number,
-    initialX: number,
-    initialY: number,
-}
-
-type MoveRequestArgs = {
-    sound: Sound,
-    newSoundboard: Soundboard,
-    newIndex: number,
-}
 
 export default class SoundList extends HTMLElement {
-    sounds: Sound[] = [];
-
-    get onMoveRequest(): ExposedEvent<MoveRequestArgs> { return this._onMoveRequest.expose(); }
-    _onMoveRequest = new Event<MoveRequestArgs>();
-
+    private currentSoundboardId?: string;
     private dragElement: SoundItem | null = null;
     private infoElement!: HTMLSpanElement;
     private containerElement!: HTMLDivElement;
     private dragDummyElement!: HTMLDivElement;
-    private dragStateInfo: DragStateInfo | null = null;
-    private canDrag = false;
-    private isDragging = false;
-
-    public canAdd = true;
-
-    private _filter = "";
-    get filter(): string {
-        return this._filter;
-    }
-    set filter(text: string) {
-        this._filter = text;
-        this.filterSounds(this.sounds);
-    }
 
     protected connectedCallback(): void {
         const infoSpan = document.createElement("span");
@@ -64,75 +30,59 @@ export default class SoundList extends HTMLElement {
 
         this.append(infoSpan, itemsContainer);
 
-        document.addEventListener("mousemove", (e) => this.onMouseMove(e));
-        document.addEventListener("mouseup", () => this.onMouseUp());
+        window.events.onSoundAdded.addHandler(e => {
+            this.addSound(e.sound, e.index);
+        });
 
-        this.onmousedown = (e): boolean => {
-            if (e.button === 1) return false;
-            return true;
-        };
-
-        // TODO: Handle events on index.ts.
-        // MSR.instance.audioManager.onPlaySound.addHandler(sound => {
-        //     const elem = this.getSoundElement(sound);
-        //     elem?.setPlayingState(true);
-        // });
-
-        // MSR.instance.audioManager.onStopSound.addHandler(sound => {
-        //     const elem = this.getSoundElement(sound);
-        //     elem?.setPlayingState(false);
-        // });
-
-        // MSR.instance.audioManager.onStopAllSounds.addHandler(() => {
-        //     for (let i = 0; i < this.containerElement.childElementCount; i++) {
-        //         const elem = this.containerElement.childNodes[i];
-        //         if (elem instanceof SoundItem) elem.setPlayingState(false);
-        //     }
-        // });
+        window.events.onSoundRemoved.addHandler(s => {
+            this.removeSound(s);
+        });
     }
 
-    addSound(sound: Sound, index: number | null = null): void {
+    loadSounds(sounds: Sound[], soundboardUuid: string): void {
+        this.currentSoundboardId = soundboardUuid;
+        this.clear();
+        for (const sound of sounds) {
+            this.addSound(sound);
+        }
+    }
+
+    startDrag(): void {
+        this.addEventListener("mousemove", this.handleMouseMove);
+        this.dragDummyElement.style.display = "inline-block";
+    }
+
+    /** Returns the index of the element being dragged over the list. */
+    stopDrag(): number {
+        this.removeEventListener("mousemove", this.handleMouseMove);
+        this.dragDummyElement.style.display = "";
+        return this.getDragElementIndex();
+    }
+
+    filter(filter: string): void {
+        this.infoElement.style.display = "none";
+        let hasSounds = false;
+        for (const soundItem of this.getSoundItems()) {
+            let isValid = !filter || soundItem.sound.name.toLowerCase().includes(filter.toLowerCase());
+            isValid = isValid && (!this.dragElement || soundItem != this.dragElement); // Is not the current drag element
+
+            if (isValid) hasSounds = true;
+            soundItem.style.display = isValid ? "" : "none";
+        }
+        if (!hasSounds) this.displayEmptyMessage(SEARCH_EMPTY);
+    }
+
+    // --- // ---
+
+    private addSound(sound: Sound, index?: number): void {
         const item = new SoundItem(sound);
 
-        item.addEventListener("contextmenu", () => {
-            // TODO: handle on index.ts
-            // const modal = new SoundModal(sound);
-            // modal.open();
-
-            // modal.onSave.addHandler(() => {
-            //     item.update();
-            //     void KeybindManager.instance.registerSound(sound);
-            //     void MS.instance.data.save();
-            // });
-
-            // modal.addEventListener("remove", () => {
-            //     item.remove();
-            //     MS.instance.stopSound(sound);
-            //     if (!this.hasSounds()) this.displayNoSoundsMessage(NO_SOUNDS);
-            //     void KeybindManager.instance.unregisterSound(sound);
-            //     MS.instance.getSelectedSoundboard().removeSound(sound);
-            //     void MS.instance.data.save();
-            // });
-        });
-
-        item.addEventListener("mousedown", (e) => {
-            if (e.button != 0) return;
+        item.addEventListener("dragstart", () => {
             this.dragElement = item;
-
-            let offsetY = e.offsetY;
-            let offsetX = e.offsetX;
-            if (e.target instanceof HTMLElement && !e.target.classList.contains("item")) {
-                offsetY = e.offsetY + e.target.offsetTop;
-                offsetX = e.offsetX + e.target.offsetLeft;
-            }
-
-            this.dragStateInfo = {
-                offsetX: offsetX + parseInt(getComputedStyle(item).marginLeft),
-                offsetY: offsetY + parseInt(getComputedStyle(item).marginTop),
-                initialX: e.clientX,
-                initialY: e.clientY,
-            };
+            this.startDrag();
         });
+
+        item.addEventListener("dragend", () => this.handleDrop);
 
         if (!index) {
             this.containerElement.append(item);
@@ -142,55 +92,51 @@ export default class SoundList extends HTMLElement {
         }
     }
 
-    removeSound(sound: Sound): void {
-        for (let i = 0; i < this.containerElement.childElementCount; i++) {
-            const item = this.containerElement.children[i];
-            if (item instanceof SoundItem && item.sound === sound) {
-                item.remove();
-                if (!this.hasSounds()) this.displayNoSoundsMessage(NO_SOUNDS);
+    private removeSound(sound: Sound): void {
+        for (const item of this.getSoundItems()) {
+            if (item instanceof SoundItem && item.sound.equals(sound)) {
+                this.removeSoundItem(item);
                 return;
             }
         }
     }
 
-    setSounds(sounds: Sound[]): void {
-        this.sounds = sounds;
-        if (sounds.length < 1) {
-            this.clear();
-            return;
-        } else {
-            this.filterSounds(sounds);
+    private clear(): void {
+        for (const item of this.getSoundItems()) {
+            this.removeSoundItem(item);
         }
     }
 
-    hasSounds(): boolean {
+    private hasSounds(): boolean {
         return this.containerElement.childElementCount > 1; // Drag dummy doesn't count
     }
 
-    // TODO: Change to generic dragHandle and use it for sound drag too
-    handleFileDrag(e: DragEvent): void {
-        if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
+    private removeSoundItem(element: SoundItem): void {
+        element.remove();
+        if (!this.hasSounds()) this.displayEmptyMessage(NO_SOUNDS);
+    }
 
-        // TODO: Check on index.ts
-        // Is there any compatible sound file?
-        let valid = false;
-        for (let i = 0; i < e.dataTransfer.items.length; i++) {
-            const item = e.dataTransfer.items[i];
-            if (SoundList.isFileTypeCompatible(item.type)) {
-                valid = true;
-                break;
-            }
+    private getDragElementIndex(): number {
+        if (!this.dragElement) return 0;
+        return Utils.getElementIndex(this.dragElement) - 1;
+    }
+
+    private displayEmptyMessage(message: string): void {
+        if (!message) this.infoElement.style.display = "none";
+        this.infoElement.style.display = "";
+        this.infoElement.innerHTML = message;
+    }
+
+    private * getSoundItems(): Generator<SoundItem> {
+        for (const element of this.containerElement.children) {
+            if (element instanceof SoundItem) yield element;
         }
+    }
 
-        if (!valid) return;
+    // Handlers
 
-        this.isDragging = true;
+    private handleMouseMove = (e: MouseEvent): void => {
         const targetElement = document.elementFromPoint(e.clientX, e.clientY);
-
-        if (!this.canDrag && this.canAdd) {
-            this.dragDummyElement.style.display = "inline-block";
-            this.canDrag = true;
-        }
 
         if (!targetElement) return;
         if (!(targetElement instanceof SoundItem)) return;
@@ -200,234 +146,17 @@ export default class SoundList extends HTMLElement {
         } else {
             this.containerElement.insertBefore(this.dragDummyElement, targetElement.nextElementSibling);
         }
+    };
 
-        // TODO: Soundboard list should handle this.
-        // if (targetElement.parentElement?.id == "soundboardlist") {
-        //     let soundboard = targetElement.soundboard;
-        //     if (!soundboard.linkedFolder) {
-        //         this.dispatchEvent(new CustomEvent("soundboardselect", { detail: { soundboard } }));
-        //     }
-        // }
-    }
+    private handleDrop = (): void => {
+        if (!this.dragElement || !this.currentSoundboardId) return;
 
-    endFileDrag(e: DragEvent): void {
-        this.isDragging = false;
-        this.canDrag = false;
-        this.dragDummyElement.style.display = "";
+        this.containerElement.insertBefore(this.dragElement, this.dragDummyElement.nextElementSibling);
+        const newIndex = this.getDragElementIndex();
 
-        if (!e.dataTransfer) { // Ends without adding sound(s)
-            console.log("File(s) dragging cancelled");
-            return;
-        }
+        window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
 
-        // Is there any compatible sound file?
-        const paths = [];
-        for (let i = 0; i < e.dataTransfer.files.length; i++) {
-            const item = e.dataTransfer.files[i];
-            if (SoundList.isFileTypeCompatible(item.type)) {
-                paths.push(item.path);
-            }
-        }
-
-        console.log(paths);
-
-        if (paths.length < 1) return;
-
-        // const currentSoundboard = MS.instance.getSelectedSoundboard();
-        // if (currentSoundboard.linkedFolder) {
-        //     DefaultModals.errSoundboardIsLinked(currentSoundboard.linkedFolder).open();
-        //     return;
-        // }
-
-        // const index = Utils.getElementIndex(this.dragDummyElement);
-
-        // TODO: Handle on index.ts
-        // if (paths.length == 1) {
-        //     const soundPath = e.dataTransfer.files[0].path;
-        //     const name = Utils.getNameFromFile(soundPath);
-        //     const newSound = new Sound(name, soundPath, 100, []);
-        //     newSound.connectToSoundboard(currentSoundboard);
-        //     const soundModal = new SoundModal(newSound);
-        //     soundModal.open(this); // TODO: Use Modal Manager.
-        //     soundModal.onSave.addHandler((sound) => { // TODO: Handle elsewhere.
-        //         void KeybindManager.instance.registerSound(sound);
-        //         currentSoundboard.addSound(sound, index);
-        //         this.addSound(sound, index);
-        //         void MS.instance.data.save();
-        //     });
-
-        // } else {
-        //     const soundsModal = new MultiSoundModal(paths);
-        //     soundsModal.open();
-        //     soundsModal.onAdded.addHandler((sounds) => { // TODO: Handle elsewhere.
-        //         for (let i = 0; i < sounds.length; i++) {
-        //             const sound = sounds[i];
-        //             sound.connectToSoundboard(currentSoundboard);
-        //             void KeybindManager.instance.registerSound(sound);
-        //             currentSoundboard.addSound(sound, index + i);
-        //             this.addSound(sound, index + i);
-        //         }
-        //         void MS.instance.data.save();
-        //     });
-        // }
-    }
-
-    // TODO: Move this.
-    private static isFileTypeCompatible(type: string): boolean {
-        return type === "audio/mpeg" || type === "audio/ogg" || type === "audio/wav";
-    }
-
-    private filterSounds(sounds: Sound[]): void {
-        if (!sounds.length) {
-            this.displayNoSoundsMessage(NO_SOUNDS);
-            return;
-        }
-        this.removeAll();
-        this.infoElement.style.display = "none";
-        let hasSounds = false;
-        for (const sound of sounds) {
-            if (!this.filter || sound.name.toLowerCase().includes(this.filter.toLowerCase())) {
-                if (!this.canDrag || (!this.dragElement || sound != this.dragElement.sound)) {
-                    this.addSound(sound);
-                    hasSounds = true;
-                }
-            }
-        }
-
-        // TODO: Do not destroy elements. Move them so the state is preserved.
-        // this.updatePlayingStates();
-        if (!hasSounds && !this.canDrag) this.displayNoSoundsMessage(SEARCH_EMPTY);
-    }
-
-    clear(): void {
-        if (!this.canDrag) this.displayNoSoundsMessage(NO_SOUNDS);
-        this.removeAll();
-    }
-
-    private removeAll(): void {
-        const count = this.containerElement.children.length;
-        for (let i = count - 1; i >= 0; i--) {
-            const elem = this.containerElement.children.item(i);
-            if (elem instanceof SoundItem) elem.remove();
-        }
-    }
-
-    private displayNoSoundsMessage(message: string): void {
-        if (!message) this.infoElement.style.display = "none";
-        this.infoElement.style.display = ""; // Default display
-        this.infoElement.innerHTML = message;
-    }
-
-    /** Returns an element from the list for a specified sound. Returns null if the element is not found. */
-    private getSoundElement(sound: Sound): SoundItem | null {
-        for (let i = 0; i < this.containerElement.childElementCount; i++) {
-            const node = this.containerElement.childNodes[i];
-            if (node instanceof SoundItem && node.sound.equals(sound)) return node;
-        }
-        return null;
-    }
-
-    // TODO: Update from index.ts for individual sounds and send parameter for state.
-    // private updatePlayingStates(): void {
-    // const playing = MS.instance.playingSounds;
-    // for (let i = 0; i < playing.length; i++) {
-    //     const elem = this.getSoundElement(playing[i]);
-    //     if (elem) elem.setPlayingState(true);
-    // }
-    // }
-
-    private onMouseMove(e: MouseEvent): void {
-        const d = this.dragElement;
-        const i = this.dragStateInfo;
-        if (!d || !i) return;
-        if ((Math.abs(i.initialX - e.clientX) > DRAG_START_OFFSET || Math.abs(i.initialY - e.clientY) > DRAG_START_OFFSET || this.canDrag) && this.isDragging) {
-            if (!this.canDrag) {
-                d.style.width = `${d.offsetWidth}px`;
-
-                d.style.position = "fixed";
-                d.style.pointerEvents = "none";
-
-                d.style.top = `${e.clientY - i.offsetY}px`;
-                d.style.left = `${e.clientX - i.offsetX}px`;
-
-                d.style.zIndex = "1";
-
-                this.containerElement.insertBefore(this.dragDummyElement, d.nextSibling);
-                this.dragDummyElement.style.display = "inline-block";
-                this.canDrag = true;
-            }
-
-            d.classList.add("drag");
-            d.style.top = `${e.clientY - i.offsetY}px`;
-            d.style.left = `${e.clientX - i.offsetX}px`;
-            const curr = document.elementFromPoint(e.clientX, e.clientY);
-            if (curr && curr instanceof SoundItem) {
-                if (Utils.getElementIndex(this.dragDummyElement) > Utils.getElementIndex(curr)) {
-                    this.containerElement.insertBefore(this.dragDummyElement, curr);
-                } else {
-                    this.containerElement.insertBefore(this.dragDummyElement, curr.nextElementSibling);
-                }
-
-                // TODO: Soundboard list should handle this.
-                // if (curr.parentElement.id == "soundboardlist" && !this.blockAdd) {
-                //     let soundboard = curr.soundboard;
-                //     if (!soundboard.linkedFolder) this.dispatchEvent(new CustomEvent("soundboardselect", { detail: { soundboard } }));
-                // }
-            }
-        }
-    }
-
-    private onMouseUp(): void {
-        this.isDragging = false;
-        const d = this.dragElement;
-        const i = this.dragStateInfo;
-        if (!i || !d || !this.canDrag) return;
-
-        d.style.position = "";
-        this.containerElement.insertBefore(d, this.dragDummyElement.nextElementSibling);
-        void d.offsetWidth; // Triggers Reflow
-        d.classList.remove("drag");
-        d.style.pointerEvents = "";
-        d.style.width = "";
-        d.style.top = "";
-        d.style.left = "";
-        d.style.zIndex = "";
         this.dragElement = null;
-        this.dragDummyElement.style.display = "none";
-        this.canDrag = false;
-        // const newIndex = Utils.getElementIndex(d) - 1;
-        // TODO: Raise sound move request event
-        // if (i.initialSoundIndex != newIndex || !i.initialSoundboard.equals(MS.instance.getSelectedSoundboard())) {
-        //     SoundList.reorderSound(i.initialSoundIndex, newIndex, i);
-        // }
-    }
-
-    // TODO: Remake and move to main process
-    // private static reorderSound(oldIndex: number, newIndex: number, dragInfo: DragStateInfo): void {
-    //     const currSB = MS.instance.getSelectedSoundboard();
-    //     const initSBSounds = dragInfo.initialSoundboard.sounds;
-    //     const currSBSounds = currSB.sounds;
-    //     const sound = initSBSounds[oldIndex];
-
-    //     initSBSounds.splice(oldIndex, 1);
-    //     currSBSounds.splice(newIndex, 0, sound);
-
-    //     // Register keybind again if it's a different soundboard
-    //     if (!dragInfo.initialSoundboard.equals(currSB)) {
-    //         sound.connectToSoundboard(currSB);
-    //         void KeybindManager.instance.registerSound(sound);
-    //     }
-
-    //     void MS.instance.data.save();
-
-    //     this.dispatchEvent(new CustomEvent("reorder", {
-    //         detail: {
-    //             sound,
-    //             oldIndex,
-    //             newIndex,
-    //             oldSoundboard: this.initialSoundboard,
-    //             newSoundboard: MS.getSelectedSoundboard()
-    //         }
-    //     }));
-    // }
+        this.stopDrag();
+    };
 }

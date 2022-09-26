@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
-import Utils from "./utils";
 import * as p from "path";
+import Utils from "./utils";
 import { Event, ExposedEvent } from "../shared/events";
 
 export default class FolderWatcher {
@@ -35,7 +35,7 @@ export default class FolderWatcher {
         this.abortFlag = true;
     }
 
-    // TODO: Use some kind of Local data manager to change sounds in the soundboard.
+    // TODO: Update sounds in a soundboard
     // async syncSounds(): Promise<void> {
     //     await this.verifyFolder();
 

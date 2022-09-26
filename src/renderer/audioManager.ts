@@ -1,108 +1,110 @@
 import { Event, ExposedEvent } from "../shared/events";
-import { Sound, UISoundPath } from "src/shared/models";
+import { Sound } from "src/shared/models";
+import { UISoundPath } from "./models";
+import { IDevice } from "../shared/interfaces";
 
-type StringDictionary = { [index: string]: string };
-
-const MSG_ERR_NOT_SUPPORTED = "Could not play the sound. The file is not supported, malformed or corrupted.";
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
 export default class AudioManager {
-    volume1 = 100;
-    volume2 = 100;
-    device1 = "default";
-    device2: string | null = null; // TODO: Listen to preload events and update volumes and devices
+    devices: IDevice[] = [{ id: "default", volume: 100 }];
+    overlapSounds = false;
 
     private uiMediaElement = new Audio();
 
     get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
     readonly _onPlaySound = new Event<Sound>();
 
-    get onStopSound(): ExposedEvent<Sound> { return this._onStopSound.expose(); }
-    readonly _onStopSound = new Event<Sound>();
+    get onStopSound(): ExposedEvent<string> { return this._onStopSound.expose(); }
+    readonly _onStopSound = new Event<string>();
 
-    get onStopAllSounds(): ExposedEvent<void> { return this._onStopAllSounds.expose(); }
-    readonly _onStopAllSounds = new Event<void>();
-
-    playingSounds: StringDictionary = {}; // TODO: Make Sounds use UUIDs (key). Sound path is the value.
+    playingSounds = new Map<string, HTMLAudioElement[]>;
 
     constructor() {
         window.events.onKeybindsStateChanged.addHandler(s => {
             if (s) void this.playUISound(UISoundPath.ON);
             else void this.playUISound(UISoundPath.OFF);
         });
+
+        window.events.onOverlapSoundsStateChanged.addHandler(s => {
+            this.overlapSounds = s;
+        });
+
+        window.events.onDevicesChanged.addHandler(devices => {
+            this.devices = devices;
+        });
     }
 
     async playSound(sound: Sound): Promise<void> {
-        // if (!this.settings.overlapSounds) this.stopAllSounds(); // TODO
+        if (!this.overlapSounds) this.stopAllSounds();
 
-        // TODO: Catch Audio error instead.
-        // if (!fs.existsSync(url)) {
-        //     throw `'${url}' could not be found. If the file exists make sure Mega Soundboard has permission to access it.`;
-        // }
-        const audio1 = new Audio(sound.path);
-        const audio2 = new Audio(sound.path);
-
-        console.log(`Added and playing 2 instances of sound at ${sound.name}.`);
-
-        // TODO: Use UUIDs to check if a sound is playing and raise event.
-
-        audio1.addEventListener("ended", () => {
-            // this.mediaElements.splice(this.mediaElements.indexOf(sound), 1);
-            // if (this.mediaElements.length < 1) {
-            console.log(`All instances of ${sound.name} finished playing.`);
-            // this._onStopSound.raise()
-            // }
-        });
-
-        audio2.addEventListener("ended", () => {
-            // this.mediaElements.splice(this.mediaElements.indexOf(sound2), 1);
-            // if (this.mediaElements.length < 1) {
-            console.log(`All instances of ${sound.name} finished playing.`);
-            // onend(this);
-            // }
-        });
-
-        if (!sound.connectedSoundboard) throw MSG_ERR_NOT_CONNECTED;
+        if (!sound.connectedSoundboard) throw Error(MSG_ERR_NOT_CONNECTED);
         const soundboardVolume = sound.connectedSoundboard.volume;
 
-        audio1.volume = Math.pow((this.volume1 / 100) * (sound.volume / 100) * (soundboardVolume / 100), 2);
-        audio2.volume = Math.pow((this.volume2 / 100) * (sound.volume / 100) * (soundboardVolume / 100), 2);
+        const sinkIdPromises: Promise<void>[] = [];
+        const audioElements: HTMLAudioElement[] = [];
 
-        const p1 = audio1.setSinkId(this.device1).catch(() => { console.error("Device 1 was not found."); });
-        let p2 = Promise.resolve();
-        if (this.device2) p2 = audio2.setSinkId(this.device2).catch(() => { console.error("Device 2 was not found."); });
+        for (const device of this.devices) {
+            const audio = new Audio(sound.path);
 
-        await Promise.all([p1, p2]);
-
-        const playTask1 = audio1.play().catch(() => {
-            throw MSG_ERR_NOT_SUPPORTED;
-        });
-        const playTasks = [playTask1];
-
-        // this.mediaElements.push(sound, sound2);
-
-        if (this.device2) {
-            const playTask2 = audio2.play().catch(() => {
-                throw MSG_ERR_NOT_SUPPORTED;
+            audio.addEventListener("ended", () => {
+                const instances = this.playingSounds.get(sound.uuid);
+                instances?.splice(instances.indexOf(audio), 1);
+                if (instances && instances.length <= 0) {
+                    console.log(`All instances of ${sound.name} finished playing.`);
+                    this._onStopSound.raise(sound.uuid);
+                }
             });
-            playTasks.push(playTask2);
-        } else {
-            // this.mediaElements.splice(this.mediaElements.indexOf(audio2), 1);
+
+            audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100) * (soundboardVolume / 100), 2);
+            const p = audio.setSinkId(device.id).catch(() => { console.error(`Error setting SinkId for ${device.id}.`); });
+            sinkIdPromises.push(p);
+            audioElements.push(audio);
+        }
+
+        console.log(`Added and playing ${this.devices.length} instances of sound at ${sound.name}.`);
+        await Promise.all(sinkIdPromises);
+
+        const playTasks: Promise<void>[] = [];
+        for (const audioElement of audioElements) {
+            const t = audioElement.play();
+            playTasks.push(t);
         }
 
         await Promise.all(playTasks);
+
+        const instances = this.playingSounds.get(sound.uuid);
+        if (!instances) {
+            this.playingSounds.set(sound.uuid, audioElements);
+        } else {
+            instances.push(...audioElements);
+        }
+
+        this._onPlaySound.raise(sound);
     }
 
     stopSound(uuid: string): void {
-        const playing = this.playingSounds[uuid];
-        if (playing) {
-            // TODO: Stop media elements (both devices) and remove item. Fire event
+        const instances = this.playingSounds.get(uuid);
+        if (instances) {
+            for (const instance of instances) {
+                instance.pause();
+            }
+            this.playingSounds.set(uuid, []);
+            console.log(`Stopped all instances of sound with UUID ${uuid}.`);
+            this._onStopSound.raise(uuid);
         }
-        console.log(`Stopped all instances of sound with UUID ${uuid}.`);
+    }
+
+    stopSounds(uuids: Iterable<string>): void {
+        for (const sound of uuids) {
+            this.stopSound(sound);
+        }
     }
 
     stopAllSounds(): void {
-        // TODO: Iterate through playing sounds and call stopSound on each one
+        for (const playingSound of this.playingSounds) {
+            const id = playingSound[0];
+            this.stopSound(id);
+        }
     }
 
     async playUISound(path: UISoundPath): Promise<void> {

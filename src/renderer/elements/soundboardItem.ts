@@ -1,8 +1,11 @@
 import Keys from "../../shared/keys";
 import { Soundboard } from "../../shared/models";
+import MSR from "../msr";
+import Actions from "../util/actions";
 import TooltipWrapper from "../util/tooltipWrapper";
+import Draggable from "./draggable";
 
-export default class SoundboardItem extends HTMLElement {
+export default class SoundboardItem extends Draggable {
     private indicatorElement!: HTMLDivElement;
     private titleElement!: HTMLSpanElement;
     private descriptionElement!: HTMLSpanElement;
@@ -42,9 +45,27 @@ export default class SoundboardItem extends HTMLElement {
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
         icon.classList.add("icon");
 
+        this.addListeners();
         new TooltipWrapper(icon, "top", "This soundboard is linked to a folder");
 
         this.append(indicator, title, desc, icon);
+    }
+
+    private addListeners(): void {
+        this.addEventListener("auxclick", (e) => {
+            if (e.button === 1) {
+                MSR.instance.audioManager.stopSounds(this.soundboard.sounds.map(x => x.uuid));
+            }
+        });
+
+        this.addEventListener("contextmenu", () => {
+            Actions.editSoundboard(this.soundboard);
+        });
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    protected get classDuringDrag(): string {
+        return "drag";
     }
 
     updateElements(): void {

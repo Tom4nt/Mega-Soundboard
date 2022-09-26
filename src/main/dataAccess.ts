@@ -1,32 +1,59 @@
-import { Sound, Soundboard } from "../shared/models";
+import { app } from "electron";
+import * as p from "path";
 import Utils from "./utils";
+import { Settings, Sound, Soundboard } from "../shared/models";
 import { promises as fs, constants as fsc } from "fs";
 
-const savePath = ""; // TODO -> ipcRenderer.sendSync("get.savePath") as string;
-const dataPath = savePath + "\\Soundboards.json";
+const savePath = p.join(app.getPath("appData"), "\\MegaSoundboard");
+const soundboardsPath = p.join(savePath, "\\Soundboards.json");
+const settingsPath = p.join(savePath, "\\Settings.json");
 
-export default class LocalDataManager {
+export default class DataAccess {
     static async getSoundboardsFromSaveFile(): Promise<Soundboard[]> {
-        const data = await this.readData();
+        const data = await this.readSoundboardsData();
         if (Array.isArray(data.get("soundboards"))) {
-            return LocalDataManager.getSoundboards(data.get("soundboards") as unknown[]);
+            return DataAccess.getSoundboards(data.get("soundboards") as unknown[]);
         }
         else {
             throw Error("Could not load data from JSON save file. There must be an array named \"soundboards\" at the root.");
         }
     }
 
-    private static async readData(): Promise<Map<string, unknown>> {
+    private static async getSettings(): Promise<Settings> {
+        const settings = new Settings();
+
+        const hasAcess = await Utils.isPathOK(settingsPath);
+        if (hasAcess) {
+            const JSONtext = await fs.readFile(settingsPath, "utf-8");
+            const jsonData = JSON.parse(JSONtext) as Map<string, unknown>;
+            Object.assign(settings, jsonData);
+        }
+        return settings;
+    }
+
+    static async saveSettings(settings: Settings): Promise<void> {
+        const json = JSON.stringify(settings);
+        await fs.writeFile(settingsPath, json);
+        console.log("Saved Settings.");
+    }
+
+    static async saveSoundboards(soundboards: Soundboard[]): Promise<void> {
+        const json = JSON.stringify(soundboards);
+        await fs.writeFile(soundboardsPath, json);
+        console.log("Saved Soundboards.");
+    }
+
+    private static async readSoundboardsData(): Promise<Map<string, unknown>> {
         let hasAcess: boolean;
         try {
-            await fs.access(dataPath, fsc.F_OK);
+            await fs.access(soundboardsPath, fsc.F_OK);
             hasAcess = true;
         } catch (error) {
             hasAcess = false;
         }
 
         if (hasAcess) {
-            const jsonText = await fs.readFile(dataPath, "utf-8");
+            const jsonText = await fs.readFile(soundboardsPath, "utf-8");
             const jsonContents = JSON.parse(jsonText) as object;
             return Utils.objectToMap(jsonContents);
 
@@ -34,13 +61,11 @@ export default class LocalDataManager {
         return new Map<string, unknown>();
     }
 
-    // TODO: Save (write data)
-
     private static getSoundboards(soundboards: unknown[]): Soundboard[] {
         const sbs: Soundboard[] = [];
         soundboards.forEach(sb => {
             if (sb && typeof sb === "object") {
-                sbs.push(LocalDataManager.getSoundboard(Utils.objectToMap(sb)));
+                sbs.push(DataAccess.getSoundboard(Utils.objectToMap(sb)));
             }
         });
         return sbs;
@@ -64,7 +89,7 @@ export default class LocalDataManager {
         if (!linkedFolder) {
             let sounds: Sound[] = [];
             if (Array.isArray(data.get("sounds")))
-                sounds = LocalDataManager.getSounds(data.get("sounds") as unknown[], sb);
+                sounds = DataAccess.getSounds(data.get("sounds") as unknown[], sb);
             sb.sounds = sounds;
         }
 
@@ -75,7 +100,7 @@ export default class LocalDataManager {
         const sounds: Sound[] = [];
         data.forEach(sound => {
             if (sound && typeof sound === "object") {
-                const s = LocalDataManager.getSound(Utils.objectToMap(sound));
+                const s = DataAccess.getSound(Utils.objectToMap(sound));
                 s.connectToSoundboard(connectedSoundboard);
                 sounds.push(s);
             }

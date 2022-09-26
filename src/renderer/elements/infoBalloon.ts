@@ -1,4 +1,4 @@
-import { Side } from "../../shared/models";
+import { Side } from "../models";
 import TooltipWrapper from "../util/tooltipWrapper";
 
 export default class InfoBalloon extends HTMLElement {

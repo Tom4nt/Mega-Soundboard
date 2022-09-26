@@ -1,10 +1,11 @@
 import { Sound } from "../models";
-import { IEquatable } from "../interfaces";
+import { IEquatable, JSONSerializable } from "../interfaces";
 
-export default class Soundboard implements IEquatable<Soundboard> {
-    constructor();
-    constructor(name: string, keys: number[], volume: number, linkedFolder: string | null, sounds: Sound[]);
+export default class Soundboard implements IEquatable<Soundboard>, JSONSerializable {
+    constructor(uuid: string);
+    constructor(uuid: string, name: string, keys: number[], volume: number, linkedFolder: string | null, sounds: Sound[]);
     constructor(
+        public uuid: string,
         public name: string = "Default",
         public keys: number[] = [],
         public volume: number = 100,
@@ -26,5 +27,15 @@ export default class Soundboard implements IEquatable<Soundboard> {
 
     removeSound = (sound: Sound): void => {
         this.sounds.splice(this.sounds.indexOf(sound), 1);
+    };
+
+    toJSON = (): object => {
+        return {
+            name: this.name,
+            keys: this.keys,
+            volume: this.volume,
+            linkedFolder: this.linkedFolder,
+            sounds: this.sounds,
+        };
     };
 }
