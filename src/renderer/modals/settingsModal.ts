@@ -46,7 +46,7 @@ export default class SettingsModal extends Modal {
         return buttons;
     }
 
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return !this.stopSoundsRecorder.isRecording && !this.keybindsStateRecorder.isRecording;
     }
 

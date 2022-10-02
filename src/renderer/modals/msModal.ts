@@ -9,7 +9,7 @@ export default class MSModal extends Modal {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return true;
     }
 

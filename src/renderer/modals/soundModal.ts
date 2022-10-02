@@ -3,6 +3,8 @@ import { Modal } from "../modals";
 import { Sound } from "../../shared/models";
 import { Event, ExposedEvent } from "../../shared/events";
 
+type SaveEventArgs = { sound: Sound, moveRequested: boolean }
+
 export default class SoundModal extends Modal {
     private nameElement!: TextField;
     private moveElement!: Toggler;
@@ -10,48 +12,44 @@ export default class SoundModal extends Modal {
     private volumeElement!: Slider;
     private keysElement!: KeyRecorder;
     private okButton!: HTMLButtonElement;
+    private removeButton!: HTMLButtonElement;
 
-    private loadedSound: Sound | null = null;
+    private loadedSound: Sound;
+    private isNew: boolean;
 
-    public get onSave(): ExposedEvent<Sound> { return this._onSave.expose(); }
-    private readonly _onSave = new Event<Sound>();
+    public get onSave(): ExposedEvent<SaveEventArgs> { return this._onSave.expose(); }
+    private readonly _onSave = new Event<SaveEventArgs>();
 
     public get onRemove(): ExposedEvent<Sound> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Sound>();
 
-    constructor(sound?: Sound) {
+    constructor(sound: Sound, isNew: boolean) {
         super(false);
-        this.modalTitle = sound ? "Edit Sound" : "Add Sound";
-        if (sound) this.loadedSound = sound;
-        // TODO: Hide and show elements according to loaded sound. Loaded: hide moveElement and check if sound is linked (remove pathElement).
-        // TODO: Change ok button text after loading a sound or null.
-        // TODO: Set "remove sound" visibility accorting to loaded sound (!isLinked).
+        this.loadedSound = sound;
+        this.isNew = isNew;
+        this.modalTitle = isNew ? "Add Sound" : "Edit Sound";
     }
 
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return !this.keysElement.isRecording;
     }
 
-    getContent(): HTMLElement {
+    protected connectedCallback(): void {
+        this.update();
+    }
+
+    protected getContent(): HTMLElement {
         this.nameElement = new TextField("Name");
         this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
-        this.pathElement = new FileSelector("Path", "file", "Audio files", ["mp3", "wav", "ogg"]);
+        this.pathElement = new FileSelector("Path", "sound");
         this.volumeElement = new Slider("Volume");
         this.keysElement = new KeyRecorder();
 
-        this.keysElement.onStartRecording.addHandler(() => this.canCloseWithKey = false);
-        this.keysElement.onStopRecording.addHandler(() => this.canCloseWithKey = true);
-
-        if (this.loadedSound) {
-            this.nameElement.value = this.loadedSound.name;
-            this.pathElement.value = this.loadedSound.path;
-            this.volumeElement.value = this.loadedSound.volume;
-            this.keysElement.keys = this.loadedSound.keys;
-        }
-
-        this.pathElement.onValueChanged.addHandler((v) => {
-            // TODO
-            // this.nameElement.value = Utils.getFileNameNoExtension(v);
+        this.pathElement.onValueChanged.addHandler(async v => {
+            if (!this.nameElement.value) {
+                const name = await window.functions.getNameFromPath(v);
+                this.nameElement.value = name;
+            }
         });
 
         const elems: HTMLElement[] = [
@@ -68,11 +66,12 @@ export default class SoundModal extends Modal {
         return contentDiv;
     }
 
-    getFooterButtons(): HTMLButtonElement[] {
-        this.okButton = Modal.getButton("ok", () => { void this.soundAction(); }, false, false);
+    protected getFooterButtons(): HTMLButtonElement[] {
+        this.okButton = Modal.getButton("ok", () => { void this.save(); }, false, false);
+        this.removeButton = Modal.getButton("remove", () => { this.removeSound(); }, true, true);
 
         const buttons = [
-            Modal.getButton("remove", () => { this.removeSound(); }, true, true),
+            this.removeButton,
             Modal.getButton("close", () => { this.close(); }, false, false),
             this.okButton
         ];
@@ -80,7 +79,21 @@ export default class SoundModal extends Modal {
         return buttons;
     }
 
-    async soundAction(): Promise<void> {
+    private update(): void {
+        this.nameElement.value = this.loadedSound.name;
+        this.pathElement.value = this.loadedSound.path;
+        this.volumeElement.value = this.loadedSound.volume;
+        this.keysElement.keys = this.loadedSound.keys;
+
+        const isLinked = this.loadedSound.connectedSoundboard?.linkedFolder;
+        this.moveElement.style.display = this.isNew ? "" : "none"; // Can only move when it's a new sound
+        this.pathElement.style.display = !isLinked ? "" : "none"; // Can only set the path for sounds in unlinked soundboards
+        this.removeButton.style.visibility = this.isNew || isLinked ? "none" : "";
+
+        this.okButton.innerHTML = this.isNew ? "Add" : "Save";
+    }
+
+    private async validate(): Promise<boolean> {
         let valid = true;
         if (!this.nameElement.value || !this.nameElement.value.trim()) {
             this.nameElement.warn();
@@ -93,64 +106,29 @@ export default class SoundModal extends Modal {
         }
 
         if (valid) {
-            if (! await this.pathElement.isPathValid()) {
+            if (! await window.functions.isPathValid(this.pathElement.value, "sound")) {
                 valid = false;
                 this.pathElement.warn();
             }
         }
 
-        if (valid) {
-            if (this.loadedSound) {
-                this.loadedSound.name = this.nameElement.value;
-                this.loadedSound.path = this.pathElement.value;
-                this.loadedSound.volume = this.volumeElement.value;
-                this.loadedSound.keys = this.keysElement.keys;
-                // TODO: Call global sound edit function (main process). 
-                // this.dispatchEvent(new CustomEvent("edit", { detail: { sound: this.sound } }));
-
-            } else { // Add Sound. // TODO: Move to main process.
-                // const file = this.pathElement.value;
-                // const folder = p.dirname(file);
-                // const targetFolder = MS.instance.settings.getSoundsLocation();
-                if (this.moveElement.isOn /*&& p.resolve(folder) != p.resolve(targetFolder)*/) {
-                    //     let targetFile = p.join(MS.instance.settings.getSoundsLocation(), p.basename(file));
-                    const targetFile = "TODO";
-
-                    //     try {
-                    //         await fs.access(targetFolder, fsConstants.F_OK);
-                    //     } catch (error) {
-                    //         await fs.mkdir(targetFolder);
-                    //     }
-
-                    //     let i = 2;
-                    //     const ext = p.extname(targetFile);
-                    //     while (await Utils.pathExists(targetFile)) {
-                    //         targetFile = `${targetFile.slice(0, -ext.length)} (${i})${ext}`;
-                    //         i++;
-                    //     }
-
-                    //     try {
-                    //         await fs.copyFile(file, targetFile);
-                    //     } catch (error) {
-                    //         console.log(error);
-                    //     }
-
-                    //     await fs.unlink(file);
-                    const sound = new Sound(this.nameElement.value, targetFile, this.volumeElement.value, this.keysElement.keys);
-                    this._onSave.raise(sound);
-
-                } else {
-                    const sound = new Sound(this.nameElement.value, this.pathElement.value, this.volumeElement.value, this.keysElement.keys);
-                    this._onSave.raise(sound);
-                }
-            }
-            this.close();
-        }
+        return valid;
     }
 
-    removeSound(): void {
-        // TODO: Call appropriate function in the main process.
-        if (this.loadedSound) this._onRemove.raise(this.loadedSound);
+    private async save(): Promise<void> {
+        if (! await this.validate()) return;
+
+        this.loadedSound.name = this.nameElement.value;
+        this.loadedSound.path = this.pathElement.value;
+        this.loadedSound.volume = this.volumeElement.value;
+        this.loadedSound.keys = this.keysElement.keys;
+
+        this._onSave.raise({ sound: this.loadedSound, moveRequested: this.moveElement.isOn });
+        this.close();
+    }
+
+    private removeSound(): void {
+        this._onRemove.raise(this.loadedSound);
         this.close();
     }
 }

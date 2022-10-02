@@ -18,7 +18,7 @@ export default class NewsModal extends Modal {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return true;
     }
 

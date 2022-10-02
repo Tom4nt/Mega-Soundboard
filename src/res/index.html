@@ -6,7 +6,7 @@
     <link rel="stylesheet" type="text/css" href="./css/main.css" />
     <!-- <script type="module" src="index.js"></script> -->
     <!-- <script src="../dist/app/elements/soundSearchbox.js"></script> -->
-    <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self';"> -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
 </head>
 
 <body>
@@ -64,13 +64,10 @@
             </div>
         </div>
 
-        <div id="popup-layer"></div>
+        <div id="tooltip-layer"></div>
     </div>
 </body>
 
-<script>var exports = {};</script> <!-- TODO: Bad -->
-<script type="module">
-    require("../dist/index.js")
-</script>
+<script src="../dist/index.js"></script>
 
 </html>

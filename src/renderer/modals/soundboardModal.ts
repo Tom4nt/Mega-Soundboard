@@ -70,28 +70,34 @@ export default class SoundboardModal extends Modal {
         return buttons;
     }
 
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return !this.keysElement.isRecording;
     }
 
-    private async save(): Promise<void> {
+    private async validate(): Promise<boolean> {
         let valid = true;
         if (!this.nameElement.value || !this.nameElement.value.trim()) {
             this.nameElement.warn();
             valid = false;
         }
 
-        const isPathValid = await this.folderElement.isPathValid();
+        const isPathValid = await window.functions.isPathValid(this.folderElement.value, "soundboard");
         if (this.folderElement.value && !isPathValid) {
             this.folderElement.warn();
             valid = false;
         }
 
-        if (!valid) return;
+        return valid;
+    }
+
+    private async save(): Promise<void> {
+        if (! await this.validate()) return;
 
         if (!this.loadedSoundboard) {
-            const soundboard = new Soundboard(this.nameElement.value, this.keysElement.keys, this.volumeElement.value, this.folderElement.value, []);
+            const uuid = await window.functions.getNewUUID();
+            const soundboard = new Soundboard(uuid, this.nameElement.value, this.keysElement.keys, this.volumeElement.value, this.folderElement.value, []);
             this._onSaved.raise(soundboard);
+
         } else {
             this.loadedSoundboard.name = this.nameElement.value;
             this.loadedSoundboard.keys = this.keysElement.keys;

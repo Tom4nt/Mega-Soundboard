@@ -1,10 +1,11 @@
 import Keys from "../../shared/keys";
 import { UISoundPath } from "../models";
 import { Sound } from "../../shared/models";
-import { MessageModal, SoundModal } from "../modals";
+import { MessageModal } from "../modals";
 import MSR from "../msr";
 import Draggable from "./draggable";
 import Utils from "../util/utils";
+import Actions from "../util/actions";
 
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
@@ -55,16 +56,7 @@ export default class SoundItem extends Draggable {
         });
 
         this.addEventListener("contextmenu", () => {
-            const modal = new SoundModal(this.sound);
-            modal.open();
-
-            modal.onSave.addHandler(() => {
-                // TODO: Save on main process. Listen and update here
-            });
-
-            modal.addEventListener("remove", () => {
-                // TODO: Remove on main process. Listen, stop sound and delete this.
-            });
+            Actions.editSound(this.sound);
         });
 
         playingIndicator.addEventListener("click", () => {

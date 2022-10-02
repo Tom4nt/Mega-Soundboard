@@ -8,7 +8,7 @@ export default class MessageModal extends Modal {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected canClose(): boolean {
+    protected canCloseWithKey(): boolean {
         return true;
     }
 

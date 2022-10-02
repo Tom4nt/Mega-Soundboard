@@ -1,7 +1,7 @@
 import Actions from "./util/actions";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
-import { DefaultModals, MSModal, MultiSoundModal, NewsModal, SettingsModal, SoundboardModal, SoundModal } from "./modals";
+import { DefaultModals, MSModal, NewsModal, SettingsModal, SoundboardModal } from "./modals";
 import MSR from "./msr";
 import Utils from "./util/utils";
 
@@ -85,12 +85,7 @@ window.ondrop = async (e): Promise<void> => {
     }
 
     const index = soundList.stopDrag(); // Use this index to insert the Sound at the correct position in the list.
-
-    if (validPaths.length == 1) {
-        void Actions.createSound(validPaths[0], currentSoundboard.uuid, index);
-    } else {
-        Actions.createSounds(validPaths.length, currentSoundboard.uuid);
-    }
+    await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
 };
 
 //#region Window
@@ -122,7 +117,7 @@ soundboardList.onSelectSoundboard.addHandler((soundboard) => {
 });
 
 addSoundButton.addEventListener("click", () => {
-    return void addNewSounds();
+    void browseAndAddSounds();
 });
 
 searchBox.onInput.addHandler(v => {
@@ -227,34 +222,6 @@ async function init(): Promise<void> {
     // MS.addPopup("Restart and Update", updateButton, "right");
 }
 
-async function addNewSounds(): Promise<void> {
-    const sb = soundboardList.getSelectedSoundboard();
-    if (!sb) return;
-
-    if (!sb.linkedFolder) {
-        const emptySounds = await window.functions.browseNewSounds();
-
-        if (emptySounds.length == 1) {
-            const newSound = emptySounds[0];
-            const modal = new SoundModal(newSound);
-            modal.open();
-            modal.onSave.addHandler(sound => {
-                window.actions.addSound(sound, sb.uuid);
-            });
-
-        } else {
-            const multiSoundModal = new MultiSoundModal(emptySounds.length);
-            multiSoundModal.open();
-            multiSoundModal.onAdded.addHandler(sounds => {
-                window.actions.addSounds(sounds, sb.uuid);
-            });
-        }
-
-    } else {
-        DefaultModals.errSoundboardIsLinked(sb.linkedFolder).open();
-    }
-}
-
 function fillDeviceLists(devices: MediaDeviceInfo[]): void {
     secondaryDeviceDropdown.addItem(new DropdownDeviceItem("None", null));
     for (const device of devices) {
@@ -280,6 +247,12 @@ function closeActionPanelContainers(e: MouseEvent): void {
     if (!e.composedPath().includes(quickSettings) && e.target != quickSettingsButton && !quickSettings.classList.contains("closed")) {
         quickSettings.classList.add("closed");
     }
+}
+
+async function browseAndAddSounds(): Promise<void> {
+    const paths = await window.functions.browseSounds();
+    const sb = soundboardList.getSelectedSoundboard();
+    if (sb) void Actions.addSounds(paths, sb.uuid);
 }
 
 //#endregion

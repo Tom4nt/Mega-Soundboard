@@ -27,10 +27,6 @@ export default class Tooltip extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        // TODO: Append tooltip from outside.
-        // const div = document.getElementById("popup-layer");
-        // if (!div) throw "Element with id 'popup-layer' could not be found";
-
         this.classList.add("popup");
         this.classList.add(this.side);
 

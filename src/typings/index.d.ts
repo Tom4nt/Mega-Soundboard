@@ -31,8 +31,9 @@ declare global {
     interface Actions {
         toggleKeybinsState(): void,
         toggleOverlapSoundsState(): void,
-        addSound(sound: Sound, soundboardId: string, index?: number): void,
-        addSounds(sounds: Sound[], soundboardId: string): void,
+        addSounds(sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number): void,
+        editSound(sound: Sound): void,
+        deleteSound(soundId: string): void,
         addSoundboard(soundboard: Soundboard): void,
         deleteSoundboard(soundboardId: string): void,
         editSoundboard(soundboard: Soundboard): void,
@@ -45,9 +46,12 @@ declare global {
     }
 
     interface Functions {
-        browseNewSounds(): Promise<Sound[]>,
+        getNewUUID(): Promise<string>,
+        getNewSoundsFromPaths(paths: string[]): Promise<Sound[]>,
+        browseSounds(): Promise<string[]>,
         browseFolder(): Promise<string>,
         getValidSoundPaths(paths: Iterator<string>): Promise<string[]>, // type === "audio/mpeg" || type === "audio/ogg" || type === "audio/wav"
+        isPathValid(path: string, type: "sound" | "soundboard"): Promise<boolean>,
         getSounds(soundboardId: string): Promise<Sound[]>,
         getSoundboards(): Promise<Soundboard[]>,
         getDevices(): Promise<MediaDeviceInfo[]>,

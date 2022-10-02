@@ -9,11 +9,7 @@ export default class ModalManager {
         document.body.append(this.modalHolder);
     }
 
-    get hasOpenModal(): boolean { return false; } // TODO: Implement
-
-    openMessageModal(text: string): void {
-        // TODO
-    }
+    get hasOpenModal(): boolean { return this.openModalCount > 0; }
 
     openModal(modal: Modal): void {
         this.modalHolder.append(modal);

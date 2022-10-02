@@ -2,9 +2,7 @@ import { Event, ExposedEvent } from "../../shared/events";
 
 export default class FileSelector extends HTMLElement {
     readonly hint: string;
-    readonly type: "folder" | "file";
-    readonly typeName: string;
-    readonly extensions: string[];
+    readonly type: "folder" | "sound";
 
     get onValueChanged(): ExposedEvent<string> { return this._onValueChanged.expose(); }
     private _onValueChanged = new Event<string>();
@@ -22,13 +20,11 @@ export default class FileSelector extends HTMLElement {
     private inputElement!: HTMLInputElement;
 
     constructor(hint: string, type: "folder");
-    constructor(hint: string, type: "file", typeName: string, extensions: string[])
-    constructor(hint: string, type: "folder" | "file", typeName = "", extensions: string[] = []) {
+    constructor(hint: string, type: "sound");
+    constructor(hint: string, type: "folder" | "sound") {
         super();
         this.hint = hint;
         this.type = type;
-        this.extensions = extensions;
-        this.typeName = typeName;
     }
 
     protected connectedCallback(): void {
@@ -47,8 +43,8 @@ export default class FileSelector extends HTMLElement {
     }
 
     async browseFile(): Promise<void> {
-        if (this.type == "file") {
-            const paths = await window.functions.browseFile(false, this.typeName, this.extensions);
+        if (this.type == "sound") {
+            const paths = await window.functions.browseSounds();
             if (paths.length > 0) {
                 this.value = paths[0];
             }

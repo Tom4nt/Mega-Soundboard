@@ -3,6 +3,7 @@ import * as p from "path";
 import Utils from "./utils";
 import { Settings, Sound, Soundboard } from "../shared/models";
 import { promises as fs, constants as fsc } from "fs";
+import { randomUUID } from "crypto";
 
 const savePath = p.join(app.getPath("appData"), "\\MegaSoundboard");
 const soundboardsPath = p.join(savePath, "\\Soundboards.json");
@@ -84,7 +85,7 @@ export default class DataAccess {
         let linkedFolder: string | null = null;
         if (typeof data.get("linkedFolder") === "string") linkedFolder = data.get("linkedFolder") as string;
 
-        const sb = new Soundboard(name, keys, volume, linkedFolder, []);
+        const sb = new Soundboard(randomUUID(), name, keys, volume, linkedFolder, []);
 
         if (!linkedFolder) {
             let sounds: Sound[] = [];
@@ -125,6 +126,6 @@ export default class DataAccess {
         const keysRes = Utils.tryGetValue(data, ["keys", "shortcut"], v => Utils.isKeys(v));
         if (keysRes) keys = data.get("keys") as number[];
 
-        return new Sound(name, path, volume, keys);
+        return new Sound(randomUUID(), name, path, volume, keys);
     }
 }

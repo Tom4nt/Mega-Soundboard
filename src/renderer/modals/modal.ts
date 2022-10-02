@@ -3,7 +3,6 @@ import MSR from "../msr";
 export default abstract class Modal extends HTMLElement {
     static blockClosureKey = false;
 
-    protected canCloseWithKey = true;
     readonly isError: boolean;
 
     private windowElement!: HTMLDivElement;
@@ -25,7 +24,7 @@ export default abstract class Modal extends HTMLElement {
     }
 
     keyUpHandler = (e: KeyboardEvent): void => {
-        if (e.key == "Escape" && this.canCloseWithKey && this.canClose())
+        if (e.key == "Escape" && this.canCloseWithKey())
             this.close();
     };
 
@@ -107,7 +106,7 @@ export default abstract class Modal extends HTMLElement {
 
     protected abstract getContent(): HTMLElement;
     protected abstract getFooterButtons(): HTMLButtonElement[];
-    protected abstract canClose(): boolean;
+    protected abstract canCloseWithKey(): boolean;
 
     open(): void {
         MSR.instance.modalManager.openModal(this);
