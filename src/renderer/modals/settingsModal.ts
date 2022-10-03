@@ -7,7 +7,6 @@ export default class SettingsModal extends Modal {
     private stopSoundsRecorder!: KeyRecorder;
     private minimizeToTrayToggler!: Toggler;
 
-    // TODO: Add Save button. Send save event to main process (it will register keybinds)
     constructor() {
         super(false);
         this.modalTitle = "Settings";
@@ -19,11 +18,7 @@ export default class SettingsModal extends Modal {
         this.soundsLocationFileSelector = new FileSelector("", "folder");
         this.minimizeToTrayToggler = new Toggler("Minimize to tray");
 
-        // TODO: Get settins from preload and load them
-        // stopSoundsRecorder.keys = MS.instance.settings.stopSoundsKeys;
-        // keybindsStateRecorder.keys = MS.instance.settings.enableKeybindsKeys;
-        // minimizeToTrayToggler.isOn = MS.instance.settings.minToTray;
-        // soundsLocationFileSelector.value = MS.instance.settings.getSoundsLocation();
+        void this.load();
 
         const container = document.createElement("div");
         container.append(
@@ -39,9 +34,19 @@ export default class SettingsModal extends Modal {
         return container;
     }
 
+    private async load(): Promise<void> {
+        const settings = await window.functions.getSettings();
+
+        this.stopSoundsRecorder.keys = settings.stopSoundsKeys;
+        this.keybindsStateRecorder.keys = settings.enableKeybindsKeys;
+        this.minimizeToTrayToggler.isOn = settings.minToTray;
+        this.soundsLocationFileSelector.value = settings.soundsLocation ?? "";
+    }
+
     protected getFooterButtons(): HTMLButtonElement[] {
         const buttons = [
             Modal.getButton("Close", () => { this.close(); }),
+            Modal.getButton("Save", () => { void this.save(); }),
         ];
         return buttons;
     }
@@ -50,17 +55,18 @@ export default class SettingsModal extends Modal {
         return !this.stopSoundsRecorder.isRecording && !this.keybindsStateRecorder.isRecording;
     }
 
-    close(): void {
-        super.close();
-        void this.save();
+    private async validate(): Promise<boolean> {
+        return await window.functions.isPathValid(this.soundsLocationFileSelector.value, "folder");
     }
 
-    validate(): boolean {
-        return true; // TODO: Check if sound path is valid. (Via preload)
-    }
-
-    private save(): void {
-        if (!this.validate()) return;
-        // TODO: Save in the main process.
+    private async save(): Promise<void> {
+        if (!await this.validate()) return;
+        window.actions.saveSettings({
+            enableKeybindsKeys: this.keybindsStateRecorder.keys,
+            stopSoundsKeys: this.stopSoundsRecorder.keys,
+            soundsLocation: this.soundsLocationFileSelector.value,
+            minToTray: this.minimizeToTrayToggler.isOn,
+        });
+        this.close();
     }
 }

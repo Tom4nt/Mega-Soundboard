@@ -26,9 +26,9 @@ export default class SoundboardModal extends Modal {
         this.volumeElement = new Slider("Volume");
         this.folderElement = new FileSelector("Linked Folder (Optional)", "folder");
 
-        this.folderElement.onValueChanged.addHandler(() => {
-            // TODO: Send to the main process to get a name from the path
-            // if (!this.nameElement.value) this.nameElement.value = Utils.getFileNameNoExtension(this.folderElement.value);
+        this.folderElement.onValueChanged.addHandler(async () => {
+            const name = await window.functions.getNameFromPath(this.folderElement.value);
+            this.nameElement.value = name;
         });
 
         if (this.loadedSoundboard) {
@@ -81,7 +81,7 @@ export default class SoundboardModal extends Modal {
             valid = false;
         }
 
-        const isPathValid = await window.functions.isPathValid(this.folderElement.value, "soundboard");
+        const isPathValid = await window.functions.isPathValid(this.folderElement.value, "folder");
         if (this.folderElement.value && !isPathValid) {
             this.folderElement.warn();
             valid = false;

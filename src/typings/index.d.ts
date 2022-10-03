@@ -1,6 +1,6 @@
 import { ExposedEvent } from "../shared/events";
 import { IDevice } from "../shared/interfaces";
-import { Sound, Soundboard } from "../shared/models";
+import { ISettings, Settings, Sound, Soundboard } from "../shared/models";
 
 declare global {
     interface HTMLMediaElement {
@@ -43,6 +43,7 @@ declare global {
         installUpdate(): void,
         setDeviceId(index: number, id: string): void,
         setDeviceVolume(index: number, volume: number): void,
+        saveSettings(settings: ISettings): void,
     }
 
     interface Functions {
@@ -51,7 +52,7 @@ declare global {
         browseSounds(): Promise<string[]>,
         browseFolder(): Promise<string>,
         getValidSoundPaths(paths: Iterator<string>): Promise<string[]>, // type === "audio/mpeg" || type === "audio/ogg" || type === "audio/wav"
-        isPathValid(path: string, type: "sound" | "soundboard"): Promise<boolean>,
+        isPathValid(path: string, type: "sound" | "folder"): Promise<boolean>,
         getSounds(soundboardId: string): Promise<Sound[]>,
         getSoundboards(): Promise<Soundboard[]>,
         getDevices(): Promise<MediaDeviceInfo[]>,
@@ -61,5 +62,6 @@ declare global {
         isSoundOverlapEnabled(): Promise<boolean>,
         getInitialSoundboardIndex(): Promise<number>,
         getNameFromPath(path: string): Promise<string>,
+        getSettings(): Promise<Settings>,
     }
 }
