@@ -13,7 +13,6 @@ export default class MSModal extends Modal {
         return true;
     }
 
-    // TODO: Commented button actions (use preload)
     getContent(): HTMLElement {
         const icon = document.createElement("img");
         icon.src = "res/icon.ico";
@@ -33,24 +32,25 @@ export default class MSModal extends Modal {
         const btnGitHub = document.createElement("button");
         btnGitHub.innerHTML = "<span>GitHub</span><span class=\"icon\">open_browser</span>";
         btnGitHub.style.marginRight = "8px";
-        // btnGitHub.onclick = (): void => void ipcRenderer.invoke("open.url", "https://github.com/Tom4nt/Mega-Soundboard");
+        btnGitHub.onclick = (): void => void window.actions.openRepo();
 
         const btnReport = document.createElement("button");
         btnReport.innerHTML = "<span>Report a Bug</span><span class=\"icon\">open_browser</span>";
         btnReport.style.marginRight = "8px";
-        // btnReport.onclick = (): void => void ipcRenderer.invoke("open.url", "https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=&template=bug_report.md&title=");
+        btnReport.onclick = (): void => void window.actions.openBugReport();
 
         const btnChanges = document.createElement("button");
         btnChanges.innerHTML = "<span>Changelog</span>";
-        btnChanges.onclick = (): void => {
+        btnChanges.onclick = async (): Promise<void> => {
             this.close();
             if (!this.parentElement) return;
-            NewsModal.load().open();
+            const newsModal = await NewsModal.load();
+            newsModal.open();
         };
 
         buttons.append(btnGitHub, btnReport, btnChanges);
 
-        this.setVersionNumber();
+        void this.setVersionNumber();
 
         const containerElement = document.createElement("div");
         containerElement.append(icon, ver, buttons);
@@ -64,9 +64,8 @@ export default class MSModal extends Modal {
         return buttons;
     }
 
-    private setVersionNumber(): void {
-        // const version = await MS.getVersion(); // TODO
-        const version = "";
+    private async setVersionNumber(): Promise<void> {
+        const version = await window.functions.getVersion();
         this.versionElement.innerHTML = `Version ${version}`;
     }
 }

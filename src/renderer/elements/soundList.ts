@@ -160,3 +160,5 @@ export default class SoundList extends HTMLElement {
         this.stopDrag();
     };
 }
+
+customElements.define("ms-soundlist", SoundList);

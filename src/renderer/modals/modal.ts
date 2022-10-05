@@ -7,6 +7,7 @@ export default abstract class Modal extends HTMLElement {
 
     private windowElement!: HTMLDivElement;
     private dimmerElement!: HTMLDivElement;
+    private titleElement!: HTMLHeadingElement;
 
     private _modalTitle = "No Title";
     public get modalTitle(): string {
@@ -14,7 +15,7 @@ export default abstract class Modal extends HTMLElement {
     }
     public set modalTitle(v: string) {
         this._modalTitle = v;
-        // TODO: Update title element
+        if (this.isConnected) this.titleElement.innerHTML = v;
     }
 
     constructor(isError: boolean) {
@@ -27,8 +28,6 @@ export default abstract class Modal extends HTMLElement {
         if (e.key == "Escape" && this.canCloseWithKey())
             this.close();
     };
-
-    //#region COMPONENTS
 
     static getButton(label: string, clickCallback: () => void, left = false, red = false): HTMLButtonElement {
         const button = document.createElement("button");
@@ -54,8 +53,6 @@ export default abstract class Modal extends HTMLElement {
         return textE;
     }
 
-    //#endregion
-
     protected connectedCallback(): void {
         this.classList.add("modal");
         if (this.isError) this.classList.add("error");
@@ -72,7 +69,8 @@ export default abstract class Modal extends HTMLElement {
         window.appendChild(header);
 
         const titleE = document.createElement("h1");
-        titleE.innerHTML = this.title;
+        this.titleElement = titleE;
+        titleE.innerHTML = this._modalTitle;
         header.appendChild(titleE);
         //---
 

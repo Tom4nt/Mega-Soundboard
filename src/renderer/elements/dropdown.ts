@@ -155,3 +155,5 @@ export default class Dropdown extends HTMLElement {
         this.mainElement.classList.remove("open");
     }
 }
+
+customElements.define("ms-dropdown", Dropdown);

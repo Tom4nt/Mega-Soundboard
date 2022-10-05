@@ -9,11 +9,9 @@ export default class NewsModal extends Modal {
     }
 
     /** Async factory method */
-    static load(): NewsModal {
+    static async load(): Promise<NewsModal> {
         const modal = new NewsModal();
-        // TODO: Make this a main process task
-        // modal.content = await fs.readFile(__dirname + "/../../news.html", "utf-8");
-        modal.content = "";
+        modal.content = await window.functions.getNewsHtml();
         return modal;
     }
 

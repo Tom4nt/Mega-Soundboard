@@ -10,7 +10,6 @@ export enum KeybindManagerEvent {
 
 export default class KeybindManager {
 
-    // TODO
     // Register global settings keybinds
     // await KeybindManager.instance.registerAction(MS.instance.settings.stopSoundsKeys, () => MS.instance.stopAllSounds(), "stop-sounds");
     // await KeybindManager.instance.registerAction(MS.instance.settings.enableKeybindsKeys, () => MS.instance.toggleKeybindsState(), "toggle-keybinds-state");
@@ -53,7 +52,7 @@ export default class KeybindManager {
 
     async unregisterSoundboardAndSounds(soundboard: Soundboard): Promise<void> {
         await this.unregisterSounds(soundboard);
-        await this.unregisterSoundboard(soundboard); // TODO: Await all
+        await this.unregisterSoundboard(soundboard);
     }
 
     async unregisterSoundboard(soundboard: Soundboard): Promise<void> {

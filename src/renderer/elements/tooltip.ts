@@ -11,9 +11,19 @@ export default class Tooltip extends HTMLElement {
         this.update();
     }
 
-    constructor(readonly side: Side, readonly rect: DOMRect, initialText: string) {
+    private _side: Side;
+    get side(): Side {
+        return this._side;
+    }
+    set side(value: Side) {
+        this._side = value;
+        this.update();
+    }
+
+    constructor(readonly rect: DOMRect) {
         super();
-        this._tooltipText = initialText;
+        this._tooltipText = "";
+        this._side = "top";
     }
 
     show(): void {
@@ -53,3 +63,5 @@ export default class Tooltip extends HTMLElement {
         this.style.top = `${top}px`;
     }
 }
+
+customElements.define("ms-tooltip", Tooltip);

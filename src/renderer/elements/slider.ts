@@ -41,7 +41,7 @@ export default class Slider extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        this.tooltipWrapper = new TooltipWrapper(this, "top", "");
+        this.tooltipWrapper = new TooltipWrapper(this);
 
         const labelAttr = this.getAttribute("label");
         if (labelAttr) {
@@ -97,3 +97,5 @@ export default class Slider extends HTMLElement {
         return value_px_position - offset + x;
     }
 }
+
+customElements.define("ms-slider", Slider);

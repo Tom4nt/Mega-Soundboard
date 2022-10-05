@@ -7,14 +7,12 @@ export default class Titlebar extends HTMLElement {
     constructor() {
         super();
 
-        // TODO: Listen to preload events. Set isMaximized
-        // ipcRenderer.on("win.maximize", () => {
-        //     this.updateSizeElements(true);
-        // });
-
-        // ipcRenderer.on("win.unmaximize", () => {
-        //     this.updateSizeElements(false);
-        // });
+        window.events.onWindowStateChanged.addHandler(s => {
+            if (s == "maximized" || s == "restored") {
+                this.isMaximized = s == "maximized";
+                this.update();
+            }
+        });
     }
 
     connectedCallback(): void {
@@ -32,23 +30,22 @@ export default class Titlebar extends HTMLElement {
         btnClose.tabIndex = -1;
         btnClose.innerHTML = "close";
         btnClose.classList.add("red");
-        // TODO: Send events on button click
-        // btnClose.onclick = (): void => {
-        //     Titlebar.closeWindow();
-        // };
+        btnClose.onclick = (): void => {
+            window.actions.close();
+        };
 
         btnSize.tabIndex = -1;
         btnSize.innerHTML = "fullscreen";
-        // btnSize.onclick = (): void => {
-        //     Titlebar.resizeWindow();
-        // };
+        btnSize.onclick = (): void => {
+            window.actions.toggleMaximizeState();
+        };
         this.sizeButton = btnSize;
 
         btnMin.tabIndex = -1;
         btnMin.innerHTML = "minimize";
-        // btnMin.onclick = (): void => {
-        //     Titlebar.minimizeWindow();
-        // };
+        btnMin.onclick = (): void => {
+            window.actions.setMinimized(true);
+        };
 
         this.append(title, dragArea, btnClose, btnSize, btnMin);
     }
@@ -63,3 +60,5 @@ export default class Titlebar extends HTMLElement {
         }
     }
 }
+
+customElements.define("ms-titlebar", Titlebar);

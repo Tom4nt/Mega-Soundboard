@@ -2,13 +2,14 @@
     "name": "mega-soundboard",
     "version": "0.5.2",
     "description": "Mega Soundboard",
-    "main": "dist/main.js",
+    "main": "out/main/main.js",
     "scripts": {
         "start": "npm run build && electron .",
-        "build": "npm run copy && tsc --build",
         "dist": "npm run build && electron-builder",
         "pub": "npm run build && electron-builder -p=always",
-        "copy": "copyfiles src/res/**/* out -u 1"
+        "build": "npm run copy && tsc --build && npm run browserify",
+        "copy": "copyfiles src/res/**/* out -u 1",
+        "browserify": "browserify out/renderer/index.js -o out/renderer/index.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload.js --no-bundle-external"
     },
     "repository": "https://github.com/Tom4nt/Mega-Soundboard",
     "author": "Tom4nt",
@@ -17,6 +18,7 @@
         "@types/node": "^18.7.1",
         "@typescript-eslint/eslint-plugin": "^5.33.0",
         "@typescript-eslint/parser": "^5.33.0",
+        "browserify": "^17.0.0",
         "copyfiles": "^2.4.1",
         "electron": "^15.5.5",
         "electron-builder": "^21.2.0",

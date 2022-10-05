@@ -4,4 +4,5 @@ export enum UISoundPath {
     ERROR = "res/audio/error.wav"
 }
 
-export type Side = "top" | "bottom" | "left" | "right"
+export const sides = ["top", "bottom", "left", "right"] as const;
+export type Side = typeof sides[number];

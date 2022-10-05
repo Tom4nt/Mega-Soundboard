@@ -1,6 +1,5 @@
 import { SoundboardItem } from "../elements";
 import { Soundboard } from "../../shared/models";
-import { Event, ExposedEvent } from "../../shared/events";
 import MSR from "../msr";
 import Utils from "../util/utils";
 
@@ -8,9 +7,6 @@ export default class SoundboardList extends HTMLElement {
     private selectedItem?: SoundboardItem;
     private dragElement: SoundboardItem | null = null;
     private dragDummy!: HTMLDivElement;
-
-    private readonly _onSelectSoundboard = new Event<Soundboard>();
-    get onSelectSoundboard(): ExposedEvent<Soundboard> { return this._onSelectSoundboard.expose(); }
 
     private *getItems(): Generator<SoundboardItem> {
         for (let i = 0; i < this.childElementCount; i++) {
@@ -28,6 +24,10 @@ export default class SoundboardList extends HTMLElement {
         this.dragDummy = item;
         this.appendChild(item);
 
+        window.events.onCurrentSoundboardChanged.addHandler(sb => {
+            this.updateSeleced(sb);
+        });
+
         MSR.instance.audioManager.onPlaySound.addHandler(s => {
             if (!s.connectedSoundboard) return;
             const elem = this.getSoundboardElement(s.connectedSoundboard);
@@ -42,11 +42,6 @@ export default class SoundboardList extends HTMLElement {
             const elem = this.getSoundboardElement(sb);
             elem?.updatePlayingIndicator(-1);
         });
-
-        this.onmousedown = (e): boolean => {
-            if (e.button === 1) return false;
-            return true;
-        };
 
         this.addEventListener("dragover", this.handleDragOver);
     }
@@ -68,29 +63,11 @@ export default class SoundboardList extends HTMLElement {
 
         sbElement.addEventListener("click", () => {
             if (!sbElement.isSelected) {
-                this.select(sbElement.soundboard);
+                window.actions.setCurrentSoundboard(sbElement.soundboard.uuid);
             }
         });
 
         this.appendChild(sbElement);
-    }
-
-    select(soundboard: Soundboard): void {
-        let selected = false;
-        for (const item of this.getItems()) {
-            if (item.soundboard.equals(soundboard)) {
-                this.selectItem(item);
-                selected = true;
-            }
-        }
-        if (!selected) {
-            this.selectSoundboardAt(0);
-        }
-    }
-
-    selectSoundboardAt(index: number): void {
-        const res = Array.from(this.getItems());
-        this.select(res[index].soundboard);
     }
 
     /** Updates the information about playing sounds in a soundboard. */
@@ -100,17 +77,20 @@ export default class SoundboardList extends HTMLElement {
         elem.updatePlayingIndicator(increment);
     }
 
+    private updateSeleced(soundboard: Soundboard): void {
+        for (const item of this.getItems()) {
+            if (item.soundboard.equals(soundboard)) {
+                item.isSelected = true;
+            }
+        }
+    }
+
     private hideDragDummy(): void {
         this.dragDummy.style.display = "";
     }
 
     private showDragDummy(): void {
         this.dragDummy.style.display = "inline-block";
-    }
-
-    private selectItem(item: SoundboardItem): void {
-        item.isSelected = true;
-        this._onSelectSoundboard.raise(item.soundboard);
     }
 
     /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
@@ -143,7 +123,9 @@ export default class SoundboardList extends HTMLElement {
                 this.insertBefore(this.dragDummy, target.nextElementSibling);
             }
         } else {
-            this.selectItem(target);
+            const curr = this.getSelectedSoundboard();
+            if (!curr || !target.soundboard.equals(curr))
+                window.actions.setCurrentSoundboard(target.soundboard.uuid);
         }
     };
 
@@ -159,3 +141,5 @@ export default class SoundboardList extends HTMLElement {
         this.hideDragDummy();
     };
 }
+
+customElements.define("ms-soundboardlist", SoundboardList);

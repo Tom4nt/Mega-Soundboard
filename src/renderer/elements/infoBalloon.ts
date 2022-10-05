@@ -7,7 +7,11 @@ export default class InfoBalloon extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        new TooltipWrapper(this, this.side, this.tooltipText);
+        const tt = new TooltipWrapper(this);
+        tt.tooltip.tooltipText = this.tooltipText;
+        tt.tooltip.side = this.side;
         this.innerHTML = "i";
     }
 }
+
+customElements.define("ms-infoballoon", InfoBalloon);

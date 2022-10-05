@@ -12,6 +12,7 @@ import SoundboardList from "./elements/soundboardList";
 import Dropdown from "./elements/dropdown";
 import Tooltip from "./elements/tooltip";
 import SearchBox from "./elements/searchBox";
+import IconButton from "./elements/iconButton";
 
 export {
     KeyRecorder,
@@ -28,6 +29,5 @@ export {
     Dropdown,
     Tooltip,
     SearchBox,
+    IconButton,
 };
-
-// TODO: Define custom elements in their respective files (customElements.define())

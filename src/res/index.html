@@ -20,10 +20,13 @@
                     <button id="logo">
                         <span id="logo-indicator"></span>
                     </button>
-                    <button class="icon-button" id="update-button">download</button>
+                    <ms-iconbutton class="icon-button" id="update-button" tooltip-text="Restart and Update" tooltip-side="right">download
+                    </ms-iconbutton>
                     <span id="logo-label">Test</span>
                 </div>
-                <button id="button-addSoundboard" class="icon-button" style="float: right;">add_multiple</button>
+                <ms-iconbutton id="button-addSoundboard" tooltip-text="Add Soundboard" tooltip-side="left" class="icon-button" style="float: right;">
+                    add_multiple
+                </ms-iconbutton>
             </div>
             <ms-soundboardlist id="soundboardlist"></ms-soundboardlist>
         </div>
@@ -31,13 +34,14 @@
         <div id="panel-right">
             <div id="soundlist-actions">
                 <ms-searchbox id="searchbox"></ms-searchbox>
-                <button id="add-sound-button" class="icon-button" style="float: right;">add</button>
+                <ms-iconbutton id="add-sound-button" tooltip-text="Add Sound(s)" tooltip-side="left" class="icon-button" style="float: right;">add
+                </ms-iconbutton>
             </div>
             <ms-soundlist id="soundlist"></ms-soundlist>
             <div id="actionpanel">
-                <button id="btndevicesettings" class="icon-button">devices</button>
-                <button id="btnquicksettings" class="icon-button">tune</button>
-                <button id="button-stopAll" class="icon-button red">stop</button>
+                <ms-iconbutton id="btndevicesettings" tooltip-text="Audio Devices" class="icon-button">devices</ms-iconbutton>
+                <ms-iconbutton id="btnquicksettings" tooltip-text="Quick Settings" class="icon-button">tune</ms-iconbutton>
+                <ms-iconbutton id="button-stopAll" tooltip-text="Stop all Sounds" class="icon-button red">stop</ms-iconbutton>
             </div>
 
             <div class="actionpanel-container closed" id="devicesettings" style="right: 107px; width: 300px;">
@@ -68,6 +72,6 @@
     </div>
 </body>
 
-<script src="../dist/index.js"></script>
+<script src="../renderer/index.js"></script>
 
 </html>

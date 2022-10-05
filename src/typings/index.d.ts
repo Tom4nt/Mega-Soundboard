@@ -18,6 +18,8 @@ declare global {
         functions: Functions,
     }
 
+    type WindowState = "minimized" | "restored" | "maximized";
+
     interface Events {
         onKeybindsStateChanged: ExposedEvent<boolean>,
         onOverlapSoundsStateChanged: ExposedEvent<boolean>,
@@ -25,7 +27,9 @@ declare global {
         onSoundAdded: ExposedEvent<SoundAddedArgs>,
         onSoundRemoved: ExposedEvent<Sound>,
         onStopAllSounds: ExposedEvent<void>,
-        onSoundboardSelected: ExposedEvent<Soundboard>,
+        onWindowStateChanged: ExposedEvent<WindowState>,
+        onKeyRecordingProgress: ExposedEvent<number[]>,
+        onCurrentSoundboardChanged: ExposedEvent<Soundboard>,
     }
 
     interface Actions {
@@ -44,6 +48,13 @@ declare global {
         setDeviceId(index: number, id: string): void,
         setDeviceVolume(index: number, volume: number): void,
         saveSettings(settings: ISettings): void,
+        setMinimized(value: boolean): void,
+        toggleMaximizeState(): void,
+        close(): void,
+        openRepo(): void, // "https://github.com/Tom4nt/Mega-Soundboard"
+        openBugReport(): void, // "https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=&template=bug_report.md",
+        stopKeyRecordingSession(id: string): void,
+        setCurrentSoundboard(id: string): void, // TODO: Call. Used for tracking folders for linked soundboards.
     }
 
     interface Functions {
@@ -63,5 +74,8 @@ declare global {
         getInitialSoundboardIndex(): Promise<number>,
         getNameFromPath(path: string): Promise<string>,
         getSettings(): Promise<Settings>,
+        getVersion(): Promise<string>,
+        getNewsHtml(): Promise<string>, // fs.readFile(__dirname + "/../../news.html", "utf-8");
+        startKeyRecordingSession(): Promise<string>,
     }
 }

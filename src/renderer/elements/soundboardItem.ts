@@ -39,16 +39,17 @@ export default class SoundboardItem extends Draggable {
         desc.classList.add("desc");
         this.descriptionElement = desc;
 
-        this.updateElements();
-
         const icon = document.createElement("span");
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
         icon.classList.add("icon");
 
-        this.addListeners();
-        new TooltipWrapper(icon, "top", "This soundboard is linked to a folder");
+        const tt = new TooltipWrapper(icon);
+        tt.tooltip.tooltipText = "This soundboard is linked to a folder";
 
         this.append(indicator, title, desc, icon);
+
+        this.addListeners();
+        this.updateElements();
     }
 
     private addListeners(): void {
@@ -93,3 +94,5 @@ export default class SoundboardItem extends Draggable {
         }
     }
 }
+
+customElements.define("ms-soundboard", SoundboardItem);

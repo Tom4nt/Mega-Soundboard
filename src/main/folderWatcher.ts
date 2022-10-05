@@ -35,7 +35,10 @@ export default class FolderWatcher {
         this.abortFlag = true;
     }
 
-    // TODO: Update sounds in a soundboard
+    // TODO: Update sounds in a soundboard.
+    // When sounds from a soundboard are requested by the renderer, get them from the linked folder.
+    // When the folder is updated, send the same soundAdded/soundRemoved event as a normal soundboard. This allows total abstraction in the renderer.
+
     // async syncSounds(): Promise<void> {
     //     await this.verifyFolder();
 
@@ -92,7 +95,7 @@ export default class FolderWatcher {
     }
 
     private async verifyFolder(): Promise<void> {
-        if (! await Utils.isPathOK(this.folder))
+        if (!await Utils.isPathOK(this.folder))
             throw Error("The specified path cannot be accessed.");
         if (!(await fs.stat(this.folder)).isDirectory())
             throw Error("The specified path is not valid because it is not a directory.");

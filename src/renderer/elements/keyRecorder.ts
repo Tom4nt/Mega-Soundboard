@@ -3,21 +3,12 @@ import { Event, ExposedEvent } from "../../shared/events";
 
 const NO_KEY_DESC = "No Keybind";
 
-// TODO: Handle keybind recording in the main process.
-// Create events like "startRecording" and "stopRecording" here and "keybindRecordingProgress" in the main process.
-
 export default class KeyRecorder extends HTMLElement {
     private labelElement!: HTMLSpanElement;
     private indicatorElement!: HTMLSpanElement;
 
-    private _isRecording = false;
-    private recordingBuffer: number[] = [];
-
-    private _onStartRecording = new Event<void>;
-    get onStartRecording(): ExposedEvent<void> { return this._onStartRecording.expose(); }
-
-    private _onStopRecording = new Event<void>;
-    get onStopRecording(): ExposedEvent<void> { return this._onStopRecording.expose(); }
+    private currentRecordingSessionId: string | null = null;
+    // private recordingBuffer: number[] = [];
 
     private _onClear = new Event<void>;
     get onClear(): ExposedEvent<void> { return this._onClear.expose(); }
@@ -31,25 +22,22 @@ export default class KeyRecorder extends HTMLElement {
         if (this.isConnected) this.setDisplayedKeys(Keys.toKeyStringArray(keys));
     }
 
-    get isRecording(): boolean { return this._isRecording; }
+    get isRecording(): boolean { return this.currentRecordingSessionId != null; }
 
-    handleKeyDown = (key: number): void => {
-        if (!this.isRecording) return;
-        if (!this.recordingBuffer.includes(key)) {
-            this.recordingBuffer.push(key);
-        }
-        this.keys = [];
-    };
+    // handleKeyDown = (key: number): void => {
+    //     if (!this.isRecording) return;
+    //     if (!this.recordingBuffer.includes(key)) {
+    //         this.recordingBuffer.push(key);
+    //     }
+    //     this.keys = [];
+    // };
 
-    handleKeyUp = (key: number): void => {
-        if (!this.isRecording) return;
-        this.recordingBuffer.splice(this.recordingBuffer.indexOf(key), 1);
-    };
+    // handleKeyUp = (key: number): void => {
+    //     if (!this.isRecording) return;
+    //     this.recordingBuffer.splice(this.recordingBuffer.indexOf(key), 1);
+    // };
 
     protected connectedCallback(): void {
-        // if (this.connected) return;
-        // this.connected = true;
-
         const label = document.createElement("span");
         label.classList.add("keyrecorder-label");
         label.innerHTML = NO_KEY_DESC;
@@ -62,43 +50,36 @@ export default class KeyRecorder extends HTMLElement {
 
         this.append(label, indicator);
 
-        window.onclick = (e): void => {
-            if (e.composedPath().includes(this)) {
-                if (this.isRecording) this.stop();
-                else this.start();
-            } else this.stop();
-        };
+        this.setDisplayedKeys(Keys.toKeyStringArray(this.keys));
 
-        // ipcRenderer.on("key.down", this.handleKeyDown);
-        // ipcRenderer.on("key.up", this.handleKeyUp);
+        this.addEventListener("click", () => {
+            if (this.isRecording) this.stop();
+            else this.start();
+        });
 
         this.oncontextmenu = (): void => { this.clear(); };
 
-        this.setDisplayedKeys(Keys.toKeyStringArray(this.keys));
+        window.events.onKeyRecordingProgress.addHandler(keys => {
+            this.setDisplayedKeys(Keys.toKeyStringArray(keys));
+        });
     }
 
     protected disconnectedCallback(): void {
-        // ipcRenderer.removeListener("key.down", this.handleKeyDown);
-        // ipcRenderer.removeListener("key.up", this.handleKeyUp);
+        this.stop();
         this.oncontextmenu = null;
     }
 
     start(): void {
-        if (this.isRecording) return;
-        this._isRecording = true;
-        this.classList.add("recording");
-        this.labelElement.innerHTML = "Recording...";
-        this.indicatorElement.innerHTML = "Stop recording";
-        this._onStartRecording.raise();
+        void this.startInternal();
     }
 
     stop(): void {
-        if (!this.isRecording) return;
-        this._isRecording = false;
+        if (!this.currentRecordingSessionId) return;
         this.classList.remove("recording");
         this.labelElement.innerHTML = NO_KEY_DESC;
         this.indicatorElement.innerHTML = "Record keybind";
-        this._onStopRecording.raise();
+        window.actions.stopKeyRecordingSession(this.currentRecordingSessionId);
+        this.currentRecordingSessionId = null;
     }
 
     setDisplayedKeys(keys: string[]): void {
@@ -123,4 +104,14 @@ export default class KeyRecorder extends HTMLElement {
         const keyElements = this.querySelectorAll(".key");
         keyElements.forEach(e => e.remove());
     }
+
+    private async startInternal(): Promise<void> {
+        if (this.currentRecordingSessionId) return;
+        this.classList.add("recording");
+        this.labelElement.innerHTML = "Recording...";
+        this.indicatorElement.innerHTML = "Stop recording";
+        this.currentRecordingSessionId = await window.functions.startKeyRecordingSession();
+    }
 }
+
+customElements.define("ms-keyrecorder", KeyRecorder);

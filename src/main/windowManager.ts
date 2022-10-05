@@ -63,7 +63,7 @@ export default class WindowManager {
     }
 
     private static async loadHTML(win: BrowserWindow): Promise<void> {
-        await win.loadFile("res/index.html");
+        await win.loadFile(path.join(__dirname, "../res/index.html"));
     }
 
     private static createMenu(): Menu {

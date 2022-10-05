@@ -112,10 +112,6 @@ updateButton.addEventListener("click", () => {
     window.actions.installUpdate();
 });
 
-soundboardList.onSelectSoundboard.addHandler((soundboard) => {
-    void loadSounds(soundboard.uuid);
-});
-
 addSoundButton.addEventListener("click", () => {
     void browseAndAddSounds();
 });
@@ -180,10 +176,6 @@ buttonMoreSettings.addEventListener("click", () => {
 //#region Functions
 
 async function init(): Promise<void> {
-    window.events.onSoundboardSelected.addHandler((s) => {
-        soundboardList.select(s);
-    });
-
     const devices = await window.functions.getDevices();
     fillDeviceLists(devices);
 
@@ -198,8 +190,6 @@ async function init(): Promise<void> {
         soundboardList.addSoundboard(sb);
     }
 
-    soundboardList.selectSoundboardAt(await window.functions.getInitialSoundboardIndex());
-
     enabeKeybindsToggler.isOn = await window.functions.areKeysEnabled();
     overlapSoundsToggler.isOn = await window.functions.isSoundOverlapEnabled();
 
@@ -208,18 +198,10 @@ async function init(): Promise<void> {
 
     const shouldShowChangelog = await window.functions.shouldShowChangelog();
     if (shouldShowChangelog) {
-        const modal = NewsModal.load();
+        const modal = await NewsModal.load();
         modal.open();
         window.actions.flagChangelogViewed();
     }
-
-    // TODO: Buttons should handle their own popups.
-    // MS.addPopup("Add Sound(s)", addSoundButton, "left");
-    // MS.addPopup("Add Soundboard", addSoundboardButton, "left");
-    // MS.addPopup("Audio Devices", deviceSettingsButton);
-    // MS.addPopup("Quick Settings", quickSettingsButton);
-    // MS.addPopup("Stop all</br>Sounds", stopAllButton);
-    // MS.addPopup("Restart and Update", updateButton, "right");
 }
 
 function fillDeviceLists(devices: MediaDeviceInfo[]): void {
@@ -233,11 +215,6 @@ function fillDeviceLists(devices: MediaDeviceInfo[]): void {
             secondaryDeviceDropdown.addItem(new DropdownDeviceItem(device.label, device.deviceId));
         }
     }
-}
-
-async function loadSounds(soundboardId: string): Promise<void> {
-    const sounds = await window.functions.getSounds(soundboardId);
-    soundList.loadSounds(sounds, soundboardId);
 }
 
 function closeActionPanelContainers(e: MouseEvent): void {
