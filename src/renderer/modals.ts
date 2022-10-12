@@ -27,3 +27,11 @@ export class DefaultModals {
         return modal;
     }
 }
+
+customElements.define("ms-msmodal", MSModal);
+customElements.define("ms-newsmodal", NewsModal);
+customElements.define("ms-soundmodal", SoundModal);
+customElements.define("ms-messagemodal", MessageModal);
+customElements.define("ms-soundboardmodal", SoundboardModal);
+customElements.define("ms-multisoundmodal", MultiSoundModal);
+customElements.define("ms-settingsmodal", SettingsModal);

@@ -3,7 +3,7 @@ import { Modal } from "../modals";
 export default class NewsModal extends Modal {
     private content!: string;
 
-    private constructor() {
+    constructor() {
         super(false);
         this.modalTitle = "What's New";
     }

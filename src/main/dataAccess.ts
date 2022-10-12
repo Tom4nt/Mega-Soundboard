@@ -20,7 +20,7 @@ export default class DataAccess {
         }
     }
 
-    private static async getSettings(): Promise<Settings> {
+    static async getSettingsFromSaveFile(): Promise<Settings> {
         const settings = new Settings();
 
         const hasAcess = await Utils.isPathOK(settingsPath);

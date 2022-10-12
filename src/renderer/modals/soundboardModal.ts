@@ -8,6 +8,11 @@ export default class SoundboardModal extends Modal {
     private keysElement!: KeyRecorder;
     private volumeElement!: Slider;
     private folderElement!: FileSelector;
+    private okButton!: HTMLButtonElement;
+    private removeButton!: HTMLButtonElement;
+
+    private loadedSoundboard: Soundboard;
+    private isNew: boolean;
 
     public get onSaved(): ExposedEvent<Soundboard> { return this._onSaved.expose(); }
     private readonly _onSaved = new Event<Soundboard>();
@@ -15,9 +20,16 @@ export default class SoundboardModal extends Modal {
     public get onRemove(): ExposedEvent<Soundboard> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Soundboard>();
 
-    constructor(private readonly loadedSoundboard?: Soundboard) {
+    constructor(soundboard: Soundboard, isNew: boolean) {
         super(false);
-        this.modalTitle = loadedSoundboard ? "Edit Soundboard" : "Add Soundboard";
+        this.loadedSoundboard = soundboard;
+        this.isNew = isNew;
+        this.modalTitle = isNew ? "Add Soundboard" : "Edit Soundboard";
+    }
+
+    protected connectedCallback(): void {
+        super.connectedCallback();
+        this.update();
     }
 
     protected getContent(): HTMLElement {
@@ -31,13 +43,6 @@ export default class SoundboardModal extends Modal {
             this.nameElement.value = name;
         });
 
-        if (this.loadedSoundboard) {
-            this.nameElement.value = this.loadedSoundboard.name;
-            this.keysElement.keys = this.loadedSoundboard.keys;
-            this.volumeElement.value = this.loadedSoundboard.volume;
-            if (this.loadedSoundboard.linkedFolder) this.folderElement.value = this.loadedSoundboard.linkedFolder;
-        }
-
         const container = document.createElement("div");
         container.append(
             this.nameElement,
@@ -47,31 +52,36 @@ export default class SoundboardModal extends Modal {
             this.keysElement,
         );
 
-        if (this.loadedSoundboard && !this.loadedSoundboard.linkedFolder && this.loadedSoundboard.sounds.length >= 1) {
-            this.folderElement.style.display = "none";
-        }
-
         return container;
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
-        let buttonName = "add";
-        if (this.loadedSoundboard)
-            buttonName = "save";
+        this.okButton = Modal.getButton("save", () => { void this.save(); });
+        this.removeButton = Modal.getButton("remove", () => { this.removeSoundboard(); }, true, true);
 
         const buttons = [
+            this.removeButton,
             Modal.getButton("close", () => { super.close(); }),
-            Modal.getButton(buttonName, () => { void this.save(); })
+            this.okButton,
         ];
-
-        if (this.loadedSoundboard)
-            buttons.unshift(Modal.getButton("remove", () => { this.removeSoundboard(); }, true, true));
 
         return buttons;
     }
 
     protected canCloseWithKey(): boolean {
         return !this.keysElement.isRecording;
+    }
+
+    private update(): void {
+        this.nameElement.value = this.loadedSoundboard.name;
+        this.keysElement.keys = this.loadedSoundboard.keys;
+        this.volumeElement.value = this.loadedSoundboard.volume;
+        if (this.loadedSoundboard.linkedFolder) this.folderElement.value = this.loadedSoundboard.linkedFolder;
+
+        const displaysFolderField = this.loadedSoundboard.linkedFolder || this.loadedSoundboard.sounds.length <= 0;
+        this.folderElement.style.display = displaysFolderField ? "" : "none";
+
+        this.okButton.innerHTML = this.isNew ? "Add" : "Save";
     }
 
     private async validate(): Promise<boolean> {
@@ -93,23 +103,16 @@ export default class SoundboardModal extends Modal {
     private async save(): Promise<void> {
         if (! await this.validate()) return;
 
-        if (!this.loadedSoundboard) {
-            const uuid = await window.functions.getNewUUID();
-            const soundboard = new Soundboard(uuid, this.nameElement.value, this.keysElement.keys, this.volumeElement.value, this.folderElement.value, []);
-            this._onSaved.raise(soundboard);
+        this.loadedSoundboard.name = this.nameElement.value;
+        this.loadedSoundboard.keys = this.keysElement.keys;
+        this.loadedSoundboard.volume = this.volumeElement.value;
+        if (this.folderElement.value) this.loadedSoundboard.linkedFolder = this.folderElement.value;
+        this._onSaved.raise(this.loadedSoundboard);
 
-        } else {
-            this.loadedSoundboard.name = this.nameElement.value;
-            this.loadedSoundboard.keys = this.keysElement.keys;
-            this.loadedSoundboard.volume = this.volumeElement.value;
-            if (this.folderElement.value) this.loadedSoundboard.linkedFolder = this.folderElement.value;
-            this._onSaved.raise(this.loadedSoundboard);
-        }
         this.close();
     }
 
     private removeSoundboard(): void {
-        if (!this.loadedSoundboard) return;
         this._onRemove.raise(this.loadedSoundboard);
         this.close();
     }

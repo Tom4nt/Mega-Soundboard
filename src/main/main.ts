@@ -1,12 +1,14 @@
 import { app } from "electron";
 import { autoUpdater } from "electron-updater";
-import { fromMain } from "../shared/ipcChannels";
-// import ioHook = require("iohook");
 import "electron-reload";
 import MS from "./ms";
 import WindowManager from "./windowManager";
 import TrayManager from "./trayManager";
 import IPCHandler from "./ipcHandler";
+import IPCEvents, { events } from "./ipcEvents";
+import SoundboardsCache from "./soundboardsCache";
+import SettingsCache from "./settingsCache";
+import DataAccess from "./dataAccess";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -27,9 +29,9 @@ if (!gotLock) {
 }
 
 void autoUpdater.checkForUpdates();
-autoUpdater.on("update-available", () => MS.instance.windowManager.window.webContents.send(fromMain.updateAvailable));
-autoUpdater.on("download-progress", progress => MS.instance.windowManager.window.webContents.send(fromMain.updateProgress, progress.percent));
-autoUpdater.on("update-downloaded", () => MS.instance.windowManager.window.webContents.send(fromMain.updateReady));
+autoUpdater.on("update-available", () => IPCEvents.sendVoid(events.updateAvailable));
+autoUpdater.on("download-progress", progress => IPCEvents.send(events.updateProgress, progress.percent));
+autoUpdater.on("update-downloaded", () => IPCEvents.sendVoid(events.updateReady));
 setInterval(() => {
     void autoUpdater.checkForUpdates();
 }, 300000); //5 minutes
@@ -50,10 +52,12 @@ app.on("ready", function () {
     void init();
 });
 
-function init(): void {
+async function init(): Promise<void> {
     const winManager = WindowManager.createWindow();
     const trayManager = TrayManager.createTray(winManager.window);
-    new MS(winManager, trayManager);
+    const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
+    const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
+    new MS(winManager, trayManager, soundboardsCache, settingsCache);
 }
 
 app.on("will-quit", function () {

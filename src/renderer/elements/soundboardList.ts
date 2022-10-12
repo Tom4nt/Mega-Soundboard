@@ -141,5 +141,3 @@ export default class SoundboardList extends HTMLElement {
         this.hideDragDummy();
     };
 }
-
-customElements.define("ms-soundboardlist", SoundboardList);

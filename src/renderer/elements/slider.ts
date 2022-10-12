@@ -1,5 +1,5 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import TooltipWrapper from "../util/tooltipWrapper";
+import { Tooltip } from "../elements";
 
 export default class Slider extends HTMLElement {
     private progressColor: string;
@@ -8,7 +8,7 @@ export default class Slider extends HTMLElement {
 
     private labelElement!: HTMLSpanElement;
     private inputElement!: HTMLInputElement;
-    private tooltipWrapper!: TooltipWrapper;
+    private tooltip!: Tooltip;
 
     public get onValueChange(): ExposedEvent<Slider> { return this._onValueChange.expose(); }
     private readonly _onValueChange = new Event<Slider>();
@@ -41,7 +41,8 @@ export default class Slider extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        this.tooltipWrapper = new TooltipWrapper(this);
+        this.tooltip = new Tooltip();
+        this.tooltip.attatch(this);
 
         const labelAttr = this.getAttribute("label");
         if (labelAttr) {
@@ -77,11 +78,11 @@ export default class Slider extends HTMLElement {
     }
 
     private updateTooltip(): void {
-        if (this.labelText) this.tooltipWrapper.tooltip.tooltipText = `${this.labelText} | ${this.textValue}`;
-        else this.tooltipWrapper.tooltip.tooltipText = this.textValue;
+        if (this.labelText) this.tooltip.tooltipText = `${this.labelText} | ${this.textValue}`;
+        else this.tooltip.tooltipText = this.textValue;
 
-        const left = this.getThumbX() - this.tooltipWrapper.tooltip.offsetWidth / 2;
-        this.tooltipWrapper.tooltip.style.left = `${left}px`;
+        const left = this.getThumbX() - this.tooltip.offsetWidth / 2;
+        this.tooltip.style.left = `${left}px`;
     }
 
     private getThumbX(): number {
@@ -97,5 +98,3 @@ export default class Slider extends HTMLElement {
         return value_px_position - offset + x;
     }
 }
-
-customElements.define("ms-slider", Slider);

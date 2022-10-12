@@ -31,3 +31,19 @@ export {
     SearchBox,
     IconButton,
 };
+
+customElements.define("ms-dropdown", Dropdown);
+customElements.define("ms-fileselector", FileSelector);
+customElements.define("ms-iconbutton", IconButton);
+customElements.define("ms-infoballoon", InfoBalloon);
+customElements.define("ms-keyrecorder", KeyRecorder);
+customElements.define("ms-searchbox", SearchBox);
+customElements.define("ms-slider", Slider);
+customElements.define("ms-soundboard", SoundboardItem);
+customElements.define("ms-soundboardlist", SoundboardList);
+customElements.define("ms-sound", SoundItem);
+customElements.define("ms-soundlist", SoundList);
+customElements.define("ms-textfield", TextField);
+customElements.define("ms-titlebar", Titlebar);
+customElements.define("ms-toggler", Toggler);
+customElements.define("ms-tooltip", Tooltip);

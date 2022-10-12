@@ -93,5 +93,3 @@ export default class SoundItem extends Draggable {
         });
     }
 }
-
-customElements.define("ms-sound", SoundItem);

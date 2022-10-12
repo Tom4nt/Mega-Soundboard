@@ -1,7 +1,7 @@
 import Actions from "./util/actions";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
-import { DefaultModals, MSModal, NewsModal, SettingsModal, SoundboardModal } from "./modals";
+import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import Utils from "./util/utils";
 
@@ -12,35 +12,35 @@ const MSRi = MSR.instance;
 // const fileDragOverlay = document.getElementById("filedragoverlay");
 
 //#region Left
-const msbutton = document.getElementById("logo") as HTMLButtonElement;
-const soundboardList = document.getElementById("soundboardlist") as SoundboardList;
-const updateButton = document.getElementById("update-button") as HTMLButtonElement;
+let msbutton!: HTMLButtonElement;
+let soundboardList!: SoundboardList;
+let updateButton!: HTMLButtonElement;
 //#endregion
 
 //#region Right
-const searchBox = document.getElementById("searchbox") as SearchBox;
-const soundList = document.getElementById("soundlist") as SoundList;
-const addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
-const addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
+let searchBox!: SearchBox;
+let soundList!: SoundList;
+let addSoundButton!: HTMLButtonElement;
+let addSoundboardButton!: HTMLButtonElement;
 
 //#region Action Panel
-const deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
-const quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
-const deviceSettingsButton = document.getElementById("btndevicesettings") as HTMLButtonElement;
-const quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
-const stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
+let deviceSettings!: HTMLDivElement;
+let quickSettings!: HTMLDivElement;
+let deviceSettingsButton!: HTMLButtonElement;
+let quickSettingsButton!: HTMLButtonElement;
+let stopAllButton!: HTMLButtonElement;
 
 //#region Devices
-const mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
-const secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;
-const mainDeviceVolumeSlider = deviceSettings.querySelector("#slider-mainDeviceVolume") as Slider;
-const secondaryDeviceVolumeSlider = deviceSettings.querySelector("#slider-secondaryDeviceVolume") as Slider;
+let mainDeviceDropdown!: Dropdown;
+let secondaryDeviceDropdown!: Dropdown;
+let mainDeviceVolumeSlider!: Slider;
+let secondaryDeviceVolumeSlider!: Slider;
 //#endregion
 
 //#region QuickSettings
-const enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds") as Toggler;
-const overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds") as Toggler;
-const buttonMoreSettings = quickSettings.querySelector("#button-more-settings") as HTMLButtonElement;
+let enabeKeybindsToggler!: Toggler;
+let overlapSoundsToggler!: Toggler;
+let buttonMoreSettings!: HTMLButtonElement;
 //#endregion
 
 //#endregion
@@ -48,8 +48,6 @@ const buttonMoreSettings = quickSettings.querySelector("#button-more-settings") 
 //#endregion
 
 //#endregion
-
-//#region Events
 
 window.ondragleave = (e): void => {
     if (e.relatedTarget || MSRi.modalManager.hasOpenModal) return;
@@ -88,94 +86,16 @@ window.ondrop = async (e): Promise<void> => {
     await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
 };
 
-//#region Window
-
 window.addEventListener("load", () => void init());
 window.addEventListener("click", (e) => void closeActionPanelContainers(e));
 window.addEventListener("contextmenu", (e) => void closeActionPanelContainers(e));
 
-//#endregion
-
-msbutton.addEventListener("click", () => {
-    new MSModal().open();
-});
-
-addSoundboardButton.addEventListener("click", () => {
-    const modal = new SoundboardModal();
-    modal.open();
-    modal.onSaved.addHandler(soundboard => {
-        window.actions.addSoundboard(soundboard);
-    });
-});
-
-updateButton.addEventListener("click", () => {
-    window.actions.installUpdate();
-});
-
-addSoundButton.addEventListener("click", () => {
-    void browseAndAddSounds();
-});
-
-searchBox.onInput.addHandler(v => {
-    soundList.filter(v);
-});
-
-searchBox.onButtonClick.addHandler(() => {
-    soundList.filter("");
-});
-
-//#region Action Panel
-
-stopAllButton.addEventListener("click", () => {
-    MSRi.audioManager.stopAllSounds();
-});
-
-deviceSettingsButton.addEventListener("click", () => {
-    deviceSettings.classList.toggle("closed");
-});
-
-quickSettingsButton.addEventListener("click", () => {
-    quickSettings.classList.toggle("closed");
-});
-
-overlapSoundsToggler.onToggle.addHandler(() => {
-    window.actions.toggleOverlapSoundsState();
-});
-
-mainDeviceVolumeSlider.onValueChange.addHandler(s => {
-    window.actions.setDeviceVolume(0, s.value);
-});
-
-secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
-    window.actions.setDeviceVolume(1, s.value);
-});
-
-mainDeviceDropdown.onSelectedItem.addHandler(item => {
-    if (item instanceof DropdownDeviceItem && item.device)
-        window.actions.setDeviceId(0, item.device);
-});
-
-secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
-    if (item instanceof DropdownDeviceItem && item.device)
-        window.actions.setDeviceId(1, item.device);
-});
-
-enabeKeybindsToggler.onToggle.addHandler(() => {
-    window.actions.toggleKeybinsState();
-});
-
-buttonMoreSettings.addEventListener("click", () => {
-    quickSettings.classList.add("closed");
-    new SettingsModal().open();
-});
-
-//#endregion
-
-//#endregion
-
 //#region Functions
 
 async function init(): Promise<void> {
+    getElementReferences();
+    addElementListeners();
+
     const devices = await window.functions.getDevices();
     fillDeviceLists(devices);
 
@@ -190,11 +110,8 @@ async function init(): Promise<void> {
         soundboardList.addSoundboard(sb);
     }
 
-    enabeKeybindsToggler.isOn = await window.functions.areKeysEnabled();
-    overlapSoundsToggler.isOn = await window.functions.isSoundOverlapEnabled();
-
-    window.events.onStopAllSounds.addHandler(() => MSRi.audioManager.stopAllSounds());
-    window.events.onKeybindsStateChanged.addHandler((state) => enabeKeybindsToggler.isOn = state);
+    window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
+    window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
 
     const shouldShowChangelog = await window.functions.shouldShowChangelog();
     if (shouldShowChangelog) {
@@ -202,6 +119,105 @@ async function init(): Promise<void> {
         modal.open();
         window.actions.flagChangelogViewed();
     }
+}
+
+function getElementReferences(): void {
+    msbutton = document.getElementById("logo") as HTMLButtonElement;
+    soundboardList = document.getElementById("soundboardlist") as SoundboardList;
+    updateButton = document.getElementById("update-button") as HTMLButtonElement;
+
+    searchBox = document.getElementById("searchbox") as SearchBox;
+    soundList = document.getElementById("soundlist") as SoundList;
+    addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
+    addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
+
+    deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
+    quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
+    deviceSettingsButton = document.getElementById("btndevicesettings") as HTMLButtonElement;
+    quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
+    stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
+
+    mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
+    secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;
+    mainDeviceVolumeSlider = deviceSettings.querySelector("#slider-mainDeviceVolume") as Slider;
+    secondaryDeviceVolumeSlider = deviceSettings.querySelector("#slider-secondaryDeviceVolume") as Slider;
+
+    enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds") as Toggler;
+    overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds") as Toggler;
+    buttonMoreSettings = quickSettings.querySelector("#button-more-settings") as HTMLButtonElement;
+}
+
+function addElementListeners(): void {
+    msbutton.addEventListener("click", () => {
+        new MSModal().open();
+    });
+
+    addSoundboardButton.addEventListener("click", () => {
+        void Actions.addSoundboard();
+    });
+
+    updateButton.addEventListener("click", () => {
+        window.actions.installUpdate();
+    });
+
+    addSoundButton.addEventListener("click", () => {
+        void browseAndAddSounds();
+    });
+
+    searchBox.onInput.addHandler(v => {
+        soundList.filter(v);
+    });
+
+    searchBox.onButtonClick.addHandler(() => {
+        soundList.filter("");
+    });
+
+    //#region Action Panel
+
+    stopAllButton.addEventListener("click", () => {
+        MSRi.audioManager.stopAllSounds();
+    });
+
+    deviceSettingsButton.addEventListener("click", () => {
+        deviceSettings.classList.toggle("closed");
+    });
+
+    quickSettingsButton.addEventListener("click", () => {
+        quickSettings.classList.toggle("closed");
+    });
+
+    overlapSoundsToggler.onToggle.addHandler(() => {
+        window.actions.toggleOverlapSoundsState();
+    });
+
+    mainDeviceVolumeSlider.onValueChange.addHandler(s => {
+        window.actions.setDeviceVolume(0, s.value);
+    });
+
+    secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
+        window.actions.setDeviceVolume(1, s.value);
+    });
+
+    mainDeviceDropdown.onSelectedItem.addHandler(item => {
+        if (item instanceof DropdownDeviceItem && item.device)
+            window.actions.setDeviceId(0, item.device);
+    });
+
+    secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
+        if (item instanceof DropdownDeviceItem && item.device)
+            window.actions.setDeviceId(1, item.device);
+    });
+
+    enabeKeybindsToggler.onToggle.addHandler(() => {
+        window.actions.toggleKeybindsState();
+    });
+
+    buttonMoreSettings.addEventListener("click", () => {
+        quickSettings.classList.add("closed");
+        new SettingsModal().open();
+    });
+
+    //#endregion
 }
 
 function fillDeviceLists(devices: MediaDeviceInfo[]): void {

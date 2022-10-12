@@ -35,5 +35,3 @@ export default class TextField extends HTMLElement {
         }, 400);
     }
 }
-
-customElements.define("ms-textfield", TextField);

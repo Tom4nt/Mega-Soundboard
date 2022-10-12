@@ -113,5 +113,3 @@ export default class KeyRecorder extends HTMLElement {
         this.currentRecordingSessionId = await window.functions.startKeyRecordingSession();
     }
 }
-
-customElements.define("ms-keyrecorder", KeyRecorder);

@@ -63,5 +63,3 @@ export default class FileSelector extends HTMLElement {
         }, 400);
     }
 }
-
-customElements.define("ms-fileselector", FileSelector);

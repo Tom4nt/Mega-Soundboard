@@ -9,7 +9,7 @@
         "pub": "npm run build && electron-builder -p=always",
         "build": "npm run copy && tsc --build && npm run browserify",
         "copy": "copyfiles src/res/**/* out -u 1",
-        "browserify": "browserify out/renderer/index.js -o out/renderer/index.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload.js --no-bundle-external"
+        "browserify": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external"
     },
     "repository": "https://github.com/Tom4nt/Mega-Soundboard",
     "author": "Tom4nt",

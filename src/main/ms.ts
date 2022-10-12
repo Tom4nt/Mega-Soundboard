@@ -1,4 +1,7 @@
-import { fromMain } from "../shared/ipcChannels";
+import DataAccess from "./dataAccess";
+import IPCEvents, { events } from "./ipcEvents";
+import SettingsCache from "./settingsCache";
+import SoundboardsCache from "./soundboardsCache";
 import TrayManager from "./trayManager";
 import WindowManager from "./windowManager";
 
@@ -11,7 +14,7 @@ export default class MS {
     isRecordingKey = false;
     modalsOpen = 0;
 
-    static readonly latestWithLog = 2; // Increments on every version that should display the changelog.
+    static readonly latestWithLog = 3; // Increments on every version that should display the changelog.
 
     private static _instance?: MS;
     public static get instance(): MS {
@@ -25,6 +28,8 @@ export default class MS {
     constructor(
         public readonly windowManager: WindowManager,
         public readonly trayManager: TrayManager,
+        public readonly soundboardsCache: SoundboardsCache,
+        public readonly settingsCache: SettingsCache,
     ) {
         MS.instance = this;
     }
@@ -32,17 +37,22 @@ export default class MS {
     toggleKeybindsState(): void {
         this.isKeybindsEnabled = !this.isKeybindsEnabled;
         this.trayManager.update();
-        this.windowManager.window.webContents.send(fromMain.keybindsStateChanged, this.isKeybindsEnabled);
+        IPCEvents.send(events.keybindsStateChanged, this.isKeybindsEnabled);
     }
 
     toggleOverlapSoundsState(): void {
         this.isOverlapEnabled = !this.isOverlapEnabled;
         this.trayManager.update();
-        this.windowManager.window.webContents.send(fromMain.overlapSoundsChanged, this.isOverlapEnabled);
+        IPCEvents.send(events.overlapSoundsStateChanged, this.isOverlapEnabled);
     }
 
     setMinToTray(state: boolean): void {
         this.isMinToTrayEnabled = state;
-        this.windowManager.window.webContents.send(fromMain.minToTrayChanged, state);
+        IPCEvents.send(events.minToTrayChanged, state);
+    }
+
+    flagChangelogViewed(): void {
+        this.settingsCache.settings.latestLogViewed = MS.latestWithLog;
+        void DataAccess.saveSettings(this.settingsCache.settings);
     }
 }

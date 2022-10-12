@@ -1,4 +1,4 @@
-@import url('../../node_modules/typeface-roboto/index.css');
+@import url('../../../node_modules/typeface-roboto/index.css');
 
 @import 'Titlebar.css';
 @import 'Modal.css';

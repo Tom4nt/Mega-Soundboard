@@ -18,4 +18,17 @@ export default class Utils {
         if (error instanceof Error) return error.message;
         else return String(error);
     }
+
+    static waitForDocument(): Promise<void> {
+        if (document.readyState == "complete") {
+            return Promise.resolve();
+        }
+        else {
+            return new Promise<void>((complete) => {
+                window.addEventListener("load", () => {
+                    complete();
+                });
+            });
+        }
+    }
 }

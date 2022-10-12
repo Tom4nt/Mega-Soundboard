@@ -1,5 +1,5 @@
+import { Tooltip } from "../elements";
 import { Side } from "../models";
-import TooltipWrapper from "../util/tooltipWrapper";
 
 export default class InfoBalloon extends HTMLElement {
     constructor(readonly tooltipText: string, readonly side: Side) {
@@ -7,11 +7,11 @@ export default class InfoBalloon extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        const tt = new TooltipWrapper(this);
-        tt.tooltip.tooltipText = this.tooltipText;
-        tt.tooltip.side = this.side;
+        const tt = new Tooltip();
+        tt.tooltipText = this.tooltipText;
+        tt.side = this.side;
+        tt.attatch(this);
+
         this.innerHTML = "i";
     }
 }
-
-customElements.define("ms-infoballoon", InfoBalloon);

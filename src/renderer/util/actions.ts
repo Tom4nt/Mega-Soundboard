@@ -35,8 +35,17 @@ export default class Actions {
         });
     }
 
+    static async addSoundboard(): Promise<void> {
+        const soundboard = await window.functions.getNewSoundboard();
+        const modal = new SoundboardModal(soundboard, true);
+        modal.open();
+        modal.onSaved.addHandler(soundboard => {
+            window.actions.addSoundboard(soundboard);
+        });
+    }
+
     static editSoundboard(soundboard: Soundboard): void {
-        const editModal = new SoundboardModal(soundboard);
+        const editModal = new SoundboardModal(soundboard, false);
         editModal.open();
         editModal.onSaved.addHandler(s => {
             window.actions.editSoundboard(s);

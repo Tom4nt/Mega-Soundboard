@@ -1,8 +1,8 @@
 import Keys from "../../shared/keys";
 import { Soundboard } from "../../shared/models";
+import { Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
-import TooltipWrapper from "../util/tooltipWrapper";
 import Draggable from "./draggable";
 
 export default class SoundboardItem extends Draggable {
@@ -43,8 +43,9 @@ export default class SoundboardItem extends Draggable {
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
         icon.classList.add("icon");
 
-        const tt = new TooltipWrapper(icon);
-        tt.tooltip.tooltipText = "This soundboard is linked to a folder";
+        const tt = new Tooltip();
+        tt.tooltipText = "This soundboard is linked to a folder";
+        tt.attatch(icon);
 
         this.append(indicator, title, desc, icon);
 
@@ -94,5 +95,3 @@ export default class SoundboardItem extends Draggable {
         }
     }
 }
-
-customElements.define("ms-soundboard", SoundboardItem);

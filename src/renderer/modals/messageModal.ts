@@ -20,7 +20,7 @@ export default class MessageModal extends Modal {
 
     protected getFooterButtons(): HTMLButtonElement[] {
         const buttons = [
-            Modal.getButton("ok", () => this.close()),
+            Modal.getButton("ok", () => void this.close()),
         ];
         return buttons;
     }

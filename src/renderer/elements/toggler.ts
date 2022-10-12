@@ -63,5 +63,3 @@ export default class Toggler extends HTMLElement {
         }
     }
 }
-
-customElements.define("ms-toggler", Toggler);

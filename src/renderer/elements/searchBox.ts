@@ -41,5 +41,3 @@ export default class SearchBox extends HTMLElement {
         });
     }
 }
-
-customElements.define("ms-searchbox", SearchBox);

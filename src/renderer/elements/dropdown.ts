@@ -2,6 +2,8 @@ import { Event, ExposedEvent } from "../../shared/events";
 import DropdownDeviceItem from "./dropdown/dropdownDeviceItem";
 import DropDownItem from "./dropdown/dropdownItem";
 
+customElements.define("ms-dropdowndeviceitem", DropdownDeviceItem);
+
 export { DropDownItem, DropdownDeviceItem };
 
 export default class Dropdown extends HTMLElement {
@@ -155,5 +157,3 @@ export default class Dropdown extends HTMLElement {
         this.mainElement.classList.remove("open");
     }
 }
-
-customElements.define("ms-dropdown", Dropdown);

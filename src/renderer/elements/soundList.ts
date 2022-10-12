@@ -37,6 +37,10 @@ export default class SoundList extends HTMLElement {
         window.events.onSoundRemoved.addHandler(s => {
             this.removeSound(s);
         });
+
+        window.events.onCurrentSoundboardChanged.addHandler(sb => {
+            this.loadSounds(sb.sounds, sb.uuid);
+        });
     }
 
     loadSounds(sounds: Sound[], soundboardUuid: string): void {
@@ -160,5 +164,3 @@ export default class SoundList extends HTMLElement {
         this.stopDrag();
     };
 }
-
-customElements.define("ms-soundlist", SoundList);

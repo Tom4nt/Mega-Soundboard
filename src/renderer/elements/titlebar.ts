@@ -37,14 +37,14 @@ export default class Titlebar extends HTMLElement {
         btnSize.tabIndex = -1;
         btnSize.innerHTML = "fullscreen";
         btnSize.onclick = (): void => {
-            window.actions.toggleMaximizeState();
+            window.actions.toggleMaximizedState();
         };
         this.sizeButton = btnSize;
 
         btnMin.tabIndex = -1;
         btnMin.innerHTML = "minimize";
         btnMin.onclick = (): void => {
-            window.actions.setMinimized(true);
+            window.actions.minimize();
         };
 
         this.append(title, dragArea, btnClose, btnSize, btnMin);
@@ -60,5 +60,3 @@ export default class Titlebar extends HTMLElement {
         }
     }
 }
-
-customElements.define("ms-titlebar", Titlebar);

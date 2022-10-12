@@ -52,17 +52,15 @@ export default class SoundModal extends Modal {
             }
         });
 
-        const elems: HTMLElement[] = [
+        const contentDiv = document.createElement("div");
+        contentDiv.append(
             this.nameElement,
             this.moveElement,
             this.pathElement,
             this.volumeElement,
             Modal.getLabel("Play"),
             this.keysElement,
-        ];
-
-        const contentDiv = new HTMLDivElement();
-        contentDiv.append(...elems);
+        );
         return contentDiv;
     }
 

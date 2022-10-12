@@ -1,19 +1,10 @@
-export interface ISettings {
-    minToTray?: boolean,
-    stopSoundsKeys?: number[],
-    enableKeybinds?: boolean,
-    enableKeybindsKeys?: number[],
-    overlapSounds?: boolean,
-    mainDevice?: string,
-    secondaryDevice?: string | null,
-    mainDeviceVolume?: number,
-    secondaryDeviceVolume?: number,
-    selectedSoundboard?: number,
-    latestLogViewed?: number,
-    soundsLocation?: string | null,
-}
+type CreateOptional<Type> = {
+    [Property in keyof Type]+?: Type[Property];
+};
 
-export default class Settings implements ISettings {
+export type OptionalSettings = CreateOptional<Settings>;
+
+export default class Settings {
     constructor(
         public minToTray = true,
         public stopSoundsKeys: number[] = [],

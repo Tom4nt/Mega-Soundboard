@@ -112,8 +112,10 @@ export default abstract class Modal extends HTMLElement {
     }
 
     close(): void {
-        void this.hide();
-        MSR.instance.modalManager.closeModal(this);
+        void (async (): Promise<void> => {
+            await this.hide();
+            MSR.instance.modalManager.closeModal(this);
+        })();
     }
 
     /** Promise completes after the animation finishes. */

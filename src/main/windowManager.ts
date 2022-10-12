@@ -16,7 +16,7 @@ export default class WindowManager {
             minHeight: 420,
             webPreferences: {
                 spellcheck: false,
-                preload: path.join(__dirname, "../shared/preload.js"),
+                preload: path.join(__dirname, "../shared/preload-bundle.js"),
             },
             frame: false,
             title: "Mega Soundboard",
