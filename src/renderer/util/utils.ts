@@ -1,4 +1,10 @@
 export default class Utils {
+    static *map<T, R>(source: Iterable<T>, callback: (element: T) => R): Iterable<R> {
+        for (const item of source) {
+            yield callback(item);
+        }
+    }
+
     static getElementIndex(element: Element): number {
         let i = 0;
         while (element.previousElementSibling != null) {
@@ -8,10 +14,8 @@ export default class Utils {
         return i;
     }
 
-    static *getDataTransferFilePaths(dataTransfer: DataTransfer): Generator<string> {
-        for (const file of dataTransfer.files) {
-            yield file.path;
-        }
+    static getDataTransferFilePaths(dataTransfer: DataTransfer): string[] {
+        return Array.from(this.map(dataTransfer.files, x => x.path));
     }
 
     static getErrorMessage(error: unknown): string {
@@ -30,5 +34,14 @@ export default class Utils {
                 });
             });
         }
+    }
+
+    static async getMediaDevices(): Promise<MediaDeviceInfo[]> {
+        let devices = await navigator.mediaDevices.enumerateDevices();
+        devices = devices.filter(device =>
+            device.kind == "audiooutput" &&
+            device.deviceId != "communications"
+        );
+        return devices;
     }
 }

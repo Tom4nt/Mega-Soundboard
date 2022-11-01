@@ -1,6 +1,7 @@
 import { BrowserWindow, Menu, MenuItem, shell } from "electron";
 import path = require("path");
-import MS from "./ms";
+import MS from "../ms";
+import Utils from "../utils/utils";
 
 export default class WindowManager {
     readonly window!: BrowserWindow;
@@ -16,7 +17,7 @@ export default class WindowManager {
             minHeight: 420,
             webPreferences: {
                 spellcheck: false,
-                preload: path.join(__dirname, "../shared/preload-bundle.js"),
+                preload: path.join(__dirname, "../../shared/preload-bundle.js"),
             },
             frame: false,
             title: "Mega Soundboard",
@@ -63,7 +64,7 @@ export default class WindowManager {
     }
 
     private static async loadHTML(win: BrowserWindow): Promise<void> {
-        await win.loadFile(path.join(__dirname, "../res/index.html"));
+        await win.loadFile(path.join(Utils.resourcesPath, "index.html"));
     }
 
     private static createMenu(): Menu {

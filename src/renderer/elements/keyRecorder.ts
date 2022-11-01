@@ -110,6 +110,6 @@ export default class KeyRecorder extends HTMLElement {
         this.classList.add("recording");
         this.labelElement.innerHTML = "Recording...";
         this.indicatorElement.innerHTML = "Stop recording";
-        this.currentRecordingSessionId = await window.functions.startKeyRecordingSession();
+        this.currentRecordingSessionId = await window.actions.startKeyRecordingSession();
     }
 }

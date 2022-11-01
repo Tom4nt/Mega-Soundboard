@@ -1,8 +1,10 @@
 import { app, BrowserWindow, Menu, Tray } from "electron";
-import MS from "./ms";
+import MS from "../ms";
+import * as path from "path";
+import Utils from "../utils/utils";
 
-const iconWhitePath = __dirname + "\\app\\res\\icon_white.ico";
-const iconPausedPath = __dirname + "\\app\\res\\icon_dot.ico";
+const iconWhitePath = path.join(Utils.resourcesPath, "icon_white.ico");
+const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
 
 enum TrayItem {
     EnableKybinds = "trayIcon:enableKeybinds",

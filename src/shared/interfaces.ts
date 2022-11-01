@@ -2,6 +2,10 @@ import { Sound, Soundboard } from "./models";
 
 export type WindowState = "minimized" | "restored" | "maximized";
 
+export type NonOptional<T> = {
+    [P in keyof T]-?: Exclude<T[P], null>;
+}
+
 export interface IEquatable<T> {
     equals: (to: T) => boolean;
 }

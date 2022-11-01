@@ -34,6 +34,12 @@ export default class AudioManager {
         });
     }
 
+    static async getAudioDevices(): Promise<MediaDeviceInfo[]> {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const filtered = devices.filter(d => d.kind == "audiooutput" && d.deviceId != "communications");
+        return filtered;
+    }
+
     async playSound(sound: Sound): Promise<void> {
         if (!this.overlapSounds) this.stopAllSounds();
 

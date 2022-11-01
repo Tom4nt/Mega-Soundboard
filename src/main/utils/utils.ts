@@ -3,11 +3,12 @@ import { promises as fs, constants as fsConstants, PathLike } from "fs";
 
 export default class Utils {
 
-    static validSoundExts = ["mp3", "wav", "ogg"];
+    static resourcesPath = p.join(__dirname, "../../res");
 
-    static isValidSoundFile(path: string): boolean {
-        const ext = p.extname(path);
-        return this.validSoundExts.includes(`.${ext}`);
+    static *map<T, R>(source: Iterable<T>, callback: (element: T) => R): Iterable<R> {
+        for (const item of source) {
+            yield callback(item);
+        }
     }
 
     static getNameFromFile(path: string): string {
@@ -45,11 +46,13 @@ export default class Utils {
     }
 
     /** Verifies if the path is not empty, the file/folder exists, and if it is within the accepted extensions. */
-    static async isPathValid(path: PathLike, type: "file" | "folder", validExtensions: string[]): Promise<boolean> {
+    static async isPathValid(path: PathLike, type: "folder"): Promise<boolean>;
+    static async isPathValid(path: PathLike, type: "file", validExtensions: string[]): Promise<boolean>;
+    static async isPathValid(path: PathLike, type: "file" | "folder", validExtensions?: string[]): Promise<boolean> {
         if (! await this.isPathOK(path)) return false;
 
         const s = await fs.stat(path);
-        if (type == "file") {
+        if (type == "file" && validExtensions) {
             if (s.isDirectory()) return false;
 
             const ext = p.extname(path.toString()).substring(1);
@@ -63,14 +66,5 @@ export default class Utils {
     static objectToMap(object: object): Map<string, unknown> {
         const entries = Object.entries(object);
         return new Map<string, unknown>(entries);
-    }
-
-    static async getMediaDevices(): Promise<MediaDeviceInfo[]> {
-        let devices = await navigator.mediaDevices.enumerateDevices();
-        devices = devices.filter(device =>
-            device.kind == "audiooutput" &&
-            device.deviceId != "communications"
-        );
-        return devices;
     }
 }

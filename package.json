@@ -5,6 +5,7 @@
     "main": "out/main/main.js",
     "scripts": {
         "start": "npm run build && electron .",
+        "startLast": "electron .",
         "dist": "npm run build && electron-builder",
         "pub": "npm run build && electron-builder -p=always",
         "build": "npm run copy && tsc --build && npm run browserify",

@@ -35,7 +35,7 @@ export default class SettingsModal extends Modal {
     }
 
     private async load(): Promise<void> {
-        const settings = await window.functions.getSettings();
+        const settings = await window.actions.getSettings();
 
         this.stopSoundsRecorder.keys = settings.stopSoundsKeys;
         this.keybindsStateRecorder.keys = settings.enableKeybindsKeys;
@@ -56,7 +56,7 @@ export default class SettingsModal extends Modal {
     }
 
     private async validate(): Promise<boolean> {
-        return await window.functions.isPathValid(this.soundsLocationFileSelector.value, "folder");
+        return await window.actions.isPathValid(this.soundsLocationFileSelector.value, "folder");
     }
 
     private async save(): Promise<void> {

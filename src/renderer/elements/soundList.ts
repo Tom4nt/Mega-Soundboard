@@ -98,7 +98,7 @@ export default class SoundList extends HTMLElement {
 
     private removeSound(sound: Sound): void {
         for (const item of this.getSoundItems()) {
-            if (item instanceof SoundItem && item.sound.equals(sound)) {
+            if (item instanceof SoundItem && Sound.equals(item.sound, sound)) {
                 this.removeSoundItem(item);
                 return;
             }

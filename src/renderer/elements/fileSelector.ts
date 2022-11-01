@@ -44,13 +44,13 @@ export default class FileSelector extends HTMLElement {
 
     async browseFile(): Promise<void> {
         if (this.type == "sound") {
-            const paths = await window.functions.browseSounds();
+            const paths = await window.actions.browseSounds();
             if (paths.length > 0) {
                 this.value = paths[0];
             }
         }
         else {
-            const path = await window.functions.browseFolder();
+            const path = await window.actions.browseFolder();
             if (path) this.value = path;
         }
     }

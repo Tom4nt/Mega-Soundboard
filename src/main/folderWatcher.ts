@@ -1,7 +1,10 @@
 import { promises as fs } from "fs";
 import * as p from "path";
-import Utils from "./utils";
+import Utils from "./utils/utils";
 import { Event, ExposedEvent } from "../shared/events";
+import SoundUtils from "./utils/soundUtils";
+import { Sound, Soundboard } from "../shared/models";
+import { randomUUID } from "crypto";
 
 export default class FolderWatcher {
     private watcher: AsyncIterable<fs.FileChangeInfo<string>>;
@@ -35,45 +38,45 @@ export default class FolderWatcher {
         this.abortFlag = true;
     }
 
-    // TODO: Update sounds in a soundboard.
-    // When sounds from a soundboard are requested by the renderer, get them from the linked folder.
-    // When the folder is updated, send the same soundAdded/soundRemoved event as a normal soundboard. This allows total abstraction in the renderer.
+    /** Adds Sounds to and/or removes them from the specified Soundboard as necessary
+     * to sync them with its linked folder. */
+    async syncSounds(soundboard: Soundboard): Promise<void> {
+        if (!soundboard.linkedFolder) return;
+        await this.verifyFolder();
 
-    // async syncSounds(): Promise<void> {
-    //     await this.verifyFolder();
+        const files = await fs.readdir(this.folder);
 
-    //     const files = await fs.readdir(this.folder);
+        // Loop through files and add unexisting sounds
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const path = p.join(soundboard.linkedFolder, file);
+            if (SoundUtils.isValidSoundFile(path)) {
+                const soundWithPath = Soundboard.getSoundWithPath(soundboard, path);
+                const stat = await fs.stat(path);
+                if (!soundWithPath && stat.isFile()) {
+                    const s = new Sound(randomUUID(), Utils.getNameFromFile(path), path, 100, []);
+                    Sound.connectToSoundboard(s, soundboard);
+                    soundboard.sounds.push();
+                }
+            }
+        }
 
-    //     // Loop through files and add unexisting sounds
-    //     for (let i = 0; i < files.length; i++) {
-    //         const file = files[i];
-    //         const path = p.join(linkedFolderPath, file);
-    //         if (Utils.isValidSoundFile(path)) {
-    //             const soundWithPath = this.getSoundWithPath(path);
-    //             if (!soundWithPath && fs.statSync(path).isFile()) {
-    //                 const s = new Sound(p.basename(file, p.extname(file)), path, 100, []);
-    //                 s.connectToSoundboard(this);
-    //                 this.sounds.push();
-    //             }
-    //         }
-    //     }
+        // Loop through existing sounds and remove those without a file
+        if (soundboard.sounds.length > 0) {
+            for (let i = soundboard.sounds.length - 1; i >= 0; i--) {
+                const sound = soundboard.sounds[i];
 
-    //     // Loop through existing sounds and remove those without a file
-    //     if (this.sounds.length > 0) {
-    //         for (let i = this.sounds.length - 1; i >= 0; i--) {
-    //             const sound = this.sounds[i];
+                // Does the folder contain this sound?
+                let contains = false;
+                for (const file of files) {
+                    const path = p.join(soundboard.linkedFolder, file);
+                    if (p.resolve(sound.path) == p.resolve(path)) contains = true;
+                }
 
-    //             // Does the folder contain this sound?
-    //             let contains = false;
-    //             for (const file of files) {
-    //                 const path = p.join(linkedFolderPath, file);
-    //                 if (p.resolve(sound.path) == p.resolve(path)) contains = true;
-    //             }
-
-    //             if (!contains) this.sounds.splice(i, 1);
-    //         }
-    //     }
-    // }
+                if (!contains) soundboard.sounds.splice(i, 1);
+            }
+        }
+    }
 
     private async handleChange(info: fs.FileChangeInfo<string>): Promise<void> {
         if (info.eventType != "rename") return;
@@ -82,13 +85,13 @@ export default class FolderWatcher {
 
         if (exists) {
             const stat = await fs.stat(path);
-            if (!stat.isFile() || !Utils.isValidSoundFile(path)) return;
+            if (!stat.isFile() || !SoundUtils.isValidSoundFile(path)) return;
             console.log(`Added ${path}`);
             this._onSoundAdded.raise(path);
         }
 
         else {
-            if (!Utils.isValidSoundFile(path)) return;
+            if (!SoundUtils.isValidSoundFile(path)) return;
             console.log(`Removed ${path}`);
             this._onSoundRemoved.raise(path);
         }

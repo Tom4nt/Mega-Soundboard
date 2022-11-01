@@ -1,7 +1,7 @@
 import { app } from "electron";
 import * as p from "path";
-import Utils from "./utils";
-import { Settings, Sound, Soundboard } from "../shared/models";
+import Utils from "../utils/utils";
+import { Settings, Sound, Soundboard } from "../../shared/models";
 import { promises as fs, constants as fsc } from "fs";
 import { randomUUID } from "crypto";
 
@@ -102,7 +102,7 @@ export default class DataAccess {
         data.forEach(sound => {
             if (sound && typeof sound === "object") {
                 const s = DataAccess.getSound(Utils.objectToMap(sound));
-                s.connectToSoundboard(connectedSoundboard);
+                Sound.connectToSoundboard(s, connectedSoundboard);
                 sounds.push(s);
             }
         });

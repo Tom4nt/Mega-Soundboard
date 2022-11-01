@@ -1,7 +1,7 @@
 import { Sound } from "../models";
-import { IEquatable, JSONSerializable } from "../interfaces";
 
-export default class Soundboard implements IEquatable<Soundboard>, JSONSerializable {
+// All functions must be static so instances can be passed between processes.
+export default class Soundboard {
     constructor(uuid: string);
     constructor(uuid: string, name: string, keys: number[], volume: number, linkedFolder: string | null, sounds: Sound[]);
     constructor(
@@ -13,29 +13,21 @@ export default class Soundboard implements IEquatable<Soundboard>, JSONSerializa
         public sounds: Sound[] = []) {
     }
 
-    equals = (to: Soundboard): boolean => {
-        return this.name === to.name &&
-            this.keys === to.keys &&
-            this.volume === to.volume &&
-            this.linkedFolder === to.linkedFolder;
-    };
+    static equals(from: Soundboard, to: Soundboard): boolean {
+        return from.uuid === to.uuid;
+    }
 
-    addSound = (sound: Sound, index?: number): void => {
-        if (!index) this.sounds.push(sound);
-        else this.sounds.splice(index, 0, sound);
-    };
-
-    removeSound = (sound: Sound): void => {
-        this.sounds.splice(this.sounds.indexOf(sound), 1);
-    };
-
-    toJSON = (): object => {
+    static toJSON(soundboard: Soundboard): object {
         return {
-            name: this.name,
-            keys: this.keys,
-            volume: this.volume,
-            linkedFolder: this.linkedFolder,
-            sounds: this.sounds,
+            name: soundboard.name,
+            keys: soundboard.keys,
+            volume: soundboard.volume,
+            linkedFolder: soundboard.linkedFolder,
+            sounds: soundboard.sounds,
         };
-    };
+    }
+
+    static getSoundWithPath(soundboard: Soundboard, path: string): Sound | undefined {
+        return soundboard.sounds.find(x => x.path === path);
+    }
 }

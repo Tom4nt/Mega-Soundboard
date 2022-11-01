@@ -5,7 +5,7 @@ export default class Actions {
 
     static async addSounds(paths: string[], soundboardId: string, index?: number): Promise<void> {
         if (paths.length <= 0) return;
-        const newSounds = await window.functions.getNewSoundsFromPaths(paths);
+        const newSounds = await window.actions.getNewSoundsFromPaths(paths);
 
         if (paths.length == 1) {
             const modal = new SoundModal(newSounds[0], true);
@@ -36,7 +36,7 @@ export default class Actions {
     }
 
     static async addSoundboard(): Promise<void> {
-        const soundboard = await window.functions.getNewSoundboard();
+        const soundboard = await window.actions.getNewSoundboard();
         const modal = new SoundboardModal(soundboard, true);
         modal.open();
         modal.onSaved.addHandler(soundboard => {

@@ -4,6 +4,7 @@ import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import Utils from "./util/utils";
+import AudioManager from "./audioManager";
 
 const MSRi = MSR.instance;
 
@@ -61,7 +62,7 @@ window.ondragstart = async (e): Promise<void> => {
     if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
 
     const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
-    const validPaths = await window.functions.getValidSoundPaths(paths);
+    const validPaths = await window.actions.getValidSoundPaths(paths);
 
     if (validPaths.length <= 0) return;
     soundList.startDrag();
@@ -71,7 +72,7 @@ window.ondrop = async (e): Promise<void> => {
     if (MSRi.modalManager.hasOpenModal || !e.dataTransfer) return;
     const filePaths = Utils.getDataTransferFilePaths(e.dataTransfer);
 
-    const validPaths = await window.functions.getValidSoundPaths(filePaths);
+    const validPaths = await window.actions.getValidSoundPaths(filePaths);
     if (validPaths.length < 1) return;
 
     const currentSoundboard = soundboardList.getSelectedSoundboard();
@@ -96,16 +97,18 @@ async function init(): Promise<void> {
     getElementReferences();
     addElementListeners();
 
-    const devices = await window.functions.getDevices();
+    const devices = await AudioManager.getAudioDevices();
     fillDeviceLists(devices);
 
-    const initialDevices = await window.functions.getInitialSelectedDevices();
+    const initialDevices = await window.actions.getCurrentDevices();
     if (initialDevices.length > 0)
-        mainDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === initialDevices[0].deviceId);
+        mainDeviceDropdown.selectIfFound((item) =>
+            item instanceof DropdownDeviceItem && item.device === initialDevices[0]);
     if (initialDevices.length > 1)
-        secondaryDeviceDropdown.selectIfFound((item) => item instanceof DropdownDeviceItem && item.device === initialDevices[1].deviceId);
+        secondaryDeviceDropdown.selectIfFound((item) =>
+            item instanceof DropdownDeviceItem && item.device === initialDevices[1]);
 
-    const soundboards = await window.functions.getSoundboards();
+    const soundboards = await window.actions.getSoundboards();
     for (const sb of soundboards) {
         soundboardList.addSoundboard(sb);
     }
@@ -113,7 +116,7 @@ async function init(): Promise<void> {
     window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
     window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
 
-    const shouldShowChangelog = await window.functions.shouldShowChangelog();
+    const shouldShowChangelog = await window.actions.shouldShowChangelog();
     if (shouldShowChangelog) {
         const modal = await NewsModal.load();
         modal.open();
@@ -243,7 +246,7 @@ function closeActionPanelContainers(e: MouseEvent): void {
 }
 
 async function browseAndAddSounds(): Promise<void> {
-    const paths = await window.functions.browseSounds();
+    const paths = await window.actions.browseSounds();
     const sb = soundboardList.getSelectedSoundboard();
     if (sb) void Actions.addSounds(paths, sb.uuid);
 }

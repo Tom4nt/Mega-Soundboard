@@ -2,13 +2,13 @@ import { app } from "electron";
 import { autoUpdater } from "electron-updater";
 import "electron-reload";
 import MS from "./ms";
-import WindowManager from "./windowManager";
-import TrayManager from "./trayManager";
+import WindowManager from "./managers/windowManager";
+import TrayManager from "./managers/trayManager";
 import IPCHandler from "./ipcHandler";
-import IPCEvents, { events } from "./ipcEvents";
-import SoundboardsCache from "./soundboardsCache";
-import SettingsCache from "./settingsCache";
-import DataAccess from "./dataAccess";
+import EventSender from "./eventSender";
+import SoundboardsCache from "./data/soundboardsCache";
+import SettingsCache from "./data/settingsCache";
+import DataAccess from "./data/dataAccess";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -29,9 +29,9 @@ if (!gotLock) {
 }
 
 void autoUpdater.checkForUpdates();
-autoUpdater.on("update-available", () => IPCEvents.sendVoid(events.updateAvailable));
-autoUpdater.on("download-progress", progress => IPCEvents.send(events.updateProgress, progress.percent));
-autoUpdater.on("update-downloaded", () => IPCEvents.sendVoid(events.updateReady));
+autoUpdater.on("update-available", () => EventSender.send("onUpdateAvailable"));
+autoUpdater.on("download-progress", progress => EventSender.send("onUpdateProgress", progress.percent));
+autoUpdater.on("update-downloaded", () => EventSender.send("onUpdateReady"));
 setInterval(() => {
     void autoUpdater.checkForUpdates();
 }, 300000); //5 minutes

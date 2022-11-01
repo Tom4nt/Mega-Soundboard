@@ -79,7 +79,8 @@ export default class SoundboardList extends HTMLElement {
 
     private updateSeleced(soundboard: Soundboard): void {
         for (const item of this.getItems()) {
-            if (item.soundboard.equals(soundboard)) {
+            console.trace();
+            if (Soundboard.equals(item.soundboard, soundboard)) {
                 item.isSelected = true;
             }
         }
@@ -96,16 +97,9 @@ export default class SoundboardList extends HTMLElement {
     /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
     private getSoundboardElement(soundboard: Soundboard): SoundboardItem | null {
         for (const item of this.getItems()) {
-            if (item.soundboard.equals(soundboard)) return item;
+            if (Soundboard.equals(item.soundboard, soundboard)) return item;
         }
         return null;
-    }
-
-    /** Sets all playing indicators to a specific state. */
-    private setAllPlayingIndicators(state: boolean): void {
-        for (const item of this.getItems()) {
-            item.setPlayingIndicatorState(state);
-        }
     }
 
     // Handlers
@@ -124,7 +118,7 @@ export default class SoundboardList extends HTMLElement {
             }
         } else {
             const curr = this.getSelectedSoundboard();
-            if (!curr || !target.soundboard.equals(curr))
+            if (!curr || !Soundboard.equals(target.soundboard, curr))
                 window.actions.setCurrentSoundboard(target.soundboard.uuid);
         }
     };

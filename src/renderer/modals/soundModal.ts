@@ -47,7 +47,7 @@ export default class SoundModal extends Modal {
 
         this.pathElement.onValueChanged.addHandler(async v => {
             if (!this.nameElement.value) {
-                const name = await window.functions.getNameFromPath(v);
+                const name = await window.actions.getNameFromPath(v);
                 this.nameElement.value = name;
             }
         });
@@ -104,7 +104,7 @@ export default class SoundModal extends Modal {
         }
 
         if (valid) {
-            if (! await window.functions.isPathValid(this.pathElement.value, "sound")) {
+            if (! await window.actions.isPathValid(this.pathElement.value, "sound")) {
                 valid = false;
                 this.pathElement.warn();
             }

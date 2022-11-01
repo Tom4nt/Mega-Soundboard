@@ -1,86 +1,28 @@
 import { app, dialog, ipcMain, shell } from "electron";
 import { promises as fs } from "fs";
 import { autoUpdater } from "electron-updater";
-import { getFromRenderer } from "../shared/ipcChannels";
-import { OptionalSettings, Sound, Soundboard } from "../shared/models";
+import { Soundboard } from "../shared/models";
+import { Actions } from "../shared/ipcActions";
 import MS from "./ms";
+import path = require("path");
+import SoundUtils from "./utils/soundUtils";
+import { randomUUID } from "crypto";
+import SharedUtils from "../shared/sharedUtils";
+import Utils from "./utils/utils";
 
 export default class IPCHandler {
+    private static handleAction<T extends keyof Actions>(name: T, handler: Actions[T]): void {
+        const f = handler as (...args: unknown[]) => unknown;
+        ipcMain.handle(name, (_e, args) => f(...args as unknown[]));
+    }
+
     static init(): void {
 
-        ipcMain.on(getFromRenderer("toggleKeybindsState"), () => {
-            MS.instance.toggleKeybindsState();
-        });
-
-        ipcMain.handle(getFromRenderer("toggleKeybindsState"), () => {
-            MS.instance.toggleKeybindsState();
-        });
-
-        ipcMain.handle(getFromRenderer("toggleOverlapSoundsState"), () => {
-            MS.instance.toggleOverlapSoundsState();
-        });
-
-        ipcMain.handle(getFromRenderer("setMinToTray"), (_e, state: boolean) => {
-            MS.instance.setMinToTray(state);
-        });
-
-        ipcMain.handle(getFromRenderer("addSounds"), (_e, sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number) => {
-            void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, move, startIndex);
-        });
-
-        ipcMain.handle(getFromRenderer("editSound"), (_e, sound: Sound) => {
-            void MS.instance.soundboardsCache.editSound(sound);
-        });
-
-        ipcMain.handle(getFromRenderer("deleteSound"), (_e, soundId: string) => {
-            void MS.instance.soundboardsCache.removeSound(soundId);
-        });
-
-        ipcMain.handle(getFromRenderer("addSoundboard"), (_e, soundboard: Soundboard) => {
-            void MS.instance.soundboardsCache.addSoundboard(soundboard);
-        });
-
-        ipcMain.handle(getFromRenderer("deleteSoundboard"), (_e, soundboardId: string) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("editSoundboard"), (_e, soundboard: Soundboard) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("flagChangelogViewed"), () => {
-            MS.instance.flagChangelogViewed();
-        });
-
-        ipcMain.handle(getFromRenderer("moveSound"), (_e, soundId: string, destinationSoundboardId: string, destinationIndex: number) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("moveSoundboard"), (_e, soundboardId: string, destinationIndex: number) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("installUpdate"), () => {
-            autoUpdater.quitAndInstall();
-        });
-
-        ipcMain.handle(getFromRenderer("setDeviceId"), (_e, index: number, id: string) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("setDeviceVolume"), (_e, index: number, volume: number) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("saveSettings"), (_e, settings: OptionalSettings) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("minimize"), () => {
+        this.handleAction("minimize", () => {
             MS.instance.windowManager.window.minimize();
         });
 
-        ipcMain.handle(getFromRenderer("toggleMaximizedState"), () => {
+        this.handleAction("toggleMaximizedState", () => {
             if (MS.instance.windowManager.window.isMaximized()) {
                 MS.instance.windowManager.window.unmaximize();
             } else {
@@ -88,104 +30,185 @@ export default class IPCHandler {
             }
         });
 
-        ipcMain.handle(getFromRenderer("close"), () => {
+        this.handleAction("close", () => {
             app.quit();
         });
 
-        ipcMain.handle(getFromRenderer("openRepo"), () => {
+
+        this.handleAction("addSounds", (sounds, soundboardId, move, startIndex) => {
+            void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, move, startIndex);
+        });
+
+        this.handleAction("editSound", sound => {
+            void MS.instance.soundboardsCache.editSound(sound);
+        });
+
+        this.handleAction("moveSound", (soundId, destinationSoundboardId, destinationIndex) => {
+            void MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex);
+        });
+
+        this.handleAction("deleteSound", soundId => {
+            void MS.instance.soundboardsCache.removeSound(soundId);
+        });
+
+        this.handleAction("getNewSoundsFromPaths", paths => {
+            const sounds = SoundUtils.getNewSoundsFromPaths(paths);
+            return Promise.resolve(sounds);
+        });
+
+        this.handleAction("getValidSoundPaths", paths => {
+            const valid = SoundUtils.getValidSoundPaths(paths);
+            return Promise.resolve(valid);
+        });
+
+
+        this.handleAction("getNewSoundboard", async () => {
+            const sb = new Soundboard(randomUUID());
+            return await Promise.resolve(sb);
+        });
+
+        this.handleAction("addSoundboard", soundboard => {
+            void MS.instance.soundboardsCache.addSoundboard(soundboard);
+        });
+
+        this.handleAction("moveSoundboard", (soundboardId, destinationIndex) => {
+            void MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
+        });
+
+        this.handleAction("deleteSoundboard", soundboardId => {
+            void MS.instance.soundboardsCache.removeSoundboard(soundboardId);
+        });
+
+        this.handleAction("editSoundboard", soundboard => {
+            void MS.instance.soundboardsCache.editSoundboard(soundboard);
+        });
+
+        this.handleAction("setCurrentSoundboard", async id => {
+            const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(id);
+            const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex];
+            await MS.instance.setCurrentSoundboard(soundboard);
+        });
+
+        this.handleAction("getSoundboards", () => {
+            const soundboards = MS.instance.soundboardsCache.soundboards;
+            return Promise.resolve(soundboards);
+        });
+
+        this.handleAction("getInitialSoundboardIndex", () => {
+            const lastSoundboardIndex = MS.instance.soundboardsCache.soundboards.length - 1;
+            let index = MS.instance.settingsCache.settings.selectedSoundboard;
+            if (index < 0) index = 0;
+            if (index > lastSoundboardIndex) index = lastSoundboardIndex;
+            return Promise.resolve(index);
+        });
+
+
+        this.handleAction("flagChangelogViewed", () => {
+            MS.instance.flagChangelogViewed();
+        });
+
+        this.handleAction("installUpdate", () => {
+            autoUpdater.quitAndInstall();
+        });
+
+
+        this.handleAction("setDeviceId", (index, id) => {
+            void MS.instance.settingsCache.setDeviceId(index, id);
+        });
+
+        this.handleAction("setDeviceVolume", (index, volume) => {
+            void MS.instance.settingsCache.setDeviceVolume(index, volume);
+        });
+
+        this.handleAction("getCurrentDevices", () => {
+            const devices = MS.instance.settingsCache.getCurrentDevices();
+            return Promise.resolve(devices);
+        });
+
+
+        this.handleAction("getSettings", () => {
+            return Promise.resolve(MS.instance.settingsCache.settings);
+        });
+
+        this.handleAction("saveSettings", settings => {
+            void MS.instance.settingsCache.save(settings);
+        });
+
+        this.handleAction("shouldShowChangelog", () => {
+            return Promise.resolve(MS.instance.settingsCache.shouldShowChangelog());
+        });
+
+        this.handleAction("setMinimizeToTray", state => {
+            MS.instance.setMinToTray(state);
+        });
+
+        this.handleAction("toggleKeybindsState", () => {
+            MS.instance.toggleKeybindsState();
+        });
+
+        this.handleAction("toggleOverlapSoundsState", () => {
+            MS.instance.toggleOverlapSoundsState();
+        });
+
+
+        this.handleAction("openRepo", () => {
             void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard");
         });
 
-        ipcMain.handle(getFromRenderer("openBugReport"), () => {
+        this.handleAction("openBugReport", () => {
             void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=bug&template=bug_report.md");
         });
 
-        ipcMain.handle(getFromRenderer("stopKeyRecordingSession"), (_e, id: string) => {
-            // TODO
-        });
 
-        ipcMain.handle(getFromRenderer("setCurrentSoundboard"), (_e, id: string) => {
-            // TODO
-        });
-
-        // ---
-
-        ipcMain.handle(getFromRenderer("getSoundsFromPaths"), (_e, paths: string[]) => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("getNewSoundboard"), () => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("browseSounds"), async () => {
+        this.handleAction("browseSounds", async () => {
             const r = await dialog.showOpenDialog({
                 properties: ["openFile", "multiSelections"],
                 filters: [
-                    { name: "Audio files", extensions: ["mp3", "wav", "ogg"] } // TODO: Unify valid extensions
+                    { name: "Audio files", extensions: SharedUtils.validSoundExts }
                 ]
             });
-            if (r.filePaths[0]) {
-                return r.filePaths;
-            } else {
-                return null;
-            }
+            return r.filePaths;
         });
 
-        ipcMain.handle(getFromRenderer("browseFolder"), async () => {
+        this.handleAction("browseFolder", async () => {
             const r = await dialog.showOpenDialog({
                 properties: ["openDirectory"]
             });
             return r.filePaths[0];
         });
 
-        ipcMain.handle(getFromRenderer("getValidSoundPaths"), () => {
-            // TODO
+        this.handleAction("isPathValid", async (path, type) => {
+            if (type === "folder") {
+                return await Utils.isPathValid(path, type);
+            }
+            else {
+                return await Utils.isPathValid(path, "file", SharedUtils.validSoundExts);
+            }
         });
 
-        ipcMain.handle(getFromRenderer("isPathValid"), (_e, path: string, type: "sound" | "folder") => {
-            // TODO
-            // type === "audio/mpeg" || type === "audio/ogg" || type === "audio/wav"
+        this.handleAction("getNameFromPath", p => {
+            const name = Utils.getNameFromFile(p);
+            return Promise.resolve(name);
         });
 
-        ipcMain.handle(getFromRenderer("getSoundboards"), () => {
-            // TODO
+
+        this.handleAction("startKeyRecordingSession", () => {
+            // TODO: Handle in the KeybindManager
+            return Promise.resolve("");
         });
 
-        ipcMain.handle(getFromRenderer("getDevices"), () => {
-            // TODO
+        this.handleAction("stopKeyRecordingSession", id => {
+            // TODO: Handle in the KeybindManager
         });
 
-        ipcMain.handle(getFromRenderer("getInitialSelectedDevices"), () => {
-            // TODO
+
+        this.handleAction("getNewsHtml", async () => {
+            return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");
         });
 
-        ipcMain.handle(getFromRenderer("shouldShowChangeLog"), () => {
-            // TODO
-        });
 
-        ipcMain.handle(getFromRenderer("getInitialSoundboardIndex"), () => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("getNameFromPath"), () => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("getSettings"), () => {
-            // TODO
-        });
-
-        ipcMain.handle(getFromRenderer("getVersion"), () => {
-            return app.getVersion();
-        });
-
-        ipcMain.handle(getFromRenderer("getNews"), async () => {
-            return await fs.readFile(__dirname + "/../../news.html", "utf-8");
-        });
-
-        ipcMain.handle(getFromRenderer("startKeyRecordingSession"), () => {
-            // TODO
+        this.handleAction("getVersion", () => {
+            return Promise.resolve(app.getVersion());
         });
     }
 }

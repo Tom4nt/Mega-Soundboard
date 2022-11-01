@@ -11,7 +11,7 @@ export default class NewsModal extends Modal {
     /** Async factory method */
     static async load(): Promise<NewsModal> {
         const modal = new NewsModal();
-        modal.content = await window.functions.getNewsHtml();
+        modal.content = await window.actions.getNewsHtml();
         return modal;
     }
 

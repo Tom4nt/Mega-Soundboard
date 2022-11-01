@@ -1,6 +1,6 @@
 import { ipcRenderer } from "electron";
-import { Sound, Soundboard } from "../shared/models";
-import { Event, ExposedEvent } from "../shared/events";
+import { Sound, Soundboard } from "../../shared/models";
+import { Event, ExposedEvent } from "../../shared/events";
 
 // TODO: Remake.
 export enum KeybindManagerEvent {

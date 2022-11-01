@@ -83,7 +83,7 @@ export default class SoundItem extends Draggable {
 
     private addGlobalListeners(): void {
         MSR.instance.audioManager.onPlaySound.addHandler(sound => {
-            if (sound.equals(this.sound))
+            if (Sound.equals(sound, this.sound))
                 this.setPlayingState(true);
         });
 

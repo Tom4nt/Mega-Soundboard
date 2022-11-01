@@ -65,7 +65,7 @@ export default class MSModal extends Modal {
     }
 
     private async setVersionNumber(): Promise<void> {
-        const version = await window.functions.getVersion();
+        const version = await window.actions.getVersion();
         this.versionElement.innerHTML = `Version ${version}`;
     }
 }
