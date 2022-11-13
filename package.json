@@ -5,12 +5,12 @@
     "main": "out/main/main.js",
     "scripts": {
         "start": "npm run build && electron .",
-        "startLast": "electron .",
-        "dist": "npm run build && electron-builder",
-        "pub": "npm run build && electron-builder -p=always",
         "build": "npm run copy && tsc --build && npm run browserify",
+        "startLast": "electron .",
+        "browserify": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external",
         "copy": "copyfiles src/res/**/* out -u 1",
-        "browserify": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external"
+        "dist": "npm run build && electron-builder",
+        "pub": "npm run build && electron-builder -p=always"
     },
     "repository": "https://github.com/Tom4nt/Mega-Soundboard",
     "author": "Tom4nt",

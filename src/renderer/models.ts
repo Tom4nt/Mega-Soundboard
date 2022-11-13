@@ -1,7 +1,7 @@
 export enum UISoundPath {
-    ON = "res/audio/on.wav",
-    OFF = "res/audio/off.wav",
-    ERROR = "res/audio/error.wav"
+    ON = "audio/on.wav",
+    OFF = "audio/off.wav",
+    ERROR = "audio/error.wav"
 }
 
 export const sides = ["top", "bottom", "left", "right"] as const;

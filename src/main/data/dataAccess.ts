@@ -102,7 +102,7 @@ export default class DataAccess {
         data.forEach(sound => {
             if (sound && typeof sound === "object") {
                 const s = DataAccess.getSound(Utils.objectToMap(sound));
-                Sound.connectToSoundboard(s, connectedSoundboard);
+                s.soundboard = connectedSoundboard;
                 sounds.push(s);
             }
         });

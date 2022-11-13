@@ -38,7 +38,7 @@ export default class SoundModal extends Modal {
         this.update();
     }
 
-    protected getContent(): HTMLElement {
+    protected getContent(): HTMLElement[] {
         this.nameElement = new TextField("Name");
         this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
         this.pathElement = new FileSelector("Path", "sound");
@@ -52,16 +52,14 @@ export default class SoundModal extends Modal {
             }
         });
 
-        const contentDiv = document.createElement("div");
-        contentDiv.append(
+        return [
             this.nameElement,
             this.moveElement,
             this.pathElement,
             this.volumeElement,
             Modal.getLabel("Play"),
             this.keysElement,
-        );
-        return contentDiv;
+        ];
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
@@ -83,7 +81,7 @@ export default class SoundModal extends Modal {
         this.volumeElement.value = this.loadedSound.volume;
         this.keysElement.keys = this.loadedSound.keys;
 
-        const isLinked = this.loadedSound.connectedSoundboard?.linkedFolder;
+        const isLinked = this.loadedSound.soundboard?.linkedFolder;
         this.moveElement.style.display = this.isNew ? "" : "none"; // Can only move when it's a new sound
         this.pathElement.style.display = !isLinked ? "" : "none"; // Can only set the path for sounds in unlinked soundboards
         this.removeButton.style.visibility = this.isNew || isLinked ? "none" : "";

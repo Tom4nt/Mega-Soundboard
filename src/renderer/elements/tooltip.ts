@@ -24,6 +24,8 @@ export default class Tooltip extends HTMLElement {
         this.update();
     }
 
+    public domRectGetter: (() => DOMRect) | null = null;
+
     constructor() {
         super();
         this._tooltipText = "";
@@ -58,6 +60,10 @@ export default class Tooltip extends HTMLElement {
         this.style.transform = "scale(0.8)";
     }
 
+    notifyPositionUpdate(): void {
+        if (this.host) this.updatePosition(this.getPreferedDOMRect());
+    }
+
     protected connectedCallback(): void {
         this.classList.add("popup");
         this.classList.add(this.side);
@@ -84,10 +90,15 @@ export default class Tooltip extends HTMLElement {
         this.style.top = `${top}px`;
     }
 
+    private getPreferedDOMRect(): DOMRect {
+        if (!this.host) throw Error("Host is not defined.");
+        return this.domRectGetter ? this.domRectGetter() : this.host.getBoundingClientRect();
+    }
+
     // --- Handlers ---
 
     hostMouseEnter = (): void => {
-        if (this.host) this.show(this.host.getBoundingClientRect());
+        if (this.host) this.show(this.getPreferedDOMRect());
     };
 
     hostMouseLeave = (): void => {

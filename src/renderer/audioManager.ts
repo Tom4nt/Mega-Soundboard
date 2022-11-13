@@ -43,8 +43,8 @@ export default class AudioManager {
     async playSound(sound: Sound): Promise<void> {
         if (!this.overlapSounds) this.stopAllSounds();
 
-        if (!sound.connectedSoundboard) throw Error(MSG_ERR_NOT_CONNECTED);
-        const soundboardVolume = sound.connectedSoundboard.volume;
+        if (!sound.soundboard) throw Error(MSG_ERR_NOT_CONNECTED);
+        const soundboardVolume = sound.soundboard.volume;
 
         const sinkIdPromises: Promise<void>[] = [];
         const audioElements: HTMLAudioElement[] = [];
@@ -90,7 +90,7 @@ export default class AudioManager {
 
     stopSound(uuid: string): void {
         const instances = this.playingSounds.get(uuid);
-        if (instances) {
+        if (instances && instances.length > 0) {
             for (const instance of instances) {
                 instance.pause();
             }

@@ -17,6 +17,11 @@ export default class SettingsCache {
         await DataAccess.saveSettings(this.settings);
     }
 
+    async setCurrentSoundboard(index: number): Promise<void> {
+        this.settings.selectedSoundboard = index;
+        await DataAccess.saveSettings(this.settings);
+    }
+
     getCurrentDevices(): string[] {
         const devices = [this.settings.mainDevice];
         if (this.settings.secondaryDevice) devices.push(this.settings.secondaryDevice);

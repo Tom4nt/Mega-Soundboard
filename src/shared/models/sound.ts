@@ -2,8 +2,7 @@ import { Soundboard } from "../models";
 
 // All functions must be static so instances can be passed between processes.
 export default class Sound {
-    private soundboard: Soundboard | null = null;
-    get connectedSoundboard(): Soundboard | null { return this.soundboard; }
+    soundboard: Soundboard | null = null;
 
     constructor(
         public uuid: string,
@@ -15,10 +14,6 @@ export default class Sound {
 
     static equals(from: Sound, to: Sound): boolean {
         return from.uuid == to.uuid;
-    }
-
-    static connectToSoundboard(sound: Sound, soundboard: Soundboard): void {
-        sound.soundboard = soundboard;
     }
 
     static toJSON(sound: Sound): object {

@@ -31,7 +31,7 @@ export default abstract class Modal extends HTMLElement {
 
     static getButton(label: string, clickCallback: () => void, left = false, red = false): HTMLButtonElement {
         const button = document.createElement("button");
-        button.innerHTML = label.toUpperCase();
+        button.innerHTML = label;
         if (left)
             button.style.float = "left";
         if (red)
@@ -77,7 +77,7 @@ export default abstract class Modal extends HTMLElement {
         //Body
         const body = document.createElement("div");
         body.classList.add("modal-body");
-        body.append(this.getContent());
+        body.append(...this.getContent());
         window.appendChild(body);
         //---
 
@@ -102,7 +102,7 @@ export default abstract class Modal extends HTMLElement {
         document.removeEventListener("keyup", this.keyUpHandler);
     }
 
-    protected abstract getContent(): HTMLElement;
+    protected abstract getContent(): HTMLElement[];
     protected abstract getFooterButtons(): HTMLButtonElement[];
     protected abstract canCloseWithKey(): boolean;
 

@@ -28,12 +28,14 @@ export default class SoundboardList extends HTMLElement {
             this.updateSeleced(sb);
         });
 
+        // TODO: Move to item
         MSR.instance.audioManager.onPlaySound.addHandler(s => {
-            if (!s.connectedSoundboard) return;
-            const elem = this.getSoundboardElement(s.connectedSoundboard);
+            if (!s.soundboard) return;
+            const elem = this.getSoundboardElement(s.soundboard);
             elem?.updatePlayingIndicator(1);
         });
 
+        // TODO: Move to item
         MSR.instance.audioManager.onStopSound.addHandler(s => {
             const sb = this.getSelectedSoundboard();
             if (!sb) return;
@@ -78,11 +80,18 @@ export default class SoundboardList extends HTMLElement {
     }
 
     private updateSeleced(soundboard: Soundboard): void {
+        this.unselectAll();
         for (const item of this.getItems()) {
-            console.trace();
             if (Soundboard.equals(item.soundboard, soundboard)) {
                 item.isSelected = true;
+                this.selectedItem = item;
             }
+        }
+    }
+
+    private unselectAll(): void {
+        for (const item of this.getItems()) {
+            item.isSelected = false;
         }
     }
 

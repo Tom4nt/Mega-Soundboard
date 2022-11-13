@@ -6,7 +6,7 @@ import Actions from "../util/actions";
 import Draggable from "./draggable";
 
 export default class SoundboardItem extends Draggable {
-    private indicatorElement!: HTMLDivElement;
+    private iconElement!: HTMLSpanElement;
     private titleElement!: HTMLSpanElement;
     private descriptionElement!: HTMLSpanElement;
 
@@ -29,7 +29,6 @@ export default class SoundboardItem extends Draggable {
 
         const indicator = document.createElement("div");
         indicator.classList.add("indicator");
-        this.indicatorElement = indicator;
 
         const title = document.createElement("span");
         title.classList.add("title");
@@ -40,6 +39,7 @@ export default class SoundboardItem extends Draggable {
         this.descriptionElement = desc;
 
         const icon = document.createElement("span");
+        this.iconElement = icon;
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
         icon.classList.add("icon");
 
@@ -75,7 +75,7 @@ export default class SoundboardItem extends Draggable {
         this.classList.remove("linked");
         if (this.soundboard.linkedFolder) this.classList.add("linked");
         this.descriptionElement.innerHTML = Keys.toKeyString(this.soundboard.keys);
-        this.indicatorElement.innerHTML = this.soundboard.linkedFolder ? "link" : "";
+        this.iconElement.innerHTML = this.soundboard.linkedFolder ? "link" : "";
     }
 
     updatePlayingIndicator(playingSoundCountSum: number): void {

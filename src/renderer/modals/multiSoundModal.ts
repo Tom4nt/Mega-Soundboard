@@ -20,12 +20,10 @@ export default class MultiSoundModal extends Modal {
         return true;
     }
 
-    getContent(): HTMLElement {
-        this.moveToggler = new Toggler("Move sounds", new InfoBalloon("The sound files will be moved to the location defined in Settings.", "top"));
-
-        const body = document.createElement("div");
-        body.append(this.moveToggler);
-        return body;
+    getContent(): HTMLElement[] {
+        this.moveToggler = new Toggler("Move sounds", new InfoBalloon(
+            "The sound files will be moved to the location defined in Settings.", "top"));
+        return [this.moveToggler];
     }
 
     getFooterButtons(): HTMLButtonElement[] {

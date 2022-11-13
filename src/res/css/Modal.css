@@ -108,6 +108,7 @@
     color: var(--color-white);
     background-color: transparent;
     font-family: Roboto;
+    text-transform: uppercase;
 }
 
 .modal-footer>*:not(:last-child) {

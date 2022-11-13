@@ -6,6 +6,8 @@ class ConcreteActions {
     toggleMaximizedState: (() => void) | null = null;
     close: (() => void) | null = null;
 
+    notifyContentLoaded: (() => void) | null = null;
+
     addSounds: ((sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number) => void) | null = null;
     editSound: ((sound: Sound) => void) | null = null;
     moveSound: ((soundId: string, destinationSoundboardId: string, destinationIndex: number) => void) | null = null;

@@ -12,10 +12,10 @@ export default class MessageModal extends Modal {
         return true;
     }
 
-    protected getContent(): HTMLElement {
+    protected getContent(): HTMLElement[] {
         const p = document.createElement("p");
         p.innerHTML = this.text;
-        return p;
+        return [p];
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {

@@ -131,7 +131,11 @@ export default class SoundList extends HTMLElement {
         this.infoElement.innerHTML = message;
     }
 
-    private * getSoundItems(): Generator<SoundItem> {
+    private getSoundItems(): SoundItem[] {
+        return Array.from(this.iterateSoundItems());
+    }
+
+    private * iterateSoundItems(): Generator<SoundItem> {
         for (const element of this.containerElement.children) {
             if (element instanceof SoundItem) yield element;
         }

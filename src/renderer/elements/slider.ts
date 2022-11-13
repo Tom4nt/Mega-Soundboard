@@ -6,7 +6,6 @@ export default class Slider extends HTMLElement {
     private mainColor: string;
     private labelText: string;
 
-    private labelElement!: HTMLSpanElement;
     private inputElement!: HTMLInputElement;
     private tooltip!: Tooltip;
 
@@ -26,6 +25,8 @@ export default class Slider extends HTMLElement {
         if (this.isConnected) {
             this.inputElement.value = num.toString();
             this.updateSliderColor();
+            this.updateTooltip();
+            this._onValueChange.raise(this);
         }
     }
 
@@ -44,12 +45,13 @@ export default class Slider extends HTMLElement {
         this.tooltip = new Tooltip();
         this.tooltip.attatch(this);
 
+        this.tooltip.domRectGetter = (): DOMRect => this.getThumbDOMRect();
+
         const labelAttr = this.getAttribute("label");
         if (labelAttr) {
             const label = document.createElement("span");
             label.classList.add("slider-label");
             if (!this.labelText) this.labelText = labelAttr;
-            this.labelElement = label;
             this.appendChild(label);
         }
 
@@ -62,13 +64,10 @@ export default class Slider extends HTMLElement {
         this.value = this._value;
 
         input.oninput = (): void => {
-            this.updateSliderColor();
-            this.updateTooltip();
-            this._onValueChange.raise(this);
+            this.value = input.valueAsNumber;
         };
 
         this.append(input);
-        this.append(this.labelElement);
         this.updateSliderColor();
     }
 
@@ -81,20 +80,14 @@ export default class Slider extends HTMLElement {
         if (this.labelText) this.tooltip.tooltipText = `${this.labelText} | ${this.textValue}`;
         else this.tooltip.tooltipText = this.textValue;
 
-        const left = this.getThumbX() - this.tooltip.offsetWidth / 2;
-        this.tooltip.style.left = `${left}px`;
+        this.tooltip.notifyPositionUpdate();
     }
 
-    private getThumbX(): number {
-        const input = this.inputElement;
-        const x = input.getBoundingClientRect().x;
-        const slider_width = input.clientWidth;
-        const center_position = slider_width / 2;
-        const percent_of_range = this.value / 100;
-        const value_px_position = percent_of_range * slider_width;
-        const dist_from_center = value_px_position - center_position;
-        const percent_dist_from_center = dist_from_center / center_position;
-        const offset = percent_dist_from_center * 6;
-        return value_px_position - offset + x;
+    private getThumbDOMRect(): DOMRect {
+        const thisRect = this.getBoundingClientRect();
+        const thumbW = 12;
+        const w = this.inputElement.clientWidth - thumbW;
+        thisRect.x += (w * (this.value / 100)) - w / 2;
+        return thisRect;
     }
 }

@@ -13,9 +13,9 @@ export default class MSModal extends Modal {
         return true;
     }
 
-    getContent(): HTMLElement {
+    getContent(): HTMLElement[] {
         const icon = document.createElement("img");
-        icon.src = "res/icon.ico";
+        icon.src = "icon.ico";
         icon.style.display = "block";
         icon.style.margin = "auto";
         icon.style.marginBottom = "8px";
@@ -52,9 +52,7 @@ export default class MSModal extends Modal {
 
         void this.setVersionNumber();
 
-        const containerElement = document.createElement("div");
-        containerElement.append(icon, ver, buttons);
-        return containerElement;
+        return [icon, ver, buttons];
     }
 
     getFooterButtons(): HTMLButtonElement[] {

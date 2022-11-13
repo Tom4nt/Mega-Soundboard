@@ -33,6 +33,7 @@ export default class SoundItem extends Draggable {
 
         const playingIndicator = document.createElement("div");
         playingIndicator.classList.add("indicator");
+        this.indicatorElement = playingIndicator;
 
         this.update();
         this.append(this.titleElement, this.detailsElement, playingIndicator);

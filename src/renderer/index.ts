@@ -122,6 +122,8 @@ async function init(): Promise<void> {
         modal.open();
         window.actions.flagChangelogViewed();
     }
+
+    window.actions.notifyContentLoaded();
 }
 
 function getElementReferences(): void {

@@ -9,6 +9,7 @@ import SoundUtils from "./utils/soundUtils";
 import { randomUUID } from "crypto";
 import SharedUtils from "../shared/sharedUtils";
 import Utils from "./utils/utils";
+import EventSender from "./eventSender";
 
 export default class IPCHandler {
     private static handleAction<T extends keyof Actions>(name: T, handler: Actions[T]): void {
@@ -32,6 +33,15 @@ export default class IPCHandler {
 
         this.handleAction("close", () => {
             app.quit();
+        });
+
+
+        this.handleAction("notifyContentLoaded", () => {
+            const index = MS.instance.settingsCache.settings.selectedSoundboard;
+            const sbs = MS.instance.soundboardsCache.soundboards;
+            let sb = sbs[0];
+            if (index > 0 && index < sbs.length) sb = sbs[index];
+            EventSender.send("onCurrentSoundboardChanged", sb);
         });
 
 

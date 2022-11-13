@@ -12,7 +12,7 @@ export default class SettingsModal extends Modal {
         this.modalTitle = "Settings";
     }
 
-    protected getContent(): HTMLElement {
+    protected getContent(): HTMLElement[] {
         this.stopSoundsRecorder = new KeyRecorder();
         this.keybindsStateRecorder = new KeyRecorder();
         this.soundsLocationFileSelector = new FileSelector("", "folder");
@@ -20,8 +20,7 @@ export default class SettingsModal extends Modal {
 
         void this.load();
 
-        const container = document.createElement("div");
-        container.append(
+        return [
             Modal.getLabel("Stop all Sounds"),
             this.stopSoundsRecorder,
             Modal.getLabel("Enable/Disable keybinds"),
@@ -29,9 +28,7 @@ export default class SettingsModal extends Modal {
             this.minimizeToTrayToggler,
             Modal.getLabel("Moved Sounds Location"),
             this.soundsLocationFileSelector
-        );
-
-        return container;
+        ];
     }
 
     private async load(): Promise<void> {

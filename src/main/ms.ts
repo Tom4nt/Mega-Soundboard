@@ -59,6 +59,9 @@ export default class MS {
     }
 
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
+        const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
+        await this.settingsCache.setCurrentSoundboard(index);
+
         if (!soundboard.linkedFolder) {
             this.currentSoundboardWatcher = null;
             EventSender.send("onCurrentSoundboardChanged", soundboard);

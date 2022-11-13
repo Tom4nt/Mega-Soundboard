@@ -32,7 +32,7 @@ export default class SoundboardModal extends Modal {
         this.update();
     }
 
-    protected getContent(): HTMLElement {
+    protected getContent(): HTMLElement[] {
         this.nameElement = new TextField("Name");
         this.keysElement = new KeyRecorder();
         this.volumeElement = new Slider("Volume");
@@ -43,16 +43,13 @@ export default class SoundboardModal extends Modal {
             this.nameElement.value = name;
         });
 
-        const container = document.createElement("div");
-        container.append(
+        return [
             this.nameElement,
             this.folderElement,
             this.volumeElement,
             Modal.getLabel("Set Active"),
             this.keysElement,
-        );
-
-        return container;
+        ];
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {

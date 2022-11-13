@@ -20,12 +20,11 @@ export default class NewsModal extends Modal {
         return true;
     }
 
-    getContent(): HTMLElement {
+    getContent(): HTMLElement[] {
         const d = document.createElement("div");
         d.classList.add("news");
         d.innerHTML = this.content;
-
-        return d;
+        return [d];
     }
 
     getFooterButtons(): HTMLButtonElement[] {
