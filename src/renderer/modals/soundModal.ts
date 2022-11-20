@@ -35,6 +35,7 @@ export default class SoundModal extends Modal {
     }
 
     protected connectedCallback(): void {
+        super.connectedCallback();
         this.update();
     }
 

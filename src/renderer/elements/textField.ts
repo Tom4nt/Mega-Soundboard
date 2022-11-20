@@ -21,8 +21,13 @@ export default class TextField extends HTMLElement {
         const input = document.createElement("input");
         input.classList.add("textInput-default");
         input.placeholder = this.hint;
-        if (this.value) input.value = this.value;
         input.type = "text";
+        if (this.value) input.value = this.value;
+
+        input.addEventListener("input", () => {
+            this.value = input.value;
+        });
+
         this.mainElement = input;
         this.append(input);
     }

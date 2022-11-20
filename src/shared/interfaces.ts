@@ -1,6 +1,7 @@
 import { Sound, Soundboard } from "./models";
 
 export type WindowState = "minimized" | "restored" | "maximized";
+export type Point = { x: number, y: number }
 
 export type NonOptional<T> = {
     [P in keyof T]-?: Exclude<T[P], null>;
@@ -20,11 +21,16 @@ export interface IDevice {
 }
 
 export interface SoundAddedArgs {
-    sound: Sound;
-    index?: number;
+    sound: Sound,
+    index?: number,
 }
 
 export interface SoundChangedArgs {
     sound: Sound,
     soundboard: Soundboard,
+}
+
+export interface SoundboardAddedArgs {
+    soundboard: Soundboard,
+    index?: number,
 }

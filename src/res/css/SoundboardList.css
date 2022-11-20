@@ -29,7 +29,8 @@ ms-soundboardlist .item.selected {
     background-color: var(--color-normal);
 }
 
-ms-soundboardlist .item.selected .title, .item.drag .title {
+ms-soundboardlist .item.selected .title,
+.item.drag .title {
     padding-left: 22px;
 }
 

@@ -5,6 +5,14 @@ import { IDevice } from "../shared/interfaces";
 
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
+class AudioInstance {
+    constructor(public readonly audioElements: HTMLAudioElement[]) { }
+    stop(): void {
+        this.audioElements.forEach(x => x.pause());
+        this.audioElements.length = 0;
+    }
+}
+
 export default class AudioManager {
     devices: IDevice[] = [{ id: "default", volume: 100 }];
     overlapSounds = false;
@@ -17,7 +25,7 @@ export default class AudioManager {
     get onStopSound(): ExposedEvent<string> { return this._onStopSound.expose(); }
     readonly _onStopSound = new Event<string>();
 
-    playingSounds = new Map<string, HTMLAudioElement[]>;
+    playingSounds = new Map<string, AudioInstance[]>;
 
     constructor() {
         window.events.onKeybindsStateChanged.addHandler(s => {
@@ -49,14 +57,17 @@ export default class AudioManager {
         const sinkIdPromises: Promise<void>[] = [];
         const audioElements: HTMLAudioElement[] = [];
 
+        const instance = new AudioInstance(audioElements);
+
         for (const device of this.devices) {
             const audio = new Audio(sound.path);
 
             audio.addEventListener("ended", () => {
-                const instances = this.playingSounds.get(sound.uuid);
-                instances?.splice(instances.indexOf(audio), 1);
-                if (instances && instances.length <= 0) {
-                    console.log(`All instances of ${sound.name} finished playing.`);
+                audioElements.splice(audioElements.indexOf(audio), 1);
+                if (audioElements.length <= 0) {
+                    console.log(`Instance of ${sound.name} finished playing.`);
+                    const instances = this.playingSounds.get(sound.uuid);
+                    instances?.splice(instances.indexOf(instance), 1);
                     this._onStopSound.raise(sound.uuid);
                 }
             });
@@ -67,7 +78,7 @@ export default class AudioManager {
             audioElements.push(audio);
         }
 
-        console.log(`Added and playing ${this.devices.length} instances of sound at ${sound.name}.`);
+        console.log(`Added and playing instance of sound at ${sound.uuid}.`);
         await Promise.all(sinkIdPromises);
 
         const playTasks: Promise<void>[] = [];
@@ -79,20 +90,22 @@ export default class AudioManager {
         await Promise.all(playTasks);
 
         const instances = this.playingSounds.get(sound.uuid);
-        if (!instances) {
-            this.playingSounds.set(sound.uuid, audioElements);
-        } else {
-            instances.push(...audioElements);
+        if (instances) {
+            instances.push(instance);
+        }
+        else {
+            this.playingSounds.set(sound.uuid, [instance]);
         }
 
         this._onPlaySound.raise(sound);
     }
 
+    /** Stops all instances of the specified Sound. */
     stopSound(uuid: string): void {
         const instances = this.playingSounds.get(uuid);
         if (instances && instances.length > 0) {
             for (const instance of instances) {
-                instance.pause();
+                instance.stop();
             }
             this.playingSounds.set(uuid, []);
             console.log(`Stopped all instances of sound with UUID ${uuid}.`);
@@ -101,8 +114,8 @@ export default class AudioManager {
     }
 
     stopSounds(uuids: Iterable<string>): void {
-        for (const sound of uuids) {
-            this.stopSound(sound);
+        for (const soundId of uuids) {
+            this.stopSound(soundId);
         }
     }
 

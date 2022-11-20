@@ -81,8 +81,11 @@ export default class IPCHandler {
             void MS.instance.soundboardsCache.addSoundboard(soundboard);
         });
 
-        this.handleAction("moveSoundboard", (soundboardId, destinationIndex) => {
-            void MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
+        this.handleAction("moveSoundboard", async (soundboardId, destinationIndex) => {
+            const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
+            const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
+            await MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
+            await MS.instance.setCurrentSoundboard(selected);
         });
 
         this.handleAction("deleteSoundboard", soundboardId => {

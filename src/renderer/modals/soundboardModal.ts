@@ -39,8 +39,10 @@ export default class SoundboardModal extends Modal {
         this.folderElement = new FileSelector("Linked Folder (Optional)", "folder");
 
         this.folderElement.onValueChanged.addHandler(async () => {
-            const name = await window.actions.getNameFromPath(this.folderElement.value);
-            this.nameElement.value = name;
+            if (!this.nameElement.value) {
+                const name = await window.actions.getNameFromPath(this.folderElement.value);
+                this.nameElement.value = name;
+            }
         });
 
         return [

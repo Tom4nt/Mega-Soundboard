@@ -57,7 +57,7 @@ window.ondragleave = (e): void => {
 
 window.ondragstart = async (e): Promise<void> => {
     if (MSRi.modalManager.hasOpenModal) return;
-    e.preventDefault();
+    // e.preventDefault();
 
     if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
 
@@ -286,12 +286,9 @@ async function browseAndAddSounds(): Promise<void> {
 //     void setKeybindsToggleSettings(state);
 // });
 
-// ipcRenderer.on("win.focus", () => {
-//     document.body.classList.add("focused");
-// });
-
-// ipcRenderer.on("win.blur", () => {
-//     document.body.classList.remove("focused");
-// });
+window.events.onWindowFocusChanged.addHandler(s => {
+    if (s) document.body.classList.add("focused");
+    else document.body.classList.remove("focused");
+});
 
 //#endregion

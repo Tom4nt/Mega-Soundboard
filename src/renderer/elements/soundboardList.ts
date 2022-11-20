@@ -1,7 +1,7 @@
-import { SoundboardItem } from "../elements";
+import { SoundboardItem, SoundItem } from "../elements";
 import { Soundboard } from "../../shared/models";
-import MSR from "../msr";
 import Utils from "../util/utils";
+import Draggable from "./draggable";
 
 export default class SoundboardList extends HTMLElement {
     private selectedItem?: SoundboardItem;
@@ -28,24 +28,34 @@ export default class SoundboardList extends HTMLElement {
             this.updateSeleced(sb);
         });
 
-        // TODO: Move to item
-        MSR.instance.audioManager.onPlaySound.addHandler(s => {
-            if (!s.soundboard) return;
-            const elem = this.getSoundboardElement(s.soundboard);
-            elem?.updatePlayingIndicator(1);
-        });
-
-        // TODO: Move to item
-        MSR.instance.audioManager.onStopSound.addHandler(s => {
-            const sb = this.getSelectedSoundboard();
-            if (!sb) return;
-            const sound = sb.sounds.find(x => x.uuid = s);
-            if (!sound) return;
+        window.events.onSoundboardRemoved.addHandler(sb => {
             const elem = this.getSoundboardElement(sb);
-            elem?.updatePlayingIndicator(-1);
+            elem?.remove();
         });
 
-        this.addEventListener("dragover", this.handleDragOver);
+        window.events.onSoundboardAdded.addHandler(args => {
+            this.addSoundboard(args.soundboard, args.index);
+        });
+
+        // this.addEventListener("dragover", this.handleDragOver);
+
+        document.addEventListener("mousemove", e => {
+            if (Draggable.currentElement) {
+                if (Draggable.currentElement instanceof SoundboardItem) {
+                    if (!this.dragElement) {
+                        this.showDragDummy();
+                        this.dragElement = Draggable.currentElement;
+                        this.handleDragOver(e.clientY);
+                    } else {
+                        this.handleDragOver(e.clientY);
+                    }
+                }
+                else if (Draggable.currentElement instanceof SoundItem) {
+                    const target = this.getItemAtPosition(e.clientY, e.clientX);
+                    if (target && !target.isSelected) target.select();
+                }
+            }
+        });
     }
 
     getSelectedSoundboard(): Soundboard | null {
@@ -54,22 +64,22 @@ export default class SoundboardList extends HTMLElement {
         return null;
     }
 
-    addSoundboard(soundboard: Soundboard): void {
+    addSoundboard(soundboard: Soundboard, index?: number): void {
         const sbElement = new SoundboardItem(soundboard);
-        sbElement.addEventListener("dragstart", () => {
-            this.dragElement = sbElement;
-            this.showDragDummy();
+
+        sbElement.onDragEnd.addHandler(() => {
+            this.handleDrop();
+            this.dragElement = null;
         });
 
-        sbElement.addEventListener("dragend", this.handleDrop);
+        let beforeElement: HTMLElement | undefined = undefined;
+        if (index !== undefined) {
+            const items = Array.from(this.getItems());
+            if (index >= 0 && index < items.length) beforeElement = items[index];
+        }
 
-        sbElement.addEventListener("click", () => {
-            if (!sbElement.isSelected) {
-                window.actions.setCurrentSoundboard(sbElement.soundboard.uuid);
-            }
-        });
-
-        this.appendChild(sbElement);
+        if (beforeElement) this.insertBefore(sbElement, beforeElement);
+        else this.appendChild(sbElement);
     }
 
     /** Updates the information about playing sounds in a soundboard. */
@@ -111,13 +121,29 @@ export default class SoundboardList extends HTMLElement {
         return null;
     }
 
+    private getItemAtPosition(y: number, x?: number): SoundboardItem | undefined {
+        const target = document.elementFromPoint(x ?? this.getBoundingClientRect().x, y);
+
+        if (!target) return undefined;
+        if (!(target instanceof SoundboardItem)) return undefined;
+
+        return target;
+    }
+
+    private getItemIndex(item: SoundboardItem): number {
+        let i = 0;
+        for (const curr of this.getItems()) {
+            if (curr === item) return i;
+            i++;
+        }
+        return i;
+    }
+
     // Handlers
 
-    private handleDragOver = (e: DragEvent): void => {
-        const target = document.elementFromPoint(this.getBoundingClientRect().x, e.clientY);
-
+    private handleDragOver = (yPos: number): void => {
+        const target = this.getItemAtPosition(yPos);
         if (!target) return;
-        if (!(target instanceof SoundboardItem)) return;
 
         if (this.dragElement) {
             if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
@@ -133,13 +159,11 @@ export default class SoundboardList extends HTMLElement {
     };
 
     private handleDrop = (): void => {
-        const sb = this.getSelectedSoundboard();
-        if (!this.dragElement || !sb) return;
+        if (!this.dragElement) return;
 
         this.insertBefore(this.dragElement, this.dragDummy.nextElementSibling);
-        const newIndex = Utils.getElementIndex(this.dragElement);
-
-        window.actions.moveSoundboard(sb.uuid, newIndex);
+        const newIndex = this.getItemIndex(this.dragElement);
+        window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);
 
         this.hideDragDummy();
     };

@@ -23,7 +23,7 @@ export default class Soundboard {
             keys: soundboard.keys,
             volume: soundboard.volume,
             linkedFolder: soundboard.linkedFolder,
-            sounds: soundboard.sounds,
+            sounds: soundboard.sounds.map(x => Sound.toJSON(x)),
         };
     }
 

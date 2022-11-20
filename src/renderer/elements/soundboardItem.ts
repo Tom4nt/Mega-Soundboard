@@ -20,11 +20,13 @@ export default class SoundboardItem extends Draggable {
         else this.classList.remove("selected");
     }
 
-    constructor(public readonly soundboard: Soundboard) {
+    constructor(public soundboard: Soundboard) {
         super();
+        this.lockHorizontal = true;
+        this.init();
     }
 
-    protected connectedCallback(): void {
+    private init(): void {
         this.classList.add("item");
 
         const indicator = document.createElement("div");
@@ -63,11 +65,39 @@ export default class SoundboardItem extends Draggable {
         this.addEventListener("contextmenu", () => {
             Actions.editSoundboard(this.soundboard);
         });
+
+        this.addEventListener("click", () => {
+            if (!this.isSelected) this.select();
+        });
+
+        window.events.onSoundboardChanged.addHandler(sb => {
+            if (Soundboard.equals(sb, this.soundboard)) {
+                this.soundboard = sb;
+                this.updateElements();
+            }
+        });
+
+        MSR.instance.audioManager.onPlaySound.addHandler(s => {
+            if (!s.soundboard) return;
+            if (Soundboard.equals(this.soundboard, s.soundboard)) {
+                this.updatePlayingIndicator(1);
+            }
+        });
+
+        MSR.instance.audioManager.onStopSound.addHandler(s => {
+            const sound = this.soundboard.sounds.find(x => x.uuid = s);
+            if (!sound) return;
+            this.updatePlayingIndicator(-1);
+        });
     }
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
         return "drag";
+    }
+
+    select(): void {
+        window.actions.setCurrentSoundboard(this.soundboard.uuid);
     }
 
     updateElements(): void {

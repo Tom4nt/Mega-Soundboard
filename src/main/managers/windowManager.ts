@@ -1,5 +1,6 @@
 import { BrowserWindow, Menu, MenuItem, shell } from "electron";
 import path = require("path");
+import EventSender from "../eventSender";
 import MS from "../ms";
 import Utils from "../utils/utils";
 
@@ -39,22 +40,23 @@ export default class WindowManager {
             if (MS.instance.isMinToTrayEnabled) {
                 win.hide();
             }
+            EventSender.send("onWindowStateChanged", "minimized");
         });
 
         win.on("maximize", function () {
-            win.webContents.send("win.maximize");
+            EventSender.send("onWindowStateChanged", "maximized");
         });
 
         win.on("unmaximize", function () {
-            win.webContents.send("win.unmaximize");
+            EventSender.send("onWindowStateChanged", "restored");
         });
 
         win.on("focus", () => {
-            win.webContents.send("win.focus");
+            EventSender.send("onWindowFocusChanged", true);
         });
 
         win.on("blur", () => {
-            win.webContents.send("win.blur");
+            EventSender.send("onWindowFocusChanged", false);
         });
 
         win.setMenu(WindowManager.createMenu());

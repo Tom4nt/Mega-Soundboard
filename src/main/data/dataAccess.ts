@@ -39,7 +39,8 @@ export default class DataAccess {
     }
 
     static async saveSoundboards(soundboards: Soundboard[]): Promise<void> {
-        const json = JSON.stringify(soundboards);
+        const obj = { soundboards: soundboards.map(x => Soundboard.toJSON(x)) };
+        const json = JSON.stringify(obj);
         await fs.writeFile(soundboardsPath, json);
         console.log("Saved Soundboards.");
     }

@@ -56,7 +56,7 @@ export default class SoundboardsCache {
 
     async addSoundboard(soundboard: Soundboard): Promise<void> {
         this.soundboards.push(soundboard);
-        EventSender.send("onSoundboardAdded", soundboard);
+        EventSender.send("onSoundboardAdded", { soundboard });
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -73,14 +73,14 @@ export default class SoundboardsCache {
         this.soundboards.splice(sbIndex, 1);
         EventSender.send("onSoundboardRemoved", soundboard);
         this.soundboards.splice(destinationIndex, 0, soundboard);
-        EventSender.send("onSoundboardAdded", soundboard);
+        EventSender.send("onSoundboardAdded", { soundboard, index: destinationIndex });
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
     async removeSoundboard(uuid: string): Promise<void> {
         const index = this.soundboards.findIndex((s) => s.uuid === uuid);
         const soundboard = this.soundboards[index];
-        this.soundboards.splice(index, 0);
+        this.soundboards.splice(index, 1);
         EventSender.send("onSoundboardRemoved", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }

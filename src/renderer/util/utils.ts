@@ -44,4 +44,11 @@ export default class Utils {
         );
         return devices;
     }
+
+    static getStyle(name: string): HTMLStyleElement {
+        const elem = document.createElement("link");
+        elem.rel = "stylesheet";
+        elem.href = `./css/${name}.css`;
+        return elem;
+    }
 }

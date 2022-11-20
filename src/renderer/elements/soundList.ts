@@ -6,6 +6,7 @@ const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
 
 export default class SoundList extends HTMLElement {
+    private currentFilter = "";
     private currentSoundboardId?: string;
     private dragElement: SoundItem | null = null;
     private infoElement!: HTMLSpanElement;
@@ -64,16 +65,13 @@ export default class SoundList extends HTMLElement {
     }
 
     filter(filter: string): void {
-        this.infoElement.style.display = "none";
-        let hasSounds = false;
+        this.currentFilter = filter;
         for (const soundItem of this.getSoundItems()) {
             let isValid = !filter || soundItem.sound.name.toLowerCase().includes(filter.toLowerCase());
             isValid = isValid && (!this.dragElement || soundItem != this.dragElement); // Is not the current drag element
-
-            if (isValid) hasSounds = true;
             soundItem.style.display = isValid ? "" : "none";
         }
-        if (!hasSounds) this.displayEmptyMessage(SEARCH_EMPTY);
+        this.updateMessage();
     }
 
     // --- // ---
@@ -94,6 +92,8 @@ export default class SoundList extends HTMLElement {
         else {
             this.containerElement.insertBefore(item, this.containerElement.childNodes[index]);
         }
+
+        this.updateMessage();
     }
 
     private removeSound(sound: Sound): void {
@@ -117,7 +117,7 @@ export default class SoundList extends HTMLElement {
 
     private removeSoundItem(element: SoundItem): void {
         element.remove();
-        if (!this.hasSounds()) this.displayEmptyMessage(NO_SOUNDS);
+        this.updateMessage();
     }
 
     private getDragElementIndex(): number {
@@ -125,10 +125,18 @@ export default class SoundList extends HTMLElement {
         return Utils.getElementIndex(this.dragElement) - 1;
     }
 
+    private updateMessage(): void {
+        if (!this.hasSounds()) this.displayEmptyMessage(this.currentFilter ? SEARCH_EMPTY : NO_SOUNDS);
+        else this.displayEmptyMessage("");
+    }
+
     private displayEmptyMessage(message: string): void {
-        if (!message) this.infoElement.style.display = "none";
-        this.infoElement.style.display = "";
-        this.infoElement.innerHTML = message;
+        if (!message) {
+            this.infoElement.style.display = "none";
+        } else {
+            this.infoElement.style.display = "";
+            this.infoElement.innerHTML = message;
+        }
     }
 
     private getSoundItems(): SoundItem[] {
