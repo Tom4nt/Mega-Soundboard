@@ -29,7 +29,6 @@ class ConcreteActions {
 
     setDeviceId: ((index: number, id: string) => void) | null = null;
     setDeviceVolume: ((index: number, volume: number) => void) | null = null;
-    getCurrentDevices: (() => Promise<string[]>) | null = null;
 
     getSettings: (() => Promise<Settings>) | null = null;
     saveSettings: ((settings: OptionalSettings) => void) | null = null;

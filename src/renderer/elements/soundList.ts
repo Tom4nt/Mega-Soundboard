@@ -1,6 +1,7 @@
 import { Sound } from "../../shared/models";
 import { SoundItem } from "../elements";
 import Utils from "../util/utils";
+import Draggable from "./draggable";
 
 const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
@@ -42,24 +43,36 @@ export default class SoundList extends HTMLElement {
         window.events.onCurrentSoundboardChanged.addHandler(sb => {
             this.loadSounds(sb.sounds, sb.uuid);
         });
+
+        document.addEventListener("mousemove", e => {
+            if (Draggable.currentElement && Draggable.currentElement instanceof SoundItem) {
+                if (!this.dragElement) {
+                    this.showDragDummy();
+                    this.dragElement = Draggable.currentElement;
+                    this.handleDragOver(e);
+                } else {
+                    this.handleDragOver(e);
+                }
+            }
+        });
     }
 
     loadSounds(sounds: Sound[], soundboardUuid: string): void {
         this.currentSoundboardId = soundboardUuid;
         this.clear();
         for (const sound of sounds) {
-            this.addSound(sound);
+            if (!this.dragElement || !Sound.equals(this.dragElement.sound, sound))
+                this.addSound(sound);
         }
     }
 
-    startDrag(): void {
-        this.addEventListener("mousemove", this.handleMouseMove);
+    showDragDummy(): void {
         this.dragDummyElement.style.display = "inline-block";
     }
 
     /** Returns the index of the element being dragged over the list. */
-    stopDrag(): number {
-        this.removeEventListener("mousemove", this.handleMouseMove);
+    hideDragDummy(): number {
+        this.removeEventListener("mousemove", this.handleDragOver);
         this.dragDummyElement.style.display = "";
         return this.getDragElementIndex();
     }
@@ -79,14 +92,12 @@ export default class SoundList extends HTMLElement {
     private addSound(sound: Sound, index?: number): void {
         const item = new SoundItem(sound);
 
-        item.addEventListener("dragstart", () => {
-            this.dragElement = item;
-            this.startDrag();
+        item.onDragEnd.addHandler(() => {
+            this.handleDrop();
+            this.dragElement = null;
         });
 
-        item.addEventListener("dragend", () => this.handleDrop);
-
-        if (!index) {
+        if (index === undefined) {
             this.containerElement.append(item);
         }
         else {
@@ -107,7 +118,7 @@ export default class SoundList extends HTMLElement {
 
     private clear(): void {
         for (const item of this.getSoundItems()) {
-            this.removeSoundItem(item);
+            if (item !== this.dragElement) this.removeSoundItem(item);
         }
     }
 
@@ -151,7 +162,7 @@ export default class SoundList extends HTMLElement {
 
     // Handlers
 
-    private handleMouseMove = (e: MouseEvent): void => {
+    private handleDragOver = (e: MouseEvent): void => {
         const targetElement = document.elementFromPoint(e.clientX, e.clientY);
 
         if (!targetElement) return;
@@ -172,7 +183,6 @@ export default class SoundList extends HTMLElement {
 
         window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
 
-        this.dragElement = null;
-        this.stopDrag();
+        this.hideDragDummy();
     };
 }

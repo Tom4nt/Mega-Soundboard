@@ -25,6 +25,7 @@ export default abstract class Draggable extends HTMLElement {
         super();
 
         this.addEventListener("mousedown", e => {
+            if (e.button !== 0) return;
             this.isMouseDownOnThis = true;
             this.initialPos = { x: e.clientX, y: e.clientY };
         });

@@ -37,8 +37,6 @@ export default class SoundboardList extends HTMLElement {
             this.addSoundboard(args.soundboard, args.index);
         });
 
-        // this.addEventListener("dragover", this.handleDragOver);
-
         document.addEventListener("mousemove", e => {
             if (Draggable.currentElement) {
                 if (Draggable.currentElement instanceof SoundboardItem) {
@@ -52,7 +50,8 @@ export default class SoundboardList extends HTMLElement {
                 }
                 else if (Draggable.currentElement instanceof SoundItem) {
                     const target = this.getItemAtPosition(e.clientY, e.clientX);
-                    if (target && !target.isSelected) target.select();
+                    if (target && !target.isSelected && target.soundboard.linkedFolder === null)
+                        target.select();
                 }
             }
         });

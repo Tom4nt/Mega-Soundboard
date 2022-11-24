@@ -74,7 +74,7 @@ export default class Dropdown extends HTMLElement {
         this.options.forEach((option) => {
             option.classList.remove("selected");
         });
-        if (!index) {
+        if (index === null) {
             this._onSelectedItem.raise(null);
             return;
         }

@@ -37,6 +37,7 @@ export default class SoundboardsCache {
         const sound = found.soundboard.sounds[found.index];
         const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
         const destSoundboard = this.soundboards[destSoundboardIndex];
+        if (destSoundboard.linkedFolder !== null) throw Error("Cannot move a sound to a linked Soundboard.");
 
         found.soundboard.sounds.splice(found.index, 1);
         EventSender.send("onSoundRemoved", sound);
@@ -88,7 +89,7 @@ export default class SoundboardsCache {
     findSound(uuid: string): { soundboard: Soundboard, index: number } {
         for (const soundboard of this.soundboards) {
             const soundIndex = soundboard.sounds.findIndex((s) => s.uuid === uuid);
-            if (soundIndex) return {
+            if (soundIndex >= 0) return {
                 soundboard: soundboard, index: soundIndex
             };
         }

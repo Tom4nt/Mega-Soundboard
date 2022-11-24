@@ -5,6 +5,7 @@ import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import Utils from "./util/utils";
 import AudioManager from "./audioManager";
+import { Settings } from "../shared/models";
 
 const MSRi = MSR.instance;
 
@@ -52,7 +53,7 @@ let buttonMoreSettings!: HTMLButtonElement;
 
 window.ondragleave = (e): void => {
     if (e.relatedTarget || MSRi.modalManager.hasOpenModal) return;
-    soundList.stopDrag();
+    soundList.hideDragDummy();
 };
 
 window.ondragstart = async (e): Promise<void> => {
@@ -65,7 +66,7 @@ window.ondragstart = async (e): Promise<void> => {
     const validPaths = await window.actions.getValidSoundPaths(paths);
 
     if (validPaths.length <= 0) return;
-    soundList.startDrag();
+    soundList.showDragDummy();
 };
 
 window.ondrop = async (e): Promise<void> => {
@@ -83,7 +84,7 @@ window.ondrop = async (e): Promise<void> => {
         return;
     }
 
-    const index = soundList.stopDrag(); // Use this index to insert the Sound at the correct position in the list.
+    const index = soundList.hideDragDummy(); // Use this index to insert the Sound at the correct position in the list.
     await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
 };
 
@@ -97,16 +98,7 @@ async function init(): Promise<void> {
     getElementReferences();
     addElementListeners();
 
-    const devices = await AudioManager.getAudioDevices();
-    fillDeviceLists(devices);
-
-    const initialDevices = await window.actions.getCurrentDevices();
-    if (initialDevices.length > 0)
-        mainDeviceDropdown.selectIfFound((item) =>
-            item instanceof DropdownDeviceItem && item.device === initialDevices[0]);
-    if (initialDevices.length > 1)
-        secondaryDeviceDropdown.selectIfFound((item) =>
-            item instanceof DropdownDeviceItem && item.device === initialDevices[1]);
+    await loadDevicesPanel();
 
     const soundboards = await window.actions.getSoundboards();
     for (const sb of soundboards) {
@@ -124,6 +116,29 @@ async function init(): Promise<void> {
     }
 
     window.actions.notifyContentLoaded();
+}
+
+async function loadDevicesPanel(): Promise<void> {
+    const devices = await AudioManager.getAudioDevices();
+    loadDevices(devices);
+
+    const settings = await window.actions.getSettings();
+    selectDevices(settings);
+    setVolumes(settings);
+}
+
+function selectDevices(settings: Settings): void {
+    mainDeviceDropdown.selectIfFound(item =>
+        item instanceof DropdownDeviceItem && item.device === settings.mainDevice);
+
+    if (settings.secondaryDevice !== null)
+        secondaryDeviceDropdown.selectIfFound(item =>
+            item instanceof DropdownDeviceItem && item.device === settings.secondaryDevice);
+}
+
+function setVolumes(settings: Settings): void {
+    mainDeviceVolumeSlider.value = settings.mainDeviceVolume;
+    secondaryDeviceVolumeSlider.value = settings.secondaryDeviceVolume;
 }
 
 function getElementReferences(): void {
@@ -195,12 +210,15 @@ function addElementListeners(): void {
         window.actions.toggleOverlapSoundsState();
     });
 
+    // TODO: Fix devices and volumes not being set.
     mainDeviceVolumeSlider.onValueChange.addHandler(s => {
         window.actions.setDeviceVolume(0, s.value);
+        // MSRi.audioManager.devices[0].volume = s.value;
     });
 
     secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
         window.actions.setDeviceVolume(1, s.value);
+        // MSRi.audioManager.devices[1].volume = s.value;
     });
 
     mainDeviceDropdown.onSelectedItem.addHandler(item => {
@@ -225,7 +243,7 @@ function addElementListeners(): void {
     //#endregion
 }
 
-function fillDeviceLists(devices: MediaDeviceInfo[]): void {
+function loadDevices(devices: MediaDeviceInfo[]): void {
     secondaryDeviceDropdown.addItem(new DropdownDeviceItem("None", null));
     for (const device of devices) {
         if (device.deviceId === "default") {

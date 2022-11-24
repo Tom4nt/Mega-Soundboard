@@ -7,6 +7,7 @@ import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
 
+// TODO: Green indicator not working when sounds overlap
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
@@ -19,9 +20,10 @@ export default class SoundItem extends Draggable {
 
     constructor(public readonly sound: Sound) {
         super();
+        this.init();
     }
 
-    protected connectedCallback(): void {
+    private init(): void {
         this.classList.add("item");
 
         this.titleElement = document.createElement("span");

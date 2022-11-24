@@ -1,11 +1,10 @@
 import { ExposedEvent } from "./events";
-import { IDevice, NonOptional, SoundAddedArgs, SoundboardAddedArgs, SoundChangedArgs, WindowState } from "./interfaces";
+import { NonOptional, SoundAddedArgs, SoundboardAddedArgs, SoundChangedArgs, WindowState } from "./interfaces";
 import { Sound, Soundboard } from "./models";
 
 class ConcreteEvents {
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
     onOverlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
-    onDevicesChanged: ExposedEvent<IDevice[]> | null = null;
     onSoundAdded: ExposedEvent<SoundAddedArgs> | null = null;
     onSoundChanged: ExposedEvent<SoundChangedArgs> | null = null;
     onSoundRemoved: ExposedEvent<Sound> | null = null;

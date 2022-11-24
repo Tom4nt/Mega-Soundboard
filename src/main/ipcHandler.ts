@@ -133,11 +133,6 @@ export default class IPCHandler {
             void MS.instance.settingsCache.setDeviceVolume(index, volume);
         });
 
-        this.handleAction("getCurrentDevices", () => {
-            const devices = MS.instance.settingsCache.getCurrentDevices();
-            return Promise.resolve(devices);
-        });
-
 
         this.handleAction("getSettings", () => {
             return Promise.resolve(MS.instance.settingsCache.settings);
@@ -207,7 +202,7 @@ export default class IPCHandler {
 
         this.handleAction("startKeyRecordingSession", () => {
             // TODO: Handle in the KeybindManager
-            return Promise.resolve("");
+            return Promise.resolve("TODO");
         });
 
         this.handleAction("stopKeyRecordingSession", id => {

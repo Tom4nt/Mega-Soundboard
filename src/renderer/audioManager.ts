@@ -36,10 +36,6 @@ export default class AudioManager {
         window.events.onOverlapSoundsStateChanged.addHandler(s => {
             this.overlapSounds = s;
         });
-
-        window.events.onDevicesChanged.addHandler(devices => {
-            this.devices = devices;
-        });
     }
 
     static async getAudioDevices(): Promise<MediaDeviceInfo[]> {

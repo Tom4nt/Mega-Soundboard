@@ -54,17 +54,23 @@ ms-dropdown {
     top: 32px;
     left: 0;
     transition: height 0.2s, visibility 0.2s;
-    transition-timing-function: cubic-bezier(0, 1.12, 0, 1.12);
+    transition-timing-function: cubic-bezier(0, 1, 0, 1);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.dropdown-container span {
+.dropdown-container ms-dropdowndeviceitem {
     font-family: Roboto;
     font-size: 13px;
     color: var(--color-white);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: block;
+    padding: 8px;
+}
+
+.dropdown-container ms-dropdowndeviceitem:hover {
+    background-color: var(--color-normalL);
 }
 
 .dropdown-container::-webkit-scrollbar {
@@ -86,10 +92,6 @@ ms-dropdown {
     font-size: 13px;
     padding: 6px;
     display: block;
-}
-
-.dropdown-container span:hover {
-    background-color: var(--color-normalL);
 }
 
 .dropdown-container .selected {
