@@ -5,10 +5,12 @@
     "main": "out/main/main.js",
     "scripts": {
         "start": "npm run build && electron .",
-        "build": "npm run copy && tsc --build && npm run browserify",
-        "softBuild": "tsc --build && npm run browserify",
+        "build": "npm run copy && tsc --build && npm run bundle",
+        "softBuild": "tsc --build && npm run bundle",
         "startLast": "electron .",
-        "browserify": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external && browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external",
+        "bundle": "npm run bundle-index && npm run bundle-preload",
+        "bundle-index": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external",
+        "bundle-preload": "browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external",
         "copy": "copyfiles src/res/**/* out -u 1",
         "dist": "npm run build && electron-builder",
         "pub": "npm run build && electron-builder -p=always"

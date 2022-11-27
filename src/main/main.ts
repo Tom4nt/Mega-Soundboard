@@ -9,6 +9,7 @@ import EventSender from "./eventSender";
 import SoundboardsCache from "./data/soundboardsCache";
 import SettingsCache from "./data/settingsCache";
 import DataAccess from "./data/dataAccess";
+import InitialContent from "../shared/models/initialContent";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -23,8 +24,8 @@ if (!gotLock) {
 } else {
     app.on("second-instance", (_e, args) => {
         console.log(args[args.length - 1].toString());
-        MS.instance.windowManager.window.show();
-        MS.instance.windowManager.window.focus();
+        MS.instance.windowManager.mainWindow?.show();
+        MS.instance.windowManager.mainWindow?.focus();
     });
 }
 
@@ -53,10 +54,20 @@ app.on("ready", function () {
 });
 
 async function init(): Promise<void> {
-    const winManager = WindowManager.createWindow();
-    const trayManager = TrayManager.createTray(winManager.window);
+    const winManager = new WindowManager();
+    await winManager.showLoadingWindow();
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
+
+    winManager.loadingWindow?.close();
+    void winManager.showMainWindow(() => new InitialContent(
+        settingsCache.settings,
+        soundboardsCache.soundboards,
+        settingsCache.shouldShowChangelog()
+    ));
+    if (!winManager.mainWindow) return;
+
+    const trayManager = TrayManager.createTray(winManager.mainWindow);
     new MS(winManager, trayManager, soundboardsCache, settingsCache);
 }
 

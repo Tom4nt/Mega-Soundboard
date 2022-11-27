@@ -1,13 +1,10 @@
 import Actions from "./util/actions";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
-import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
+import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
-import Utils from "./util/utils";
-import AudioManager from "./audioManager";
 import { Settings } from "../shared/models";
-
-const MSRi = MSR.instance;
+import AudioManager from "./audioManager";
 
 //#region Elements
 
@@ -51,42 +48,42 @@ let buttonMoreSettings!: HTMLButtonElement;
 
 //#endregion
 
-window.ondragleave = (e): void => {
-    if (e.relatedTarget || MSRi.modalManager.hasOpenModal) return;
-    soundList.hideDragDummy();
-};
+// window.ondragleave = (e): void => {
+//     if (e.relatedTarget || MSR.instance.modalManager.hasOpenModal) return;
+//     soundList.hideDragDummy();
+// };
 
-window.ondragstart = async (e): Promise<void> => {
-    if (MSRi.modalManager.hasOpenModal) return;
-    // e.preventDefault();
+// window.ondragstart = async (e): Promise<void> => {
+//     if (MSR.instance.modalManager.hasOpenModal) return;
+//     // e.preventDefault();
 
-    if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
+//     if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
 
-    const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
-    const validPaths = await window.actions.getValidSoundPaths(paths);
+//     const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
+//     const validPaths = await window.actions.getValidSoundPaths(paths);
 
-    if (validPaths.length <= 0) return;
-    soundList.showDragDummy();
-};
+//     if (validPaths.length <= 0) return;
+//     soundList.showDragDummy();
+// };
 
-window.ondrop = async (e): Promise<void> => {
-    if (MSRi.modalManager.hasOpenModal || !e.dataTransfer) return;
-    const filePaths = Utils.getDataTransferFilePaths(e.dataTransfer);
+// window.ondrop = async (e): Promise<void> => {
+//     if (MSR.instance.modalManager.hasOpenModal || !e.dataTransfer) return;
+//     const filePaths = Utils.getDataTransferFilePaths(e.dataTransfer);
 
-    const validPaths = await window.actions.getValidSoundPaths(filePaths);
-    if (validPaths.length < 1) return;
+//     const validPaths = await window.actions.getValidSoundPaths(filePaths);
+//     if (validPaths.length < 1) return;
 
-    const currentSoundboard = soundboardList.getSelectedSoundboard();
-    if (!currentSoundboard) return;
+//     const currentSoundboard = soundboardList.getSelectedSoundboard();
+//     if (!currentSoundboard) return;
 
-    if (currentSoundboard.linkedFolder) {
-        DefaultModals.errSoundboardIsLinked(currentSoundboard.linkedFolder).open();
-        return;
-    }
+//     if (currentSoundboard.linkedFolder) {
+//         DefaultModals.errSoundboardIsLinked(currentSoundboard.linkedFolder).open();
+//         return;
+//     }
 
-    const index = soundList.hideDragDummy(); // Use this index to insert the Sound at the correct position in the list.
-    await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
-};
+//     const index = soundList.hideDragDummy(); // Use this index to insert the Sound at the correct position in the list.
+//     await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
+// };
 
 window.addEventListener("load", () => void init());
 window.addEventListener("click", (e) => void closeActionPanelContainers(e));
@@ -95,12 +92,15 @@ window.addEventListener("contextmenu", (e) => void closeActionPanelContainers(e)
 //#region Functions
 
 async function init(): Promise<void> {
+    const content = window.initialContent;
+
     getElementReferences();
     addElementListeners();
 
-    await loadDevicesPanel();
+    const devices = await AudioManager.getAudioDevices();
+    loadDevicesPanel(devices, content.settings);
 
-    const soundboards = await window.actions.getSoundboards();
+    const soundboards = content.soundboards;
     for (const sb of soundboards) {
         soundboardList.addSoundboard(sb);
     }
@@ -108,21 +108,21 @@ async function init(): Promise<void> {
     window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
     window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
 
-    const shouldShowChangelog = await window.actions.shouldShowChangelog();
+    const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
         const modal = await NewsModal.load();
         modal.open();
         window.actions.flagChangelogViewed();
     }
 
-    window.actions.notifyContentLoaded();
+    // TODO: Test with empty save file.
+    const sb = soundboards[content.settings.selectedSoundboard];
+    soundList.loadSounds(sb.sounds, sb.uuid);
+    soundboardList.selectSoundboard(sb);
 }
 
-async function loadDevicesPanel(): Promise<void> {
-    const devices = await AudioManager.getAudioDevices();
+function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {
     loadDevices(devices);
-
-    const settings = await window.actions.getSettings();
     selectDevices(settings);
     setVolumes(settings);
 }
@@ -195,7 +195,7 @@ function addElementListeners(): void {
     //#region Action Panel
 
     stopAllButton.addEventListener("click", () => {
-        MSRi.audioManager.stopAllSounds();
+        MSR.instance.audioManager.stopAllSounds();
     });
 
     deviceSettingsButton.addEventListener("click", () => {
@@ -210,15 +210,12 @@ function addElementListeners(): void {
         window.actions.toggleOverlapSoundsState();
     });
 
-    // TODO: Fix devices and volumes not being set.
     mainDeviceVolumeSlider.onValueChange.addHandler(s => {
         window.actions.setDeviceVolume(0, s.value);
-        // MSRi.audioManager.devices[0].volume = s.value;
     });
 
     secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
         window.actions.setDeviceVolume(1, s.value);
-        // MSRi.audioManager.devices[1].volume = s.value;
     });
 
     mainDeviceDropdown.onSelectedItem.addHandler(item => {

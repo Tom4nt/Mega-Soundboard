@@ -9,39 +9,33 @@ import SoundUtils from "./utils/soundUtils";
 import { randomUUID } from "crypto";
 import SharedUtils from "../shared/sharedUtils";
 import Utils from "./utils/utils";
-import EventSender from "./eventSender";
 
 export default class IPCHandler {
-    private static handleAction<T extends keyof Actions>(name: T, handler: Actions[T]): void {
+    public static handleAction<T extends keyof Actions>(name: T, handler: Actions[T]): void {
         const f = handler as (...args: unknown[]) => unknown;
         ipcMain.handle(name, (_e, args) => f(...args as unknown[]));
+    }
+
+    public static removeActionHandle<T extends keyof Actions>(name: T): void {
+        ipcMain.removeHandler(name);
     }
 
     static init(): void {
 
         this.handleAction("minimize", () => {
-            MS.instance.windowManager.window.minimize();
+            MS.instance.windowManager.mainWindow?.minimize();
         });
 
         this.handleAction("toggleMaximizedState", () => {
-            if (MS.instance.windowManager.window.isMaximized()) {
-                MS.instance.windowManager.window.unmaximize();
+            if (MS.instance.windowManager.mainWindow?.isMaximized()) {
+                MS.instance.windowManager.mainWindow.unmaximize();
             } else {
-                MS.instance.windowManager.window.maximize();
+                MS.instance.windowManager.mainWindow?.maximize();
             }
         });
 
         this.handleAction("close", () => {
             app.quit();
-        });
-
-
-        this.handleAction("notifyContentLoaded", () => {
-            const index = MS.instance.settingsCache.settings.selectedSoundboard;
-            const sbs = MS.instance.soundboardsCache.soundboards;
-            let sb = sbs[0];
-            if (index > 0 && index < sbs.length) sb = sbs[index];
-            EventSender.send("onCurrentSoundboardChanged", sb);
         });
 
 

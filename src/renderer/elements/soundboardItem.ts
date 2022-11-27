@@ -85,7 +85,7 @@ export default class SoundboardItem extends Draggable {
         });
 
         MSR.instance.audioManager.onStopSound.addHandler(s => {
-            const sound = this.soundboard.sounds.find(x => x.uuid = s);
+            const sound = this.soundboard.sounds.find(x => x.uuid == s);
             if (!sound) return;
             this.updatePlayingIndicator(-1);
         });

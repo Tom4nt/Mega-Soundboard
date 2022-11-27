@@ -21,8 +21,9 @@ export default class SoundUtils {
     }
 
     static isValidSoundFile(path: string): boolean {
-        const ext = p.extname(path);
-        return SharedUtils.validSoundExts.includes(`.${ext}`);
+        let ext = p.extname(path);
+        if (ext.startsWith(".")) ext = ext.substring(1);
+        return SharedUtils.validSoundExts.includes(ext);
     }
 
     static getValidSoundPaths(paths: string[]): string[] {

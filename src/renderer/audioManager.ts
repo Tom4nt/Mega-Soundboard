@@ -1,5 +1,5 @@
 import { Event, ExposedEvent } from "../shared/events";
-import { Sound } from "src/shared/models";
+import { Settings, Sound } from "src/shared/models";
 import { UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
 
@@ -14,9 +14,9 @@ class AudioInstance {
 }
 
 export default class AudioManager {
-    devices: IDevice[] = [{ id: "default", volume: 100 }];
     overlapSounds = false;
 
+    private devices: IDevice[];
     private uiMediaElement = new Audio();
 
     get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
@@ -27,7 +27,9 @@ export default class AudioManager {
 
     playingSounds = new Map<string, AudioInstance[]>;
 
-    constructor() {
+    constructor(settings: Settings) {
+        this.devices = AudioManager.parseDevices(settings);
+
         window.events.onKeybindsStateChanged.addHandler(s => {
             if (s) void this.playUISound(UISoundPath.ON);
             else void this.playUISound(UISoundPath.OFF);
@@ -36,6 +38,16 @@ export default class AudioManager {
         window.events.onOverlapSoundsStateChanged.addHandler(s => {
             this.overlapSounds = s;
         });
+    }
+
+    static parseDevices(settings: Settings): IDevice[] {
+        const devices: IDevice[] = [
+            { id: settings.mainDevice, volume: settings.mainDeviceVolume }
+        ];
+        if (settings.secondaryDevice && settings.secondaryDeviceVolume) {
+            devices.push({ id: settings.secondaryDevice, volume: settings.secondaryDeviceVolume });
+        }
+        return devices;
     }
 
     static async getAudioDevices(): Promise<MediaDeviceInfo[]> {

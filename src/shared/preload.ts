@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { Event } from "./events";
 import { eventsKeys, EventsMap } from "./ipcEvents";
 import { actionsKeys, Actions } from "./ipcActions";
+import InitialContent from "./models/initialContent";
 
 function registerEvents(): void {
     const bridgeObject: Record<string, unknown> = {};
@@ -25,6 +26,9 @@ function registerActions(): void {
     }
     contextBridge.exposeInMainWorld("actions", bridgeObject);
 }
+
+const content = ipcRenderer.sendSync("load") as InitialContent;
+contextBridge.exposeInMainWorld("initialContent", content);
 
 registerEvents();
 registerActions();

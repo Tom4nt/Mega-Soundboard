@@ -1,5 +1,7 @@
 import { Sound } from "../../shared/models";
 import { SoundItem } from "../elements";
+import MSR from "../msr";
+import Actions from "../util/actions";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
 
@@ -55,6 +57,13 @@ export default class SoundList extends HTMLElement {
                 }
             }
         });
+
+        this.addEventListener("dragenter", this.handleDragEnter);
+        this.addEventListener("dragover", e => {
+            e.preventDefault();
+            this.handleDragOver(e);
+        });
+        this.addEventListener("drop", this.handleFileDrop);
     }
 
     loadSounds(sounds: Sound[], soundboardUuid: string): void {
@@ -74,7 +83,7 @@ export default class SoundList extends HTMLElement {
     hideDragDummy(): number {
         this.removeEventListener("mousemove", this.handleDragOver);
         this.dragDummyElement.style.display = "";
-        return this.getDragElementIndex();
+        return this.getDragDummyIndex();
     }
 
     filter(filter: string): void {
@@ -93,7 +102,7 @@ export default class SoundList extends HTMLElement {
         const item = new SoundItem(sound);
 
         item.onDragEnd.addHandler(() => {
-            this.handleDrop();
+            this.handleItemDrop();
             this.dragElement = null;
         });
 
@@ -131,9 +140,8 @@ export default class SoundList extends HTMLElement {
         this.updateMessage();
     }
 
-    private getDragElementIndex(): number {
-        if (!this.dragElement) return 0;
-        return Utils.getElementIndex(this.dragElement) - 1;
+    private getDragDummyIndex(): number {
+        return Utils.getElementIndex(this.dragDummyElement);
     }
 
     private updateMessage(): void {
@@ -160,6 +168,20 @@ export default class SoundList extends HTMLElement {
         }
     }
 
+    private async onFileDrop(e: DragEvent): Promise<void> {
+        this.hideDragDummy();
+
+        if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
+
+        const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
+        const validPaths = await window.actions.getValidSoundPaths(paths);
+
+        if (validPaths.length <= 0) return;
+
+        if (this.currentSoundboardId)
+            await Actions.addSounds(validPaths, this.currentSoundboardId, this.getDragDummyIndex());
+    }
+
     // Handlers
 
     private handleDragOver = (e: MouseEvent): void => {
@@ -175,14 +197,25 @@ export default class SoundList extends HTMLElement {
         }
     };
 
-    private handleDrop = (): void => {
+    private handleItemDrop = (): void => {
         if (!this.dragElement || !this.currentSoundboardId) return;
 
         this.containerElement.insertBefore(this.dragElement, this.dragDummyElement.nextElementSibling);
-        const newIndex = this.getDragElementIndex();
+        const newIndex = this.getDragDummyIndex();
 
         window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
 
         this.hideDragDummy();
+    };
+
+    private handleDragEnter = (e: DragEvent): void => {
+        e.preventDefault();
+        if (MSR.instance.modalManager.hasOpenModal) return;
+        this.showDragDummy();
+        this.handleDragOver(e);
+    };
+
+    private handleFileDrop = (e: DragEvent): void => {
+        void this.onFileDrop(e);
     };
 }

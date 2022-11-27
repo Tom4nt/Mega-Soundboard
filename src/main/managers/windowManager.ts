@@ -1,15 +1,47 @@
-import { BrowserWindow, Menu, MenuItem, shell } from "electron";
+import { BrowserWindow, ipcMain, Menu, MenuItem, shell } from "electron";
 import path = require("path");
+import InitialContent from "../../shared/models/initialContent";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import Utils from "../utils/utils";
 
 export default class WindowManager {
-    readonly window!: BrowserWindow;
+    private _mainWindow?: BrowserWindow;
+    private _loadingWindow?: BrowserWindow;
+    private windowContentRequested?: () => InitialContent;
 
-    private constructor(window: BrowserWindow) { this.window = window; }
+    get mainWindow(): BrowserWindow | undefined { return this._mainWindow; }
+    get loadingWindow(): BrowserWindow | undefined { return this._loadingWindow; }
 
-    static createWindow(): WindowManager {
+    constructor() {
+        ipcMain.on("load", (e) => {
+            e.returnValue = this.windowContentRequested ? this.windowContentRequested() : undefined;
+        });
+    }
+
+    async showLoadingWindow(): Promise<void> {
+        const win = new BrowserWindow({
+            show: false,
+            width: 300,
+            height: 300,
+            resizable: false,
+            frame: false,
+            title: "Mega Soundboard",
+            backgroundColor: "#1f1f24"
+        });
+        this._loadingWindow = win;
+        await win.loadFile(path.join(Utils.resourcesPath, "loading.html"));
+        win.show();
+    }
+
+    async showMainWindow(contentRequested: () => InitialContent): Promise<void> {
+        this.windowContentRequested = contentRequested;
+        await this.showMainWindowInternal();
+    }
+
+    private async showMainWindowInternal(): Promise<void> {
+        if (this.mainWindow && this.mainWindow.closable) this.mainWindow.close();
+
         const win = new BrowserWindow({
             show: false,
             width: 850,
@@ -24,8 +56,7 @@ export default class WindowManager {
             title: "Mega Soundboard",
             backgroundColor: "#1f1f24"
         });
-
-        const instance = new WindowManager(win);
+        this._mainWindow = win;
 
         win.webContents.on("will-navigate", (e, url) => {
             e.preventDefault();
@@ -60,12 +91,6 @@ export default class WindowManager {
         });
 
         win.setMenu(WindowManager.createMenu());
-        void WindowManager.loadHTML(win);
-
-        return instance;
-    }
-
-    private static async loadHTML(win: BrowserWindow): Promise<void> {
         await win.loadFile(path.join(Utils.resourcesPath, "index.html"));
     }
 
@@ -76,14 +101,6 @@ export default class WindowManager {
             accelerator: "Ctrl+Shift+I",
             click: (_item, window): void => {
                 window?.webContents.toggleDevTools();
-            }
-        }));
-
-        m.append(new MenuItem({
-            accelerator: "F5",
-            click: (_item, window): void => {
-                // ioHook.unregisterAllShortcuts();
-                window?.reload();
             }
         }));
         return m;

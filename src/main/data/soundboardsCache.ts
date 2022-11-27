@@ -8,13 +8,14 @@ export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
     async addSounds(sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number): Promise<void> {
-        const soundboard = this.soundboards.find((s) => s.uuid = soundboardId);
+        const soundboard = this.soundboards.find((s) => s.uuid == soundboardId);
         if (!soundboard) throw new Error(`Soundboard with runtime UUID ${soundboardId} could not be found.`);
 
         const soundsDestination = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
         let index = startIndex ?? 0;
         for (const sound of sounds) {
+            sound.soundboard = soundboard;
             soundboard.sounds.splice(index, 0, sound);
             if (move && soundsDestination)
                 moveTasks.push(fs.rename(sound.path, soundsDestination));
@@ -22,6 +23,7 @@ export default class SoundboardsCache {
             index += 1;
         }
 
+        EventSender.send("onSoundboardChanged", soundboard);
         await Promise.all([...moveTasks, DataAccess.saveSoundboards(this.soundboards)]);
     }
 
@@ -41,8 +43,10 @@ export default class SoundboardsCache {
 
         found.soundboard.sounds.splice(found.index, 1);
         EventSender.send("onSoundRemoved", sound);
+        EventSender.send("onSoundboardChanged", found.soundboard);
         destSoundboard.sounds.splice(destinationIndex, 0, sound);
         EventSender.send("onSoundAdded", { sound: sound, index: destinationIndex });
+        EventSender.send("onSoundboardChanged", destSoundboard);
 
         await DataAccess.saveSoundboards(this.soundboards);
     }
@@ -52,6 +56,7 @@ export default class SoundboardsCache {
         const sound = existing.soundboard.sounds[existing.index];
         existing.soundboard.sounds.splice(existing.index, 1);
         EventSender.send("onSoundRemoved", sound);
+        EventSender.send("onSoundboardChanged", existing.soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 

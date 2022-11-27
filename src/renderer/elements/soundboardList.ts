@@ -25,7 +25,7 @@ export default class SoundboardList extends HTMLElement {
         this.appendChild(item);
 
         window.events.onCurrentSoundboardChanged.addHandler(sb => {
-            this.updateSeleced(sb);
+            this.selectSoundboard(sb);
         });
 
         window.events.onSoundboardRemoved.addHandler(sb => {
@@ -49,11 +49,14 @@ export default class SoundboardList extends HTMLElement {
                     }
                 }
                 else if (Draggable.currentElement instanceof SoundItem) {
-                    const target = this.getItemAtPosition(e.clientY, e.clientX);
-                    if (target && !target.isSelected && target.soundboard.linkedFolder === null)
-                        target.select();
+                    this.selectMouseHoverItem(e, true);
                 }
             }
+        });
+
+        this.addEventListener("dragover", e => {
+            e.preventDefault();
+            this.selectMouseHoverItem(e, true);
         });
     }
 
@@ -81,14 +84,7 @@ export default class SoundboardList extends HTMLElement {
         else this.appendChild(sbElement);
     }
 
-    /** Updates the information about playing sounds in a soundboard. */
-    incrementPlayingSound(soundboard: Soundboard, increment: number): void {
-        const elem = this.getSoundboardElement(soundboard);
-        if (!elem) return;
-        elem.updatePlayingIndicator(increment);
-    }
-
-    private updateSeleced(soundboard: Soundboard): void {
+    selectSoundboard(soundboard: Soundboard): void {
         this.unselectAll();
         for (const item of this.getItems()) {
             if (Soundboard.equals(item.soundboard, soundboard)) {
@@ -96,6 +92,21 @@ export default class SoundboardList extends HTMLElement {
                 this.selectedItem = item;
             }
         }
+    }
+
+    /** Updates the information about playing sounds in a soundboard. */
+    private incrementPlayingSound(soundboard: Soundboard, increment: number): void {
+        const elem = this.getSoundboardElement(soundboard);
+        if (!elem) return;
+        elem.updatePlayingIndicator(increment);
+    }
+
+    private selectMouseHoverItem(e: MouseEvent, ignoreLinked: boolean): void {
+        const target = this.getItemAtPosition(e.clientY, e.clientX);
+        if (!target) return;
+        const isLinked = target.soundboard.linkedFolder !== null;
+        if (!target.isSelected && (!ignoreLinked || !isLinked))
+            target.select();
     }
 
     private unselectAll(): void {
