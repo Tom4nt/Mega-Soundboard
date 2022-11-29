@@ -119,12 +119,12 @@ export default class IPCHandler {
         });
 
 
-        this.handleAction("setDeviceId", (index, id) => {
-            void MS.instance.settingsCache.setDeviceId(index, id);
+        this.handleAction("setMainDevice", (id, volume) => {
+            void MS.instance.settingsCache.setMainDevice(id, volume);
         });
 
-        this.handleAction("setDeviceVolume", (index, volume) => {
-            void MS.instance.settingsCache.setDeviceVolume(index, volume);
+        this.handleAction("setSecondaryDevice", (id, volume) => {
+            void MS.instance.settingsCache.setSecondaryDevice(id, volume);
         });
 
 

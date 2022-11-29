@@ -15,7 +15,8 @@ export default class WindowManager {
 
     constructor() {
         ipcMain.on("load", (e) => {
-            e.returnValue = this.windowContentRequested ? this.windowContentRequested() : undefined;
+            const content = this.windowContentRequested ? this.windowContentRequested() : undefined;
+            e.returnValue = content;
         });
     }
 

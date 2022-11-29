@@ -1,4 +1,4 @@
-import { NonOptional } from "./interfaces";
+import { IDevice, NonOptional, Optional } from "./interfaces";
 import { OptionalSettings, Settings, Sound, Soundboard } from "./models";
 
 class ConcreteActions {
@@ -27,8 +27,8 @@ class ConcreteActions {
     flagChangelogViewed: (() => void) | null = null;
     installUpdate: (() => void) | null = null;
 
-    setDeviceId: ((index: number, id: string) => void) | null = null;
-    setDeviceVolume: ((index: number, volume: number) => void) | null = null;
+    setMainDevice: ((id?: string, volume?: number) => void) | null = null;
+    setSecondaryDevice: ((id?: string | null, volume?: number) => void) | null = null;
 
     getSettings: (() => Promise<Settings>) | null = null;
     saveSettings: ((settings: OptionalSettings) => void) | null = null;

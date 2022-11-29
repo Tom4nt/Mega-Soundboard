@@ -1,8 +1,6 @@
-type CreateOptional<Type> = {
-    [Property in keyof Type]+?: Type[Property];
-};
+import { Optional } from "../interfaces";
 
-export type OptionalSettings = CreateOptional<Settings>;
+export type OptionalSettings = Optional<Settings>;
 
 export default class Settings {
     constructor(

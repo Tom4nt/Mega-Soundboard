@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, dialog } from "electron";
 import { autoUpdater } from "electron-updater";
 import "electron-reload";
 import MS from "./ms";
@@ -50,7 +50,10 @@ setInterval(() => {
 IPCHandler.init();
 
 app.on("ready", function () {
-    void init();
+    void init().catch(() => {
+        dialog.showErrorBox("Error",
+            "An error has occurred while trying to load the app. This may cause unexpected behaviours.");
+    });
 });
 
 async function init(): Promise<void> {

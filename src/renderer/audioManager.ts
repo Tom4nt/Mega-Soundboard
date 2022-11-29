@@ -16,7 +16,11 @@ class AudioInstance {
 export default class AudioManager {
     overlapSounds = false;
 
-    private devices: IDevice[];
+    private mainDevice: string;
+    private mainDeviceVolume: number;
+    private secondaryDevice: string | null;
+    private secondaryDeviceVolume: number;
+
     private uiMediaElement = new Audio();
 
     get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
@@ -28,7 +32,10 @@ export default class AudioManager {
     playingSounds = new Map<string, AudioInstance[]>;
 
     constructor(settings: Settings) {
-        this.devices = AudioManager.parseDevices(settings);
+        this.mainDevice = settings.mainDevice;
+        this.mainDeviceVolume = settings.mainDeviceVolume;
+        this.secondaryDevice = settings.secondaryDevice;
+        this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
 
         window.events.onKeybindsStateChanged.addHandler(s => {
             if (s) void this.playUISound(UISoundPath.ON);
@@ -37,6 +44,13 @@ export default class AudioManager {
 
         window.events.onOverlapSoundsStateChanged.addHandler(s => {
             this.overlapSounds = s;
+        });
+
+        window.events.onDevicesChanged.addHandler(s => {
+            this.mainDevice = s.mainDevice;
+            this.mainDeviceVolume = s.mainDeviceVolume;
+            this.secondaryDevice = s.secondaryDevice;
+            this.secondaryDeviceVolume = s.secondaryDeviceVolume;
         });
     }
 
@@ -67,7 +81,11 @@ export default class AudioManager {
 
         const instance = new AudioInstance(audioElements);
 
-        for (const device of this.devices) {
+        // In the future, devices will be stored as an array and the user will be able to add/remove them.
+        const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
+        if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
+
+        for (const device of devices) {
             const audio = new Audio(sound.path);
 
             audio.addEventListener("ended", () => {

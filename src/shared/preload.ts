@@ -28,7 +28,7 @@ function registerActions(): void {
 }
 
 const content = ipcRenderer.sendSync("load") as InitialContent;
-contextBridge.exposeInMainWorld("initialContent", content);
+contextBridge.exposeInMainWorld("getInitialContent", () => content);
 
 registerEvents();
 registerActions();

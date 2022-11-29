@@ -48,43 +48,6 @@ let buttonMoreSettings!: HTMLButtonElement;
 
 //#endregion
 
-// window.ondragleave = (e): void => {
-//     if (e.relatedTarget || MSR.instance.modalManager.hasOpenModal) return;
-//     soundList.hideDragDummy();
-// };
-
-// window.ondragstart = async (e): Promise<void> => {
-//     if (MSR.instance.modalManager.hasOpenModal) return;
-//     // e.preventDefault();
-
-//     if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
-
-//     const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
-//     const validPaths = await window.actions.getValidSoundPaths(paths);
-
-//     if (validPaths.length <= 0) return;
-//     soundList.showDragDummy();
-// };
-
-// window.ondrop = async (e): Promise<void> => {
-//     if (MSR.instance.modalManager.hasOpenModal || !e.dataTransfer) return;
-//     const filePaths = Utils.getDataTransferFilePaths(e.dataTransfer);
-
-//     const validPaths = await window.actions.getValidSoundPaths(filePaths);
-//     if (validPaths.length < 1) return;
-
-//     const currentSoundboard = soundboardList.getSelectedSoundboard();
-//     if (!currentSoundboard) return;
-
-//     if (currentSoundboard.linkedFolder) {
-//         DefaultModals.errSoundboardIsLinked(currentSoundboard.linkedFolder).open();
-//         return;
-//     }
-
-//     const index = soundList.hideDragDummy(); // Use this index to insert the Sound at the correct position in the list.
-//     await Actions.addSounds(validPaths, currentSoundboard.uuid, index);
-// };
-
 window.addEventListener("load", () => void init());
 window.addEventListener("click", (e) => void closeActionPanelContainers(e));
 window.addEventListener("contextmenu", (e) => void closeActionPanelContainers(e));
@@ -92,7 +55,7 @@ window.addEventListener("contextmenu", (e) => void closeActionPanelContainers(e)
 //#region Functions
 
 async function init(): Promise<void> {
-    const content = window.initialContent;
+    const content = window.getInitialContent();
 
     getElementReferences();
     addElementListeners();
@@ -115,7 +78,6 @@ async function init(): Promise<void> {
         window.actions.flagChangelogViewed();
     }
 
-    // TODO: Test with empty save file.
     const sb = soundboards[content.settings.selectedSoundboard];
     soundList.loadSounds(sb.sounds, sb.uuid);
     soundboardList.selectSoundboard(sb);
@@ -131,9 +93,8 @@ function selectDevices(settings: Settings): void {
     mainDeviceDropdown.selectIfFound(item =>
         item instanceof DropdownDeviceItem && item.device === settings.mainDevice);
 
-    if (settings.secondaryDevice !== null)
-        secondaryDeviceDropdown.selectIfFound(item =>
-            item instanceof DropdownDeviceItem && item.device === settings.secondaryDevice);
+    secondaryDeviceDropdown.selectIfFound(item =>
+        item instanceof DropdownDeviceItem && item.device === settings.secondaryDevice);
 }
 
 function setVolumes(settings: Settings): void {
@@ -211,21 +172,21 @@ function addElementListeners(): void {
     });
 
     mainDeviceVolumeSlider.onValueChange.addHandler(s => {
-        window.actions.setDeviceVolume(0, s.value);
+        window.actions.setMainDevice(undefined, s.value);
     });
 
     secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
-        window.actions.setDeviceVolume(1, s.value);
+        window.actions.setSecondaryDevice(undefined, s.value);
     });
 
     mainDeviceDropdown.onSelectedItem.addHandler(item => {
         if (item instanceof DropdownDeviceItem && item.device)
-            window.actions.setDeviceId(0, item.device);
+            window.actions.setMainDevice(item.device);
     });
 
     secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
-        if (item instanceof DropdownDeviceItem && item.device)
-            window.actions.setDeviceId(1, item.device);
+        if (item instanceof DropdownDeviceItem)
+            window.actions.setSecondaryDevice(item.device);
     });
 
     enabeKeybindsToggler.onToggle.addHandler(() => {

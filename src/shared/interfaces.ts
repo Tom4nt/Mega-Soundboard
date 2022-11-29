@@ -7,6 +7,10 @@ export type NonOptional<T> = {
     [P in keyof T]-?: Exclude<T[P], null>;
 }
 
+export type Optional<Type> = {
+    [Property in keyof Type]+?: Type[Property];
+};
+
 export interface IEquatable<T> {
     equals: (to: T) => boolean;
 }

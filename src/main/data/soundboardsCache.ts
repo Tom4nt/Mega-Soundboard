@@ -13,13 +13,13 @@ export default class SoundboardsCache {
 
         const soundsDestination = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
-        let index = startIndex ?? 0;
+        let index = startIndex ?? soundboard.sounds.length + 1;
         for (const sound of sounds) {
             sound.soundboard = soundboard;
             soundboard.sounds.splice(index, 0, sound);
             if (move && soundsDestination)
                 moveTasks.push(fs.rename(sound.path, soundsDestination));
-            EventSender.send("onSoundAdded", { sound: sound, index: index });
+            EventSender.send("onSoundAdded", { sound: sound, index });
             index += 1;
         }
 

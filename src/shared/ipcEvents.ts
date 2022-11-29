@@ -1,8 +1,9 @@
 import { ExposedEvent } from "./events";
 import { NonOptional, SoundAddedArgs, SoundboardAddedArgs, SoundChangedArgs, WindowState } from "./interfaces";
-import { Sound, Soundboard } from "./models";
+import { Settings, Sound, Soundboard } from "./models";
 
 class ConcreteEvents {
+    onDevicesChanged: ExposedEvent<Settings> | null = null;
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
     onOverlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
     onSoundAdded: ExposedEvent<SoundAddedArgs> | null = null;

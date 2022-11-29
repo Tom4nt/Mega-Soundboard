@@ -7,18 +7,18 @@ import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
 
-// TODO: Green indicator not working when sounds overlap
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
+    private instancesPlayingCount = 0;
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
         return "drag";
     }
 
-    constructor(public readonly sound: Sound) {
+    constructor(public sound: Sound) {
         super();
         this.init();
     }
@@ -69,6 +69,11 @@ export default class SoundItem extends Draggable {
         this.addGlobalListeners();
     }
 
+    updatePlayingCount(value: number): void {
+        this.instancesPlayingCount += value;
+        this.setPlayingState(this.instancesPlayingCount > 0);
+    }
+
     setPlayingState(playingState: boolean): void {
         if (playingState) {
             this.indicatorElement.style.top = "-11px";
@@ -87,12 +92,19 @@ export default class SoundItem extends Draggable {
     private addGlobalListeners(): void {
         MSR.instance.audioManager.onPlaySound.addHandler(sound => {
             if (Sound.equals(sound, this.sound))
-                this.setPlayingState(true);
+                this.updatePlayingCount(1);
         });
 
         MSR.instance.audioManager.onStopSound.addHandler(uuid => {
             if (uuid == this.sound.uuid)
-                this.setPlayingState(false);
+                this.updatePlayingCount(-1);
+        });
+
+        window.events.onSoundChanged.addHandler(e => {
+            if (Sound.equals(e.sound, this.sound)) {
+                this.sound = e.sound;
+                this.update();
+            }
         });
     }
 }

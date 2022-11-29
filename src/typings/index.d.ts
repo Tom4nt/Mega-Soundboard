@@ -10,6 +10,6 @@ declare global {
     interface Window {
         events: Events,
         actions: Actions,
-        initialContent: InitialContent,
+        getInitialContent: () => InitialContent,
     }
 }

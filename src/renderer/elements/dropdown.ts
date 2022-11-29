@@ -26,6 +26,11 @@ export default class Dropdown extends HTMLElement {
         this.select(value);
     }
 
+    get selectedItem(): DropDownItem | null {
+        if (!this.selectedIndex) return null;
+        return this.options[this.selectedIndex];
+    }
+
     protected connectedCallback(): void {
         // Can no longer set the items in HTML.
         // for (let i = 0; i < this.childElementCount; i++) {

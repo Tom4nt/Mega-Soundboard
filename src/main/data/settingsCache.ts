@@ -1,31 +1,28 @@
 import { OptionalSettings, Settings } from "../../shared/models";
+import EventSender from "../eventSender";
 import MS from "../ms";
 import DataAccess from "./dataAccess";
 
 export default class SettingsCache {
     constructor(public readonly settings: Settings) { }
 
-    async setDeviceId(index: number, id: string): Promise<void> {
-        if (index == 0) this.settings.mainDevice = id;
-        if (index == 1) this.settings.secondaryDevice = id;
+    async setMainDevice(id?: string, volume?: number): Promise<void> {
+        if (id !== undefined) this.settings.mainDevice = id;
+        if (volume !== undefined) this.settings.mainDeviceVolume = volume;
         await DataAccess.saveSettings(this.settings);
+        EventSender.send("onDevicesChanged", this.settings);
     }
 
-    async setDeviceVolume(index: number, volume: number): Promise<void> {
-        if (index == 0) this.settings.mainDeviceVolume = volume;
-        if (index == 1) this.settings.secondaryDeviceVolume = volume;
+    async setSecondaryDevice(id?: string | null, volume?: number): Promise<void> {
+        if (id !== undefined) this.settings.secondaryDevice = id;
+        if (volume !== undefined) this.settings.secondaryDeviceVolume = volume;
         await DataAccess.saveSettings(this.settings);
+        EventSender.send("onDevicesChanged", this.settings);
     }
 
     async setCurrentSoundboard(index: number): Promise<void> {
         this.settings.selectedSoundboard = index;
         await DataAccess.saveSettings(this.settings);
-    }
-
-    getCurrentDevices(): string[] {
-        const devices = [this.settings.mainDevice];
-        if (this.settings.secondaryDevice) devices.push(this.settings.secondaryDevice);
-        return devices;
     }
 
     async save(values: OptionalSettings): Promise<void> {

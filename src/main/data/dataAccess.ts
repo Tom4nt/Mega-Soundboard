@@ -16,7 +16,7 @@ export default class DataAccess {
             return DataAccess.getSoundboards(data.get("soundboards") as unknown[]);
         }
         else {
-            throw Error("Could not load data from JSON save file. There must be an array named \"soundboards\" at the root.");
+            return DataAccess.getDefaultSoundboards();
         }
     }
 
@@ -70,6 +70,11 @@ export default class DataAccess {
                 sbs.push(DataAccess.getSoundboard(Utils.objectToMap(sb)));
             }
         });
+        return sbs;
+    }
+
+    private static getDefaultSoundboards(): Soundboard[] {
+        const sbs = [new Soundboard(randomUUID(), "Default", [], 100, null, [])];
         return sbs;
     }
 

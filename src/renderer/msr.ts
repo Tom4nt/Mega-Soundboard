@@ -4,7 +4,7 @@ import ModalManager from "./modalManager";
 
 /** MegaSoundboardRenderer - Represents an instance of the main renderer process. */
 export default class MSR {
-    private static _instance = new MSR(window.initialContent.settings);
+    private static _instance = new MSR(window.getInitialContent().settings);
     public static get instance(): MSR { return this._instance; }
 
     readonly audioManager: AudioManager;

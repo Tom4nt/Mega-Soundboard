@@ -73,6 +73,7 @@ export default class SoundList extends HTMLElement {
             if (!this.dragElement || !Sound.equals(this.dragElement.sound, sound))
                 this.addSound(sound);
         }
+        this.updateMessage();
     }
 
     showDragDummy(): void {
