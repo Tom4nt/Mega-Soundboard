@@ -39,7 +39,8 @@ export default class SoundboardsCache {
         const sound = found.soundboard.sounds[found.index];
         const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
         const destSoundboard = this.soundboards[destSoundboardIndex];
-        if (destSoundboard.linkedFolder !== null) throw Error("Cannot move a sound to a linked Soundboard.");
+        if (found.soundboard.linkedFolder === null && destSoundboard.linkedFolder !== null)
+            throw Error("Cannot move a sound to a linked Soundboard.");
 
         found.soundboard.sounds.splice(found.index, 1);
         EventSender.send("onSoundRemoved", sound);

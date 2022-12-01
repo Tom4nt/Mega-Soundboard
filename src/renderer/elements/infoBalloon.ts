@@ -10,7 +10,7 @@ export default class InfoBalloon extends HTMLElement {
         const tt = new Tooltip();
         tt.tooltipText = this.tooltipText;
         tt.side = this.side;
-        tt.attatch(this);
+        tt.attach(this);
 
         this.innerHTML = "i";
     }

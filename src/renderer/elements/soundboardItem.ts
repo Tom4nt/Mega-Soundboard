@@ -1,5 +1,5 @@
 import Keys from "../../shared/keys";
-import { Soundboard } from "../../shared/models";
+import { Sound, Soundboard } from "../../shared/models";
 import { Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
@@ -26,6 +26,11 @@ export default class SoundboardItem extends Draggable {
         this.init();
     }
 
+    destroy(): void {
+        this.removeGlobalListeners();
+        this.remove();
+    }
+
     private init(): void {
         this.classList.add("item");
 
@@ -47,7 +52,7 @@ export default class SoundboardItem extends Draggable {
 
         const tt = new Tooltip();
         tt.tooltipText = "This soundboard is linked to a folder";
-        tt.attatch(icon);
+        tt.attach(icon);
 
         this.append(indicator, title, desc, icon);
 
@@ -70,25 +75,19 @@ export default class SoundboardItem extends Draggable {
             if (!this.isSelected) this.select();
         });
 
-        window.events.onSoundboardChanged.addHandler(sb => {
-            if (Soundboard.equals(sb, this.soundboard)) {
-                this.soundboard = sb;
-                this.updateElements();
-            }
-        });
+        this.addGlobalListeners();
+    }
 
-        MSR.instance.audioManager.onPlaySound.addHandler(s => {
-            if (!s.soundboard) return;
-            if (Soundboard.equals(this.soundboard, s.soundboard)) {
-                this.updatePlayingIndicator(1);
-            }
-        });
+    private addGlobalListeners(): void {
+        window.events.onSoundboardChanged.addHandler(this.handleSoundboardChanged);
+        MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
+        MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
+    }
 
-        MSR.instance.audioManager.onStopSound.addHandler(s => {
-            const sound = this.soundboard.sounds.find(x => x.uuid == s);
-            if (!sound) return;
-            this.updatePlayingIndicator(-1);
-        });
+    private removeGlobalListeners(): void {
+        window.events.onSoundboardChanged.removeHandler(this.handleSoundboardChanged);
+        MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
+        MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
     }
 
     // eslint-disable-next-line class-methods-use-this
@@ -124,4 +123,26 @@ export default class SoundboardItem extends Draggable {
             this.titleElement.style.fontWeight = "";
         }
     }
+
+    // Handlers
+
+    private handleSoundboardChanged = (sb: Soundboard): void => {
+        if (Soundboard.equals(sb, this.soundboard)) {
+            this.soundboard = sb;
+            this.updateElements();
+        }
+    };
+
+    private handlePlaySound = (s: Sound): void => {
+        if (!s.soundboard) return;
+        if (Soundboard.equals(this.soundboard, s.soundboard)) {
+            this.updatePlayingIndicator(1);
+        }
+    };
+
+    private handleStopSound = (uuid: string): void => {
+        const sound = this.soundboard.sounds.find(x => x.uuid == uuid);
+        if (!sound) return;
+        this.updatePlayingIndicator(-1);
+    };
 }

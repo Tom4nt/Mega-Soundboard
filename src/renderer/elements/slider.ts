@@ -26,7 +26,6 @@ export default class Slider extends HTMLElement {
             this.inputElement.value = num.toString();
             this.updateSliderColor();
             this.updateTooltip();
-            this._onValueChange.raise(this);
         }
     }
 
@@ -43,7 +42,7 @@ export default class Slider extends HTMLElement {
 
     protected connectedCallback(): void {
         this.tooltip = new Tooltip();
-        this.tooltip.attatch(this);
+        this.tooltip.attach(this);
 
         this.tooltip.domRectGetter = (): DOMRect => this.getThumbDOMRect();
 
@@ -63,12 +62,17 @@ export default class Slider extends HTMLElement {
         this.inputElement = input;
         this.value = this._value;
 
-        input.oninput = (): void => {
+        input.onchange = (): void => {
             this.value = input.valueAsNumber;
+            this._onValueChange.raise(this);
         };
 
         this.append(input);
         this.updateSliderColor();
+    }
+
+    protected disconnectedCallback(): void {
+        this.tooltip.detach();
     }
 
     private updateSliderColor(): void {

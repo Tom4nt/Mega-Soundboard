@@ -30,7 +30,7 @@ export default class SoundboardList extends HTMLElement {
 
         window.events.onSoundboardRemoved.addHandler(sb => {
             const elem = this.getSoundboardElement(sb);
-            elem?.remove();
+            elem?.destroy();
         });
 
         window.events.onSoundboardAdded.addHandler(args => {
@@ -88,6 +88,7 @@ export default class SoundboardList extends HTMLElement {
         this.unselectAll();
         for (const item of this.getItems()) {
             if (Soundboard.equals(item.soundboard, soundboard)) {
+                item.soundboard = soundboard;
                 item.isSelected = true;
                 this.selectedItem = item;
             }

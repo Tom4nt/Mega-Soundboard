@@ -3,15 +3,23 @@ import { Sound } from "../models";
 // All functions must be static so instances can be passed between processes.
 export default class Soundboard {
     constructor(uuid: string);
-    constructor(uuid: string, name: string, keys: number[], volume: number, linkedFolder: string | null, sounds: Sound[]);
+    constructor(
+        uuid: string,
+        name: string,
+        keys: number[],
+        volume: number,
+        linkedFolder: string | null,
+        sounds: Sound[],
+    );
+
     constructor(
         public uuid: string,
         public name: string = "Default",
         public keys: number[] = [],
         public volume: number = 100,
         public linkedFolder: string | null = null,
-        public sounds: Sound[] = []) {
-    }
+        public sounds: Sound[] = [],
+    ) { }
 
     static equals(from: Soundboard, to: Soundboard): boolean {
         return from.uuid === to.uuid;

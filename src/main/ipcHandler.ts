@@ -23,14 +23,14 @@ export default class IPCHandler {
     static init(): void {
 
         this.handleAction("minimize", () => {
-            MS.instance.windowManager.mainWindow?.minimize();
+            MS.instance.windowManager.mainWindow.minimize();
         });
 
         this.handleAction("toggleMaximizedState", () => {
-            if (MS.instance.windowManager.mainWindow?.isMaximized()) {
+            if (MS.instance.windowManager.mainWindow.isMaximized()) {
                 MS.instance.windowManager.mainWindow.unmaximize();
             } else {
-                MS.instance.windowManager.mainWindow?.maximize();
+                MS.instance.windowManager.mainWindow.maximize();
             }
         });
 

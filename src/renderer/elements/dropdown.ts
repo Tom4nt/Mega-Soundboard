@@ -32,18 +32,6 @@ export default class Dropdown extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        // Can no longer set the items in HTML.
-        // for (let i = 0; i < this.childElementCount; i++) {
-        //     const node = this.children.item(i);
-        //     if (!node || !(node instanceof HTMLElement)) continue;
-        //     this.options.push(node);
-        //     node.onclick = (): void => {
-        //         this._selectedIndex = i;
-        //         this._onSelectedItem.raise(i);
-        //         this.close();
-        //     };
-        // }
-
         const main = document.createElement("div");
         main.classList.add("dropdown-default");
         main.onclick = (): void => this.toggleOpen();
@@ -79,13 +67,9 @@ export default class Dropdown extends HTMLElement {
         this.options.forEach((option) => {
             option.classList.remove("selected");
         });
-        if (index === null) {
-            this._onSelectedItem.raise(null);
-            return;
-        }
+        if (index === null) return;
         this.options[index].classList.add("selected");
         if (this.isConnected) this.textElement.innerHTML = this.options[index].innerHTML;
-        this._onSelectedItem.raise(this.options[index]);
     }
 
     findItem(predicate: (item: DropDownItem) => boolean): DropDownItem | undefined {
@@ -115,6 +99,7 @@ export default class Dropdown extends HTMLElement {
         this.options.push(item);
         item.onclick = (): void => {
             this.selectItem(item);
+            this._onSelectedItem.raise(item);
             this.close();
         };
     }

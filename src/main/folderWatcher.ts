@@ -56,7 +56,7 @@ export default class FolderWatcher {
                 if (!soundWithPath && stat.isFile()) {
                     const s = new Sound(randomUUID(), Utils.getNameFromFile(path), path, 100, []);
                     s.soundboard = soundboard;
-                    soundboard.sounds.push();
+                    soundboard.sounds.push(s);
                 }
             }
         }
@@ -65,14 +65,7 @@ export default class FolderWatcher {
         if (soundboard.sounds.length > 0) {
             for (let i = soundboard.sounds.length - 1; i >= 0; i--) {
                 const sound = soundboard.sounds[i];
-
-                // Does the folder contain this sound?
-                let contains = false;
-                for (const file of files) {
-                    const path = p.join(soundboard.linkedFolder, file);
-                    if (p.resolve(sound.path) == p.resolve(path)) contains = true;
-                }
-
+                const contains = FolderWatcher.folderContains(soundboard.linkedFolder, files, sound.path);
                 if (!contains) soundboard.sounds.splice(i, 1);
             }
         }
@@ -95,6 +88,15 @@ export default class FolderWatcher {
             console.log(`Removed ${path}`);
             this._onSoundRemoved.raise(path);
         }
+    }
+
+    private static folderContains(basePath: string, files: string[], fileToCompare: string): boolean {
+        let contains = false;
+        for (const file of files) {
+            const path = p.join(basePath, file);
+            if (p.resolve(fileToCompare) == p.resolve(path)) contains = true;
+        }
+        return contains;
     }
 
     private async verifyFolder(): Promise<void> {

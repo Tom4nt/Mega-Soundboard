@@ -24,8 +24,8 @@ if (!gotLock) {
 } else {
     app.on("second-instance", (_e, args) => {
         console.log(args[args.length - 1].toString());
-        MS.instance.windowManager.mainWindow?.show();
-        MS.instance.windowManager.mainWindow?.focus();
+        MS.instance.windowManager.mainWindow.show();
+        MS.instance.windowManager.mainWindow.focus();
     });
 }
 
@@ -50,9 +50,9 @@ setInterval(() => {
 IPCHandler.init();
 
 app.on("ready", function () {
-    void init().catch(() => {
+    void init().catch(e => {
         dialog.showErrorBox("Error",
-            "An error has occurred while trying to load the app. This may cause unexpected behaviours.");
+            "An error has occurred while trying to load the app. This may cause unexpected behaviours. " + String(e));
     });
 });
 
@@ -61,20 +61,31 @@ async function init(): Promise<void> {
     await winManager.showLoadingWindow();
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
+    const trayManager = TrayManager.createTray(winManager.mainWindow);
 
-    winManager.loadingWindow?.close();
-    void winManager.showMainWindow(() => new InitialContent(
+    new MS(winManager, trayManager, soundboardsCache, settingsCache);
+    await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);
+
+    winManager.loadingWindow.close();
+    await winManager.showMainWindow(() => new InitialContent(
         settingsCache.settings,
         soundboardsCache.soundboards,
         settingsCache.shouldShowChangelog()
     ));
-    if (!winManager.mainWindow) return;
-
-    const trayManager = TrayManager.createTray(winManager.mainWindow);
-    new MS(winManager, trayManager, soundboardsCache, settingsCache);
 }
 
-app.on("will-quit", function () {
+let canQuit = false;
+async function exit(): Promise<void> {
+    await MS.instance.settingsCache.save();
+    canQuit = true;
+    app.quit();
+}
+
+app.on("before-quit", e => {
+    if (!canQuit) {
+        e.preventDefault();
+        void exit();
+    }
     // ioHook.unregisterAllShortcuts();
     // ioHook.stop();
 });

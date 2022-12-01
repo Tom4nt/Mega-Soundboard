@@ -6,12 +6,12 @@ import MSR from "../msr";
 import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
+import { SoundChangedArgs } from "../../shared/interfaces";
 
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
-    private instancesPlayingCount = 0;
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
@@ -21,6 +21,32 @@ export default class SoundItem extends Draggable {
     constructor(public sound: Sound) {
         super();
         this.init();
+    }
+
+    updatePlayingState(): void {
+        const isPlaying = MSR.instance.audioManager.isSoundPlaying(this.sound.uuid);
+        this.setPlayingState(isPlaying);
+    }
+
+    setPlayingState(playingState: boolean): void {
+        if (playingState) {
+            this.indicatorElement.style.top = "-11px";
+            this.indicatorElement.style.right = "-11px";
+        } else {
+            this.indicatorElement.style.top = "";
+            this.indicatorElement.style.right = "";
+        }
+    }
+
+    update(): void {
+        this.titleElement.innerHTML = this.sound.name;
+        this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);
+        this.updatePlayingState();
+    }
+
+    destroy(): void {
+        this.removeGlobalListeners();
+        this.remove();
     }
 
     private init(): void {
@@ -69,42 +95,34 @@ export default class SoundItem extends Draggable {
         this.addGlobalListeners();
     }
 
-    updatePlayingCount(value: number): void {
-        this.instancesPlayingCount += value;
-        this.setPlayingState(this.instancesPlayingCount > 0);
-    }
-
-    setPlayingState(playingState: boolean): void {
-        if (playingState) {
-            this.indicatorElement.style.top = "-11px";
-            this.indicatorElement.style.right = "-11px";
-        } else {
-            this.indicatorElement.style.top = "";
-            this.indicatorElement.style.right = "";
-        }
-    }
-
-    update(): void {
-        this.titleElement.innerHTML = this.sound.name;
-        this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);
-    }
-
     private addGlobalListeners(): void {
-        MSR.instance.audioManager.onPlaySound.addHandler(sound => {
-            if (Sound.equals(sound, this.sound))
-                this.updatePlayingCount(1);
-        });
-
-        MSR.instance.audioManager.onStopSound.addHandler(uuid => {
-            if (uuid == this.sound.uuid)
-                this.updatePlayingCount(-1);
-        });
-
-        window.events.onSoundChanged.addHandler(e => {
-            if (Sound.equals(e.sound, this.sound)) {
-                this.sound = e.sound;
-                this.update();
-            }
-        });
+        MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
+        MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
+        window.events.onSoundChanged.addHandler(this.handleSoundChanged);
     }
+
+    private removeGlobalListeners(): void {
+        MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
+        MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
+        window.events.onSoundChanged.removeHandler(this.handleSoundChanged);
+    }
+
+    // Handlers
+
+    private handlePlaySound = (sound: Sound): void => {
+        if (Sound.equals(sound, this.sound))
+            this.updatePlayingState();
+    };
+
+    private handleStopSound = (soundUuid: string): void => {
+        if (soundUuid == this.sound.uuid)
+            this.updatePlayingState();
+    };
+
+    private handleSoundChanged = (e: SoundChangedArgs): void => {
+        if (Sound.equals(e.sound, this.sound)) {
+            this.sound = e.sound;
+            this.update();
+        }
+    };
 }

@@ -137,7 +137,7 @@ export default class SoundList extends HTMLElement {
     }
 
     private removeSoundItem(element: SoundItem): void {
-        element.remove();
+        element.destroy();
         this.updateMessage();
     }
 

@@ -52,6 +52,10 @@ export default class AudioManager {
             this.secondaryDevice = s.secondaryDevice;
             this.secondaryDeviceVolume = s.secondaryDeviceVolume;
         });
+
+        window.events.onSoundRemoved.addHandler(s => {
+            this.stopSound(s.uuid);
+        });
     }
 
     static parseDevices(settings: Settings): IDevice[] {
@@ -150,6 +154,11 @@ export default class AudioManager {
             const id = playingSound[0];
             this.stopSound(id);
         }
+    }
+
+    isSoundPlaying(uuid: string): boolean {
+        const instances = this.playingSounds.get(uuid);
+        return instances !== undefined && instances.length > 0;
     }
 
     async playUISound(path: UISoundPath): Promise<void> {

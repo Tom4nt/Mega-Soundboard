@@ -20,17 +20,18 @@ export default class SettingsCache {
         EventSender.send("onDevicesChanged", this.settings);
     }
 
-    async setCurrentSoundboard(index: number): Promise<void> {
+    setCurrentSoundboard(index: number): void {
         this.settings.selectedSoundboard = index;
-        await DataAccess.saveSettings(this.settings);
     }
 
-    async save(values: OptionalSettings): Promise<void> {
+    async save(values?: OptionalSettings): Promise<void> {
         let key: keyof Settings;
-        for (key in values) {
-            const proposed = values[key];
-            if (proposed)
-                this.setSettingsValue(key, proposed);
+        if (values) {
+            for (key in values) {
+                const proposed = values[key];
+                if (proposed)
+                    this.setSettingsValue(key, proposed);
+            }
         }
         await DataAccess.saveSettings(this.settings);
     }

@@ -25,9 +25,13 @@ export default class DataAccess {
 
         const hasAcess = await Utils.isPathOK(settingsPath);
         if (hasAcess) {
-            const JSONtext = await fs.readFile(settingsPath, "utf-8");
-            const jsonData = JSON.parse(JSONtext) as Map<string, unknown>;
-            Object.assign(settings, jsonData);
+            try {
+                const JSONtext = await fs.readFile(settingsPath, "utf-8");
+                const jsonData = JSON.parse(JSONtext) as Map<string, unknown>;
+                Object.assign(settings, jsonData);
+            } catch (error) {
+                console.error("Settings could not be loaded.");
+            }
         }
         return settings;
     }
@@ -74,7 +78,7 @@ export default class DataAccess {
     }
 
     private static getDefaultSoundboards(): Soundboard[] {
-        const sbs = [new Soundboard(randomUUID(), "Default", [], 100, null, [])];
+        const sbs = [new Soundboard(randomUUID())];
         return sbs;
     }
 
@@ -93,21 +97,20 @@ export default class DataAccess {
 
         const sb = new Soundboard(randomUUID(), name, keys, volume, linkedFolder, []);
 
-        if (!linkedFolder) {
-            let sounds: Sound[] = [];
-            if (Array.isArray(data.get("sounds")))
-                sounds = DataAccess.getSounds(data.get("sounds") as unknown[], sb);
-            sb.sounds = sounds;
+        let sounds: Sound[] = [];
+        if (Array.isArray(data.get("sounds"))) {
+            sounds = DataAccess.getSounds(data.get("sounds") as unknown[], sb);
         }
+        sb.sounds = sounds;
 
         return sb;
     }
 
     private static getSounds(data: unknown[], connectedSoundboard: Soundboard): Sound[] {
         const sounds: Sound[] = [];
-        data.forEach(sound => {
-            if (sound && typeof sound === "object") {
-                const s = DataAccess.getSound(Utils.objectToMap(sound));
+        data.forEach(item => {
+            if (item && typeof item === "object") {
+                const s = DataAccess.getSound(Utils.objectToMap(item));
                 s.soundboard = connectedSoundboard;
                 sounds.push(s);
             }

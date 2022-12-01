@@ -3,6 +3,7 @@ import { Side } from "../models";
 export default class Tooltip extends HTMLElement {
     private lastRect?: DOMRect;
     private host?: HTMLElement;
+    private isShown = false;
 
     private _tooltipText: string;
     get tooltipText(): string {
@@ -30,21 +31,28 @@ export default class Tooltip extends HTMLElement {
         super();
         this._tooltipText = "";
         this._side = "top";
+
+        this.style.opacity = "0";
+        this.style.transform = "scale(0.8)";
+
+        this.classList.add("popup");
+        this.classList.add(this.side);
     }
 
-    attatch(host: HTMLElement): void {
+    attach(host: HTMLElement): void {
         this.host = host;
         host.addEventListener("mouseenter", this.hostMouseEnter);
         host.addEventListener("mouseleave", this.hostMouseLeave);
     }
 
-    remove(): void {
+    detach(): void {
         this.hide();
         this.host?.removeEventListener("mouseenter", this.hostMouseEnter);
         this.host?.removeEventListener("mouseleave", this.hostMouseLeave);
     }
 
     show(rect: DOMRect): void {
+        this.isShown = true;
         const layer = document.getElementById("tooltip-layer") as HTMLDivElement;
         layer.append(this);
 
@@ -56,18 +64,14 @@ export default class Tooltip extends HTMLElement {
     }
 
     hide(): void {
+        this.isShown = false;
         this.style.opacity = "0";
         this.style.transform = "scale(0.8)";
+        setInterval(this.removeHandler, 150);
     }
 
     notifyPositionUpdate(): void {
         if (this.host) this.updatePosition(this.getPreferedDOMRect());
-    }
-
-    protected connectedCallback(): void {
-        this.classList.add("popup");
-        this.classList.add(this.side);
-        this.hide();
     }
 
     private update(): void {
@@ -103,5 +107,10 @@ export default class Tooltip extends HTMLElement {
 
     hostMouseLeave = (): void => {
         this.hide();
+    };
+
+    removeHandler = (): void => {
+        if (this.isShown) return;
+        this.remove();
     };
 }

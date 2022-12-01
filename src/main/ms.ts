@@ -60,26 +60,27 @@ export default class MS {
 
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
         const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
-        await this.settingsCache.setCurrentSoundboard(index);
+        this.settingsCache.setCurrentSoundboard(index);
+
+        if (this.currentSoundboardWatcher) this.currentSoundboardWatcher.stop();
+        this.currentSoundboardWatcher = null;
 
         if (!soundboard.linkedFolder) {
-            this.currentSoundboardWatcher = null;
             EventSender.send("onCurrentSoundboardChanged", soundboard);
             return;
         }
 
         const watcher = new FolderWatcher(soundboard.linkedFolder);
-        if (this.currentSoundboardWatcher) this.currentSoundboardWatcher.stop();
         this.currentSoundboardWatcher = watcher;
 
         watcher.onSoundAdded.addHandler(p => {
             const sound = SoundUtils.getNewSoundsFromPaths([p])[0];
-            EventSender.send("onSoundAdded", { sound: sound });
+            void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
         });
 
         watcher.onSoundRemoved.addHandler(p => {
             const sound = Soundboard.getSoundWithPath(soundboard, p);
-            if (sound) EventSender.send("onSoundRemoved", sound);
+            if (sound) void MS.instance.soundboardsCache.removeSound(sound.uuid);
         });
 
         await watcher.syncSounds(soundboard);

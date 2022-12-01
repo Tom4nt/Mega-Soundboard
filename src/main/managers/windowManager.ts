@@ -6,33 +6,26 @@ import MS from "../ms";
 import Utils from "../utils/utils";
 
 export default class WindowManager {
-    private _mainWindow?: BrowserWindow;
-    private _loadingWindow?: BrowserWindow;
+    private _mainWindow: BrowserWindow;
+    private _loadingWindow: BrowserWindow;
     private windowContentRequested?: () => InitialContent;
 
-    get mainWindow(): BrowserWindow | undefined { return this._mainWindow; }
-    get loadingWindow(): BrowserWindow | undefined { return this._loadingWindow; }
+    get mainWindow(): BrowserWindow { return this._mainWindow; }
+    get loadingWindow(): BrowserWindow { return this._loadingWindow; }
 
     constructor() {
         ipcMain.on("load", (e) => {
             const content = this.windowContentRequested ? this.windowContentRequested() : undefined;
             e.returnValue = content;
         });
+        const windows = WindowManager.createWindows();
+        this._mainWindow = windows.main;
+        this._loadingWindow = windows.load;
     }
 
     async showLoadingWindow(): Promise<void> {
-        const win = new BrowserWindow({
-            show: false,
-            width: 300,
-            height: 300,
-            resizable: false,
-            frame: false,
-            title: "Mega Soundboard",
-            backgroundColor: "#1f1f24"
-        });
-        this._loadingWindow = win;
-        await win.loadFile(path.join(Utils.resourcesPath, "loading.html"));
-        win.show();
+        await this.loadingWindow.loadFile(path.join(Utils.resourcesPath, "loading.html"));
+        this.loadingWindow.show();
     }
 
     async showMainWindow(contentRequested: () => InitialContent): Promise<void> {
@@ -41,9 +34,22 @@ export default class WindowManager {
     }
 
     private async showMainWindowInternal(): Promise<void> {
-        if (this.mainWindow && this.mainWindow.closable) this.mainWindow.close();
+        await this.mainWindow.loadFile(path.join(Utils.resourcesPath, "index.html"));
+        this.mainWindow.show();
+    }
 
-        const win = new BrowserWindow({
+    private static createWindows(): { main: BrowserWindow, load: BrowserWindow } {
+        const lWin = new BrowserWindow({
+            show: false,
+            width: 300,
+            height: 300,
+            resizable: false,
+            frame: false,
+            title: "Mega Soundboard",
+            backgroundColor: "#1f1f24"
+        });
+
+        const wWin = new BrowserWindow({
             show: false,
             width: 850,
             height: 600,
@@ -57,42 +63,38 @@ export default class WindowManager {
             title: "Mega Soundboard",
             backgroundColor: "#1f1f24"
         });
-        this._mainWindow = win;
 
-        win.webContents.on("will-navigate", (e, url) => {
+        wWin.webContents.on("will-navigate", (e, url) => {
             e.preventDefault();
             void shell.openExternal(url);
         });
 
-        win.on("ready-to-show", () => {
-            win.show();
-        });
-
-        win.on("minimize", function () {
+        wWin.on("minimize", function () {
             if (MS.instance.isMinToTrayEnabled) {
-                win.hide();
+                wWin.hide();
             }
             EventSender.send("onWindowStateChanged", "minimized");
         });
 
-        win.on("maximize", function () {
+        wWin.on("maximize", function () {
             EventSender.send("onWindowStateChanged", "maximized");
         });
 
-        win.on("unmaximize", function () {
+        wWin.on("unmaximize", function () {
             EventSender.send("onWindowStateChanged", "restored");
         });
 
-        win.on("focus", () => {
+        wWin.on("focus", () => {
             EventSender.send("onWindowFocusChanged", true);
         });
 
-        win.on("blur", () => {
+        wWin.on("blur", () => {
             EventSender.send("onWindowFocusChanged", false);
         });
 
-        win.setMenu(WindowManager.createMenu());
-        await win.loadFile(path.join(Utils.resourcesPath, "index.html"));
+        wWin.setMenu(WindowManager.createMenu());
+
+        return { main: wWin, load: lWin };
     }
 
     private static createMenu(): Menu {

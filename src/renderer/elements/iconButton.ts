@@ -18,7 +18,7 @@ export default class IconButton extends HTMLElement {
 
     protected connectedCallback(): void {
         const tooltip = new Tooltip();
-        tooltip.attatch(this);
+        tooltip.attach(this);
 
         if (this.hasAttribute("red")) {
             this.classList.add("red");
