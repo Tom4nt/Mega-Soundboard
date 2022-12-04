@@ -55,7 +55,7 @@ export default class FolderWatcher {
                 const stat = await fs.stat(path);
                 if (!soundWithPath && stat.isFile()) {
                     const s = new Sound(randomUUID(), Utils.getNameFromFile(path), path, 100, []);
-                    s.soundboard = soundboard;
+                    s.soundboardUuid = soundboard.uuid;
                     soundboard.sounds.push(s);
                 }
             }

@@ -36,6 +36,7 @@ export default class AudioManager {
         this.mainDeviceVolume = settings.mainDeviceVolume;
         this.secondaryDevice = settings.secondaryDevice;
         this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
+        this.overlapSounds = settings.overlapSounds;
 
         window.events.onKeybindsStateChanged.addHandler(s => {
             if (s) void this.playUISound(UISoundPath.ON);
@@ -77,8 +78,9 @@ export default class AudioManager {
     async playSound(sound: Sound): Promise<void> {
         if (!this.overlapSounds) this.stopAllSounds();
 
-        if (!sound.soundboard) throw Error(MSG_ERR_NOT_CONNECTED);
-        const soundboardVolume = sound.soundboard.volume;
+        if (!sound.soundboardUuid) throw Error(MSG_ERR_NOT_CONNECTED);
+        const sb = await window.actions.getSoundboard(sound.soundboardUuid);
+        const soundboardVolume = sb.volume;
 
         const sinkIdPromises: Promise<void>[] = [];
         const audioElements: HTMLAudioElement[] = [];
@@ -133,13 +135,14 @@ export default class AudioManager {
     /** Stops all instances of the specified Sound. */
     stopSound(uuid: string): void {
         const instances = this.playingSounds.get(uuid);
-        if (instances && instances.length > 0) {
-            for (const instance of instances) {
-                instance.stop();
-            }
-            this.playingSounds.set(uuid, []);
-            console.log(`Stopped all instances of sound with UUID ${uuid}.`);
+        if (!instances || instances.length <= 0) return;
+        const instancesCopy = [...instances];
+
+        for (const instance of instancesCopy) {
+            instance.stop();
+            instances.splice(instances.indexOf(instance), 1);
             this._onStopSound.raise(uuid);
+            console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
         }
     }
 

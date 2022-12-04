@@ -15,6 +15,7 @@ export default class SoundList extends HTMLElement {
     private infoElement!: HTMLSpanElement;
     private containerElement!: HTMLDivElement;
     private dragDummyElement!: HTMLDivElement;
+    private dragDepth = 0;
 
     protected connectedCallback(): void {
         const infoSpan = document.createElement("span");
@@ -61,8 +62,9 @@ export default class SoundList extends HTMLElement {
         this.addEventListener("dragenter", this.handleDragEnter);
         this.addEventListener("dragover", e => {
             e.preventDefault();
-            this.handleDragOver(e);
+            // this.handleDragOver(e);
         });
+        this.addEventListener("dragleave", this.handleFileDrop);
         this.addEventListener("drop", this.handleFileDrop);
     }
 
@@ -73,7 +75,7 @@ export default class SoundList extends HTMLElement {
             if (!this.dragElement || !Sound.equals(this.dragElement.sound, sound))
                 this.addSound(sound);
         }
-        this.updateMessage();
+        this.filter(this.currentFilter);
     }
 
     showDragDummy(): void {
@@ -90,6 +92,7 @@ export default class SoundList extends HTMLElement {
     filter(filter: string): void {
         this.currentFilter = filter;
         for (const soundItem of this.getSoundItems()) {
+            if (soundItem === this.dragElement) continue;
             let isValid = !filter || soundItem.sound.name.toLowerCase().includes(filter.toLowerCase());
             isValid = isValid && (!this.dragElement || soundItem != this.dragElement); // Is not the current drag element
             soundItem.style.display = isValid ? "" : "none";
@@ -133,7 +136,8 @@ export default class SoundList extends HTMLElement {
     }
 
     private hasSounds(): boolean {
-        return this.containerElement.childElementCount > 1; // Drag dummy doesn't count
+        const items = this.getSoundItems();
+        return items.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
     }
 
     private removeSoundItem(element: SoundItem): void {
@@ -212,11 +216,18 @@ export default class SoundList extends HTMLElement {
     private handleDragEnter = (e: DragEvent): void => {
         e.preventDefault();
         if (MSR.instance.modalManager.hasOpenModal) return;
+        this.dragDepth++;
+        console.log(this.dragDepth);
         this.showDragDummy();
         this.handleDragOver(e);
     };
 
     private handleFileDrop = (e: DragEvent): void => {
-        void this.onFileDrop(e);
+        e.preventDefault();
+        if (MSR.instance.modalManager.hasOpenModal) return;
+        this.dragDepth--;
+        console.log(this.dragDepth);
+        if (this.dragDepth === 0)
+            void this.onFileDrop(e);
     };
 }

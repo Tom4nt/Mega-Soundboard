@@ -1,4 +1,5 @@
 import { ExposedEvent, Event } from "../../shared/events";
+import IconButton from "./iconButton";
 
 export default class SearchBox extends HTMLElement {
 
@@ -9,8 +10,9 @@ export default class SearchBox extends HTMLElement {
     get onButtonClick(): ExposedEvent<void> { return this._onButtonClick.expose(); }
 
     protected connectedCallback(): void {
-        const btn = document.createElement("button");
+        const btn = document.createElement("ms-iconbutton") as IconButton;
         btn.id = "soundlist-searchbox-button";
+        btn.innerHTML = "search";
 
         const ipt = document.createElement("input");
         ipt.id = "soundlist-searchbox";
@@ -39,5 +41,7 @@ export default class SearchBox extends HTMLElement {
                 btn.innerHTML = "search";
             }
         });
+
+        this.append(btn, ipt);
     }
 }

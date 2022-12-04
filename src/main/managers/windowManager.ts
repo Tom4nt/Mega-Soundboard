@@ -70,7 +70,7 @@ export default class WindowManager {
         });
 
         wWin.on("minimize", function () {
-            if (MS.instance.isMinToTrayEnabled) {
+            if (MS.instance.settingsCache.settings.minToTray) {
                 wWin.hide();
             }
             EventSender.send("onWindowStateChanged", "minimized");

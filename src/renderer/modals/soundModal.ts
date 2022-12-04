@@ -36,7 +36,7 @@ export default class SoundModal extends Modal {
 
     protected connectedCallback(): void {
         super.connectedCallback();
-        this.update();
+        void this.update();
     }
 
     protected getContent(): HTMLElement[] {
@@ -76,16 +76,20 @@ export default class SoundModal extends Modal {
         return buttons;
     }
 
-    private update(): void {
+    private async update(): Promise<void> {
         this.nameElement.value = this.loadedSound.name;
         this.pathElement.value = this.loadedSound.path;
         this.volumeElement.value = this.loadedSound.volume;
         this.keysElement.keys = this.loadedSound.keys;
 
-        const isLinked = this.loadedSound.soundboard?.linkedFolder;
+        let isLinked = false;
+        if (this.loadedSound.soundboardUuid) {
+            const soundboard = await window.actions.getSoundboard(this.loadedSound.soundboardUuid);
+            isLinked = soundboard.linkedFolder !== null;
+        }
         this.moveElement.style.display = this.isNew ? "" : "none"; // Can only move when it's a new sound
         this.pathElement.style.display = !isLinked ? "" : "none"; // Can only set the path for sounds in unlinked soundboards
-        this.removeButton.style.visibility = this.isNew || isLinked ? "none" : "";
+        this.removeButton.style.display = this.isNew || isLinked ? "none" : "";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
     }

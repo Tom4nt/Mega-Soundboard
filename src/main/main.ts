@@ -61,7 +61,8 @@ async function init(): Promise<void> {
     await winManager.showLoadingWindow();
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
-    const trayManager = TrayManager.createTray(winManager.mainWindow);
+    const s = settingsCache.settings;
+    const trayManager = TrayManager.createTray(winManager.mainWindow, s.enableKeybinds, s.overlapSounds);
 
     new MS(winManager, trayManager, soundboardsCache, settingsCache);
     await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);

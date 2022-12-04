@@ -22,13 +22,14 @@
         "consistent-return": "error",
         "class-methods-use-this": "warn",
         "@typescript-eslint/explicit-function-return-type": "error",
-        "@typescript-eslint/no-unnecessary-condition": "warn"
-        // "no-restricted-imports": "off",
-        // "@typescript-eslint/no-restricted-imports": [
-        //     "error",
-        //     {
-        //         "patterns": [ "!./*", "!../*" ]
-        //     }
-        // ]
+        "@typescript-eslint/no-unnecessary-condition": "warn",
+        "@typescript-eslint/no-misused-promises": [
+            "error",
+            {
+                "checksVoidReturn": {
+                    "arguments": false
+                }
+            }
+        ]
     }
 }

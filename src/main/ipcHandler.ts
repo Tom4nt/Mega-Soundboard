@@ -66,13 +66,19 @@ export default class IPCHandler {
         });
 
 
+        this.handleAction("getSoundboard", (uuid) => {
+            const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
+            if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
+            return Promise.resolve(sb);
+        });
+
         this.handleAction("getNewSoundboard", async () => {
-            const sb = new Soundboard(randomUUID());
+            const sb = new Soundboard(randomUUID(), "", [], 100, null, []);
             return await Promise.resolve(sb);
         });
 
-        this.handleAction("addSoundboard", soundboard => {
-            void MS.instance.soundboardsCache.addSoundboard(soundboard);
+        this.handleAction("addSoundboard", async soundboard => {
+            await MS.instance.soundboardsCache.addSoundboard(soundboard);
         });
 
         this.handleAction("moveSoundboard", async (soundboardId, destinationIndex) => {
@@ -82,12 +88,16 @@ export default class IPCHandler {
             await MS.instance.setCurrentSoundboard(selected);
         });
 
-        this.handleAction("deleteSoundboard", soundboardId => {
-            void MS.instance.soundboardsCache.removeSoundboard(soundboardId);
+        this.handleAction("deleteSoundboard", async soundboardId => {
+            const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
+            const selectedUuid = MS.instance.soundboardsCache.soundboards[selectedIndex].uuid;
+            await MS.instance.soundboardsCache.removeSoundboard(soundboardId);
+            if (soundboardId === selectedUuid)
+                await MS.instance.setCurrentSoundboard(MS.instance.soundboardsCache.soundboards[0]);
         });
 
-        this.handleAction("editSoundboard", soundboard => {
-            void MS.instance.soundboardsCache.editSoundboard(soundboard);
+        this.handleAction("editSoundboard", async soundboard => {
+            await MS.instance.soundboardsCache.editSoundboard(soundboard);
         });
 
         this.handleAction("setCurrentSoundboard", async id => {
@@ -140,16 +150,12 @@ export default class IPCHandler {
             return Promise.resolve(MS.instance.settingsCache.shouldShowChangelog());
         });
 
-        this.handleAction("setMinimizeToTray", state => {
-            MS.instance.setMinToTray(state);
+        this.handleAction("toggleKeybindsState", async () => {
+            await MS.instance.toggleKeybindsState();
         });
 
-        this.handleAction("toggleKeybindsState", () => {
-            MS.instance.toggleKeybindsState();
-        });
-
-        this.handleAction("toggleOverlapSoundsState", () => {
-            MS.instance.toggleOverlapSoundsState();
+        this.handleAction("toggleOverlapSoundsState", async () => {
+            await MS.instance.toggleOverlapSoundsState();
         });
 
 

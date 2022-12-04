@@ -29,7 +29,7 @@ export default class SettingsCache {
         if (values) {
             for (key in values) {
                 const proposed = values[key];
-                if (proposed)
+                if (proposed !== undefined)
                     this.setSettingsValue(key, proposed);
             }
         }

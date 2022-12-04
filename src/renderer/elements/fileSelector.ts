@@ -14,7 +14,6 @@ export default class FileSelector extends HTMLElement {
     set value(v: string) {
         this._value = v;
         if (this.isConnected) this.inputElement.value = v;
-        this._onValueChanged.raise(v);
     }
 
     private inputElement!: HTMLInputElement;
@@ -33,6 +32,11 @@ export default class FileSelector extends HTMLElement {
         this.inputElement.placeholder = this.hint;
         this.inputElement.value = this.value;
         this.inputElement.classList.add("fileselector-input");
+
+        this.inputElement.addEventListener("change", () => {
+            this.value = this.inputElement.value;
+            this._onValueChanged.raise(this.value);
+        });
 
         const button = document.createElement("button");
         button.classList.add("fileselector-button");

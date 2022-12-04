@@ -1,4 +1,4 @@
-.icon-button {
+ms-iconbutton {
     font-family: 'MSIcons';
     color: var(--color-white);
     font-variant-ligatures: discretionary-ligatures;
@@ -14,22 +14,22 @@
     background-position: center;
 }
 
-.icon-button:hover {
+ms-iconbutton:hover {
     background-color: var(--color-light);
 }
 
-.icon-button:active {
+ms-iconbutton:active {
     background-color: var(--color-lightL);
 }
 
-.icon-button.red {
+ms-iconbutton.red {
     background-color: var(--color-red);
 }
 
-.icon-button.red:hover {
+ms-iconbutton.red:hover {
     background-color: var(--color-red-light);
 }
 
-.icon-button.red:active {
+ms-iconbutton.red:active {
     background-color: var(--color-red-lightL);
 }

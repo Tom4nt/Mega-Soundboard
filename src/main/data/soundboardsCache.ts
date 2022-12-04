@@ -3,6 +3,7 @@ import { Sound, Soundboard } from "../../shared/models";
 import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
+import path = require("path");
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -15,10 +16,14 @@ export default class SoundboardsCache {
         const moveTasks: Promise<void>[] = [];
         let index = startIndex ?? soundboard.sounds.length + 1;
         for (const sound of sounds) {
-            sound.soundboard = soundboard;
+            sound.soundboardUuid = soundboardId;
             soundboard.sounds.splice(index, 0, sound);
-            if (move && soundsDestination)
-                moveTasks.push(fs.rename(sound.path, soundsDestination));
+            if (move && soundsDestination) {
+                const basename = path.basename(sound.path);
+                const soundDestination = path.join(soundsDestination, basename);
+                moveTasks.push(fs.rename(sound.path, soundDestination));
+                sound.path = soundDestination;
+            }
             EventSender.send("onSoundAdded", { sound: sound, index });
             index += 1;
         }
@@ -46,6 +51,7 @@ export default class SoundboardsCache {
         EventSender.send("onSoundRemoved", sound);
         EventSender.send("onSoundboardChanged", found.soundboard);
         destSoundboard.sounds.splice(destinationIndex, 0, sound);
+        sound.soundboardUuid = destinationSoundboardId;
         EventSender.send("onSoundAdded", { sound: sound, index: destinationIndex });
         EventSender.send("onSoundboardChanged", destSoundboard);
 

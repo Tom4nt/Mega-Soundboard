@@ -9,6 +9,7 @@ export default abstract class Draggable extends HTMLElement {
 
     lockVertical = false;
     lockHorizontal = false;
+    allowDrag = true;
 
     private _onDragEnd = new Event<void>;
     get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
@@ -25,7 +26,7 @@ export default abstract class Draggable extends HTMLElement {
         super();
 
         this.addEventListener("mousedown", e => {
-            if (e.button !== 0) return;
+            if (e.button !== 0 || !this.allowDrag) return;
             this.isMouseDownOnThis = true;
             this.initialPos = { x: e.clientX, y: e.clientY };
         });

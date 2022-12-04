@@ -73,10 +73,6 @@ a {
     color: var(--color-link)
 }
 
-::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-}
-
 .label {
     font-family: Roboto;
     color: var(--color-white);

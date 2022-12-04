@@ -12,7 +12,6 @@ import { Soundboard } from "../shared/models";
 export default class MS {
     isKeybindsEnabled = false;
     isOverlapEnabled = false;
-    isMinToTrayEnabled = false;
 
     private currentSoundboardWatcher: FolderWatcher | null = null;
 
@@ -34,23 +33,22 @@ export default class MS {
         public readonly settingsCache: SettingsCache,
     ) {
         MS.instance = this;
+        this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;
+        this.isOverlapEnabled = settingsCache.settings.overlapSounds;
     }
 
-    toggleKeybindsState(): void {
+    async toggleKeybindsState(): Promise<void> {
         this.isKeybindsEnabled = !this.isKeybindsEnabled;
-        this.trayManager.update();
+        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled);
         EventSender.send("onKeybindsStateChanged", this.isKeybindsEnabled);
+        await this.settingsCache.save({ enableKeybinds: this.isKeybindsEnabled });
     }
 
-    toggleOverlapSoundsState(): void {
+    async toggleOverlapSoundsState(): Promise<void> {
         this.isOverlapEnabled = !this.isOverlapEnabled;
-        this.trayManager.update();
+        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled);
         EventSender.send("onOverlapSoundsStateChanged", this.isOverlapEnabled);
-    }
-
-    setMinToTray(state: boolean): void {
-        this.isMinToTrayEnabled = state;
-        EventSender.send("onMinToTrayChanged", state);
+        await this.settingsCache.save({ overlapSounds: this.isOverlapEnabled });
     }
 
     flagChangelogViewed(): void {

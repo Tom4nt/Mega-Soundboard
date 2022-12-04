@@ -17,16 +17,15 @@ export default class TrayManager {
 
     private constructor() { /* */ }
 
-    static createTray(win: BrowserWindow): TrayManager {
+    static createTray(win: BrowserWindow, keybindsEnabled: boolean, overlapSounds: boolean): TrayManager {
         const instance = new TrayManager();
         instance.tray = new Tray(iconWhitePath);
-        instance.tray.setToolTip("Mega Soundboard");
         instance.trayMenu = Menu.buildFromTemplate([{
             id: TrayItem.EnableKybinds,
             label: "Enable keybinds",
             type: "checkbox",
             click: (): void => {
-                MS.instance.toggleKeybindsState();
+                void MS.instance.toggleKeybindsState();
             }
         },
         {
@@ -34,7 +33,7 @@ export default class TrayManager {
             label: "Overlap sounds",
             type: "checkbox",
             click: (): void => {
-                MS.instance.toggleOverlapSoundsState();
+                void MS.instance.toggleOverlapSoundsState();
             }
         },
         { type: "separator" },
@@ -57,11 +56,12 @@ export default class TrayManager {
             win.show();
         });
 
+        instance.update(keybindsEnabled, overlapSounds);
         return instance;
     }
 
-    update(): void {
-        if (MS.instance.isKeybindsEnabled) {
+    update(keybindsEnabled: boolean, overlapSounds: boolean): void {
+        if (keybindsEnabled) {
             this.tray.setImage(iconWhitePath);
             this.tray.setToolTip("Mega Soundboard");
         } else {
@@ -70,9 +70,9 @@ export default class TrayManager {
         }
 
         const keysItem = this.trayMenu.getMenuItemById(TrayItem.EnableKybinds);
-        if (keysItem) keysItem.checked = MS.instance.isKeybindsEnabled;
+        if (keysItem) keysItem.checked = keybindsEnabled;
 
         const overlapItem = this.trayMenu.getMenuItemById(TrayItem.EnableOverlapSounds);
-        if (overlapItem) overlapItem.checked = MS.instance.isOverlapEnabled;
+        if (overlapItem) overlapItem.checked = overlapSounds;
     }
 }

@@ -53,15 +53,25 @@ export default class SettingsModal extends Modal {
     }
 
     private async validate(): Promise<boolean> {
-        return await window.actions.isPathValid(this.soundsLocationFileSelector.value, "folder");
+        const soundsPath = this.soundsLocationFileSelector.value;
+        const pathValid = await window.actions.isPathValid(soundsPath, "folder");
+        if (!soundsPath || pathValid)
+            return true;
+        else {
+            this.soundsLocationFileSelector.warn();
+            return false;
+        }
     }
 
     private async save(): Promise<void> {
         if (!await this.validate()) return;
+        let soundsPath: string | null = this.soundsLocationFileSelector.value;
+        if (!soundsPath) soundsPath = null;
+
         window.actions.saveSettings({
             enableKeybindsKeys: this.keybindsStateRecorder.keys,
             stopSoundsKeys: this.stopSoundsRecorder.keys,
-            soundsLocation: this.soundsLocationFileSelector.value,
+            soundsLocation: soundsPath,
             minToTray: this.minimizeToTrayToggler.isOn,
         });
         this.close();

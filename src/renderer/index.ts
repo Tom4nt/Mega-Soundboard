@@ -1,7 +1,7 @@
 import Actions from "./util/actions";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
-import { MSModal, NewsModal, SettingsModal } from "./modals";
+import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import { Settings } from "../shared/models";
 import AudioManager from "./audioManager";
@@ -67,6 +67,9 @@ async function init(): Promise<void> {
     for (const sb of soundboards) {
         soundboardList.addSoundboard(sb);
     }
+
+    enabeKeybindsToggler.isOn = content.settings.enableKeybinds;
+    overlapSoundsToggler.isOn = content.settings.overlapSounds;
 
     window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
     window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
@@ -224,9 +227,14 @@ function closeActionPanelContainers(e: MouseEvent): void {
 }
 
 async function browseAndAddSounds(): Promise<void> {
-    const paths = await window.actions.browseSounds();
     const sb = soundboardList.getSelectedSoundboard();
-    if (sb) void Actions.addSounds(paths, sb.uuid);
+    if (sb) {
+        if (sb.linkedFolder === null) {
+            const paths = await window.actions.browseSounds();
+            await Actions.addSounds(paths, sb.uuid);
+        } else
+            DefaultModals.errSoundboardIsLinked(sb.linkedFolder).open();
+    }
 }
 
 //#endregion

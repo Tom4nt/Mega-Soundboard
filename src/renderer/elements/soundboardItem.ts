@@ -67,8 +67,8 @@ export default class SoundboardItem extends Draggable {
             }
         });
 
-        this.addEventListener("contextmenu", () => {
-            Actions.editSoundboard(this.soundboard);
+        this.addEventListener("contextmenu", async () => {
+            await Actions.editSoundboard(this.soundboard);
         });
 
         this.addEventListener("click", () => {
@@ -134,8 +134,8 @@ export default class SoundboardItem extends Draggable {
     };
 
     private handlePlaySound = (s: Sound): void => {
-        if (!s.soundboard) return;
-        if (Soundboard.equals(this.soundboard, s.soundboard)) {
+        if (!s.soundboardUuid) return;
+        if (this.soundboard.uuid === s.soundboardUuid) {
             this.updatePlayingIndicator(1);
         }
     };

@@ -12,7 +12,6 @@ export default class SoundboardModal extends Modal {
     private removeButton!: HTMLButtonElement;
 
     private loadedSoundboard: Soundboard;
-    private isNew: boolean;
 
     public get onSaved(): ExposedEvent<Soundboard> { return this._onSaved.expose(); }
     private readonly _onSaved = new Event<Soundboard>();
@@ -20,10 +19,9 @@ export default class SoundboardModal extends Modal {
     public get onRemove(): ExposedEvent<Soundboard> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Soundboard>();
 
-    constructor(soundboard: Soundboard, isNew: boolean) {
+    constructor(soundboard: Soundboard, private isNew: boolean, private isLast: boolean) {
         super(false);
         this.loadedSoundboard = soundboard;
-        this.isNew = isNew;
         this.modalTitle = isNew ? "Add Soundboard" : "Edit Soundboard";
     }
 
@@ -81,6 +79,7 @@ export default class SoundboardModal extends Modal {
         this.folderElement.style.display = displaysFolderField ? "" : "none";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
+        this.removeButton.style.display = this.isLast || this.isNew ? "none" : "";
     }
 
     private async validate(): Promise<boolean> {

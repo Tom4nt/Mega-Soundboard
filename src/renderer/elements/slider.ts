@@ -62,10 +62,13 @@ export default class Slider extends HTMLElement {
         this.inputElement = input;
         this.value = this._value;
 
-        input.onchange = (): void => {
+        input.addEventListener("input", () => {
             this.value = input.valueAsNumber;
+        });
+
+        input.addEventListener("change", () => {
             this._onValueChange.raise(this);
-        };
+        });
 
         this.append(input);
         this.updateSliderColor();

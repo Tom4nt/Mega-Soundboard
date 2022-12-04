@@ -95,23 +95,22 @@ export default class DataAccess {
         let linkedFolder: string | null = null;
         if (typeof data.get("linkedFolder") === "string") linkedFolder = data.get("linkedFolder") as string;
 
-        const sb = new Soundboard(randomUUID(), name, keys, volume, linkedFolder, []);
+        const uuid = randomUUID();
 
         let sounds: Sound[] = [];
         if (Array.isArray(data.get("sounds"))) {
-            sounds = DataAccess.getSounds(data.get("sounds") as unknown[], sb);
+            sounds = DataAccess.getSounds(data.get("sounds") as unknown[], uuid);
         }
-        sb.sounds = sounds;
 
-        return sb;
+        return new Soundboard(uuid, name, keys, volume, linkedFolder, sounds);
     }
 
-    private static getSounds(data: unknown[], connectedSoundboard: Soundboard): Sound[] {
+    private static getSounds(data: unknown[], connectedSoundboardUuid: string): Sound[] {
         const sounds: Sound[] = [];
         data.forEach(item => {
             if (item && typeof item === "object") {
                 const s = DataAccess.getSound(Utils.objectToMap(item));
-                s.soundboard = connectedSoundboard;
+                s.soundboardUuid = connectedSoundboardUuid;
                 sounds.push(s);
             }
         });

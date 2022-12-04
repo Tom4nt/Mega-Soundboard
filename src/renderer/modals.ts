@@ -20,9 +20,9 @@ export {
 
 export class DefaultModals {
     static errSoundboardIsLinked(path: string): MessageModal {
-        const folder = `<a href=${path}>folder</a>`;
+        const folder = `<a href="${path}">folder</a>`;
         const modal = new MessageModal("Linked Soundboard",
-            `This soundboard is linked to a ${folder}.<br/>Add sounds to the ${folder} and they will appear here automatically.`,
+            `This soundboard is linked to a ${folder}. Add sounds to the folder and they will appear here automatically.`,
             false);
         return modal;
     }

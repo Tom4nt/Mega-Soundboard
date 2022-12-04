@@ -29,7 +29,7 @@ export default class SoundboardList extends HTMLElement {
         });
 
         window.events.onSoundboardRemoved.addHandler(sb => {
-            const elem = this.getSoundboardElement(sb);
+            const elem = this.getSoundboardElement(sb.uuid);
             elem?.destroy();
         });
 
@@ -39,17 +39,20 @@ export default class SoundboardList extends HTMLElement {
 
         document.addEventListener("mousemove", e => {
             if (Draggable.currentElement) {
-                if (Draggable.currentElement instanceof SoundboardItem) {
+                const d = Draggable.currentElement;
+                if (d instanceof SoundboardItem) {
                     if (!this.dragElement) {
                         this.showDragDummy();
-                        this.dragElement = Draggable.currentElement;
+                        this.dragElement = d;
                         this.handleDragOver(e.clientY);
                     } else {
                         this.handleDragOver(e.clientY);
                     }
                 }
-                else if (Draggable.currentElement instanceof SoundItem) {
-                    this.selectMouseHoverItem(e, true);
+                else if (d instanceof SoundItem && d.sound.soundboardUuid) {
+                    const elem = this.getSoundboardElement(d.sound.soundboardUuid);
+                    if (elem?.soundboard.linkedFolder === null)
+                        this.selectMouseHoverItem(e, true);
                 }
             }
         });
@@ -95,13 +98,6 @@ export default class SoundboardList extends HTMLElement {
         }
     }
 
-    /** Updates the information about playing sounds in a soundboard. */
-    private incrementPlayingSound(soundboard: Soundboard, increment: number): void {
-        const elem = this.getSoundboardElement(soundboard);
-        if (!elem) return;
-        elem.updatePlayingIndicator(increment);
-    }
-
     private selectMouseHoverItem(e: MouseEvent, ignoreLinked: boolean): void {
         const target = this.getItemAtPosition(e.clientY, e.clientX);
         if (!target) return;
@@ -125,9 +121,9 @@ export default class SoundboardList extends HTMLElement {
     }
 
     /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
-    private getSoundboardElement(soundboard: Soundboard): SoundboardItem | null {
+    private getSoundboardElement(soundboardUuid: string): SoundboardItem | null {
         for (const item of this.getItems()) {
-            if (Soundboard.equals(item.soundboard, soundboard)) return item;
+            if (item.soundboard.uuid === soundboardUuid) return item;
         }
         return null;
     }

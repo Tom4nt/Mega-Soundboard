@@ -1,8 +1,6 @@
-import { Soundboard } from "../models";
-
 // All functions must be static so instances can be passed between processes.
 export default class Sound {
-    soundboard: Soundboard | null = null;
+    soundboardUuid: string | null = null;
 
     constructor(
         public uuid: string,

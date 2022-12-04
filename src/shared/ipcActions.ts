@@ -15,6 +15,7 @@ class ConcreteActions {
     getNewSoundsFromPaths: ((paths: string[]) => Promise<Sound[]>) | null = null;
     getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
 
+    getSoundboard: ((uuid: string) => Promise<Soundboard>) | null = null;
     getNewSoundboard: (() => Promise<Soundboard>) | null = null;
     addSoundboard: ((soundboard: Soundboard) => void) | null = null;
     moveSoundboard: ((soundboardId: string, destinationIndex: number) => void) | null = null;
@@ -33,7 +34,6 @@ class ConcreteActions {
     getSettings: (() => Promise<Settings>) | null = null;
     saveSettings: ((settings: OptionalSettings) => void) | null = null;
     shouldShowChangelog: (() => Promise<boolean>) | null = null;
-    setMinimizeToTray: ((value: boolean) => void) | null = null;
     toggleKeybindsState: (() => void) | null = null;
     toggleOverlapSoundsState: (() => void) | null = null;
 

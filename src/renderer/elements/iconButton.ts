@@ -17,21 +17,21 @@ export default class IconButton extends HTMLElement {
     }
 
     protected connectedCallback(): void {
-        const tooltip = new Tooltip();
-        tooltip.attach(this);
-
         if (this.hasAttribute("red")) {
             this.classList.add("red");
         }
 
         if (this.hasAttribute("tooltip-text")) {
-            tooltip.tooltipText = this.getAttribute("tooltip-text") as string;
-        }
+            const tooltip = new Tooltip();
+            tooltip.attach(this);
 
-        if (this.hasAttribute("tooltip-side")) {
-            const sideParam = this.getAttribute("tooltip-side") as Side;
-            if (sides.includes(sideParam)) {
-                tooltip.side = sideParam;
+            tooltip.tooltipText = this.getAttribute("tooltip-text") as string;
+
+            if (this.hasAttribute("tooltip-side")) {
+                const sideParam = this.getAttribute("tooltip-side") as Side;
+                if (sides.includes(sideParam)) {
+                    tooltip.side = sideParam;
+                }
             }
         }
     }
