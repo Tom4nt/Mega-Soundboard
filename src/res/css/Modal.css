@@ -55,6 +55,7 @@
 .modal-header h1 {
     font-size: 13px;
     color: var(--color-white);
+    text-transform: uppercase;
     margin: 0;
 }
 

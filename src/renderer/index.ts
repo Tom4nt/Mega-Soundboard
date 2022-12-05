@@ -241,34 +241,27 @@ async function browseAndAddSounds(): Promise<void> {
 
 //#region Main Events
 
-// ipcRenderer.on("update.available", function () {
-//     updateButton.updateReady = false;
+// window.events.onUpdateAvailable.addHandler(() => {
+//     // updateButton.updateReady = false;
 //     updateButton.style.display = "inline-block";
 //     updateButton.classList.add("downloading");
 //     updateButton.classList.remove("update");
-//     updateButton.firstElementChild.firstElementChild.innerHTML = "Downloading Update";
-//     updateButton.firstElementChild.style.width = "0%";
+//     if (updateButton.firstElementChild?.firstElementChild) {
+//         updateButton.firstElementChild.firstElementChild.innerHTML = "Downloading Update";
+//         if (updateButton.firstElementChild instanceof HTMLElement)
+//             updateButton.firstElementChild.style.width = "0%";
+//     }
 // });
 
-// ipcRenderer.on("update.progress", function (e, progress: number) {
+// window.events.onUpdateProgress.addHandler(progress => {
 //     if (updateButton.firstElementChild instanceof HTMLElement)
 //         updateButton.firstElementChild.style.width = `${progress}%`;
 // });
 
-// ipcRenderer.on("update.ready", function () {
-//     updateButton.style.display = "inherit";
-//     console.log("READY TO UPDATE");
-// });
-
-// ipcRenderer.on("settings.overlapSounds", function (e, state: boolean) {
-//     overlapSoundsToggler.isOn = state;
-//     void setOverlapSoundsSettings(state);
-// });
-
-// ipcRenderer.on("settings.enableKeybinds", function (e, state: boolean) {
-//     enabeKeybindsToggler.isOn = state;
-//     void setKeybindsToggleSettings(state);
-// });
+window.events.onUpdateReady.addHandler(() => {
+    updateButton.style.display = "inherit";
+    console.log("READY TO UPDATE");
+});
 
 window.events.onWindowFocusChanged.addHandler(s => {
     if (s) document.body.classList.add("focused");

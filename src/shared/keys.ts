@@ -165,7 +165,7 @@ export default class Keys {
                     keysstring = keysstring.concat(keycodes[keyarray[i]]);
             }
         } else {
-            keysstring = "None";
+            keysstring = "No Keybind";
         }
         return keysstring;
     }

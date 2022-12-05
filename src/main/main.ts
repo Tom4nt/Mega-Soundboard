@@ -35,7 +35,7 @@ autoUpdater.on("download-progress", progress => EventSender.send("onUpdateProgre
 autoUpdater.on("update-downloaded", () => EventSender.send("onUpdateReady"));
 setInterval(() => {
     void autoUpdater.checkForUpdates();
-}, 300000); // 5 minutes
+}, 5 * 60 * 1000);
 
 // type KeyEvent = { keycode: number };
 
