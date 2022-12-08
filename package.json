@@ -24,16 +24,15 @@
         "@typescript-eslint/parser": "^5.33.0",
         "browserify": "^17.0.0",
         "copyfiles": "^2.4.1",
-        "electron": "^15.5.5",
-        "electron-builder": "^21.2.0",
-        "electron-reload": "^2.0.0-alpha.1",
+        "electron": "^22.0.0",
+        "electron-builder": "^23.0.0",
         "eslint": "^8.21.0",
         "typescript": "^4.7.4"
     },
     "dependencies": {
         "electron-updater": "^5.2.1",
-        "iohook": "0.9.0",
-        "typeface-roboto": "0.0.75"
+        "typeface-roboto": "^1.0.0",
+        "uiohook-napi": "^1.5.0"
     },
     "build": {
         "appId": "com.tom4nt.megasoundboard",
