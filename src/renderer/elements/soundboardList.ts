@@ -2,6 +2,7 @@ import { SoundboardItem, SoundItem } from "../elements";
 import { Soundboard } from "../../shared/models";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
+import GlobalEvents from "../util/globalEvents";
 
 export default class SoundboardList extends HTMLElement {
     private selectedItem?: SoundboardItem;
@@ -24,16 +25,16 @@ export default class SoundboardList extends HTMLElement {
         this.dragDummy = item;
         this.appendChild(item);
 
-        window.events.onCurrentSoundboardChanged.addHandler(sb => {
+        GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
             this.selectSoundboard(sb);
         });
 
-        window.events.onSoundboardRemoved.addHandler(sb => {
+        GlobalEvents.addHandler("onSoundboardRemoved", sb => {
             const elem = this.getSoundboardElement(sb.uuid);
             elem?.destroy();
         });
 
-        window.events.onSoundboardAdded.addHandler(args => {
+        GlobalEvents.addHandler("onSoundboardAdded", args => {
             this.addSoundboard(args.soundboard, args.index);
         });
 

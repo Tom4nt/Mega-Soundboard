@@ -178,4 +178,25 @@ export default class Keys {
         }
         return keyArray;
     }
+
+    static equals(pressed: number[], toCompare: number[], orderMatters = false): boolean {
+        if (orderMatters) return this.exactEquals(pressed, toCompare);
+        else return this.shuffledEquals(pressed, toCompare);
+    }
+
+    private static exactEquals(pressed: number[], toCompare: number[]): boolean {
+        if (pressed.length != toCompare.length) return false;
+        for (let i = 0; i < pressed.length; i++) {
+            if (pressed[i] !== toCompare[i]) return false;
+        }
+        return true;
+    }
+
+    private static shuffledEquals(pressed: number[], toCompare: number[]): boolean {
+        if (pressed.length != toCompare.length) return false;
+        for (const keyPressed of pressed) {
+            if (!toCompare.includes(keyPressed)) return false;
+        }
+        return true;
+    }
 }

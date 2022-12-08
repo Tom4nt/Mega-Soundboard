@@ -1,6 +1,7 @@
 export interface ExposedEvent<Args> {
     addHandler: (handler: (args: Args) => unknown) => void;
     removeHandler: (handler: (args: Args) => unknown) => void;
+    getHandlerCount: () => number;
 }
 
 export class Event<Args> implements ExposedEvent<Args> {
@@ -20,5 +21,9 @@ export class Event<Args> implements ExposedEvent<Args> {
 
     expose = (): ExposedEvent<Args> => {
         return this;
+    };
+
+    getHandlerCount = (): number => {
+        return this.hanlders.length;
     };
 }

@@ -2,6 +2,7 @@ import { Event, ExposedEvent } from "../shared/events";
 import { Settings, Sound } from "src/shared/models";
 import { UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
+import GlobalEvents from "./util/globalEvents";
 
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
@@ -38,23 +39,23 @@ export default class AudioManager {
         this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
         this.overlapSounds = settings.overlapSounds;
 
-        window.events.onKeybindsStateChanged.addHandler(s => {
+        GlobalEvents.addHandler("onKeybindsStateChanged", s => {
             if (s) void this.playUISound(UISoundPath.ON);
             else void this.playUISound(UISoundPath.OFF);
         });
 
-        window.events.onOverlapSoundsStateChanged.addHandler(s => {
+        GlobalEvents.addHandler("onOverlapSoundsStateChanged", s => {
             this.overlapSounds = s;
         });
 
-        window.events.onDevicesChanged.addHandler(s => {
+        GlobalEvents.addHandler("onDevicesChanged", s => {
             this.mainDevice = s.mainDevice;
             this.mainDeviceVolume = s.mainDeviceVolume;
             this.secondaryDevice = s.secondaryDevice;
             this.secondaryDeviceVolume = s.secondaryDeviceVolume;
         });
 
-        window.events.onSoundRemoved.addHandler(s => {
+        GlobalEvents.addHandler("onSoundRemoved", s => {
             this.stopSound(s.uuid);
         });
     }

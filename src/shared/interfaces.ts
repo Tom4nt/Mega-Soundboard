@@ -38,3 +38,8 @@ export interface SoundboardAddedArgs {
     soundboard: Soundboard,
     index?: number,
 }
+
+export interface KeyRecordingArgs {
+    uuid: string,
+    combination: number[],
+}

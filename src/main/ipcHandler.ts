@@ -200,13 +200,12 @@ export default class IPCHandler {
         });
 
 
-        this.handleAction("startKeyRecordingSession", () => {
-            // TODO: Handle in the KeybindManager
-            return Promise.resolve("TODO");
+        this.handleAction("startKeyRecordingSession", async () => {
+            return MS.instance.keybindManager.startRecordingSession();
         });
 
-        this.handleAction("stopKeyRecordingSession", id => {
-            // TODO: Handle in the KeybindManager
+        this.handleAction("stopKeyRecordingSession", uuid => {
+            MS.instance.keybindManager.stopRecordingSession(uuid);
         });
 
 

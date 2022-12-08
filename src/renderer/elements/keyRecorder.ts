@@ -1,5 +1,7 @@
 import Keys from "../../shared/keys";
 import { Event, ExposedEvent } from "../../shared/events";
+import { KeyRecordingArgs } from "../../shared/interfaces";
+import GlobalEvents from "../util/globalEvents";
 
 const NO_KEY_DESC = "No Keybind";
 
@@ -24,19 +26,6 @@ export default class KeyRecorder extends HTMLElement {
 
     get isRecording(): boolean { return this.currentRecordingSessionId != null; }
 
-    // handleKeyDown = (key: number): void => {
-    //     if (!this.isRecording) return;
-    //     if (!this.recordingBuffer.includes(key)) {
-    //         this.recordingBuffer.push(key);
-    //     }
-    //     this.keys = [];
-    // };
-
-    // handleKeyUp = (key: number): void => {
-    //     if (!this.isRecording) return;
-    //     this.recordingBuffer.splice(this.recordingBuffer.indexOf(key), 1);
-    // };
-
     protected connectedCallback(): void {
         const label = document.createElement("span");
         label.classList.add("keyrecorder-label");
@@ -54,23 +43,26 @@ export default class KeyRecorder extends HTMLElement {
 
         this.addEventListener("click", () => {
             if (this.isRecording) this.stop();
-            else this.start();
+            else void this.start();
         });
 
         this.oncontextmenu = (): void => { this.clear(); };
 
-        window.events.onKeyRecordingProgress.addHandler(keys => {
-            this.setDisplayedKeys(Keys.toKeyStringArray(keys));
-        });
+        this.addGlobalListeners();
     }
 
     protected disconnectedCallback(): void {
         this.stop();
+        this.removeGlobalListeners();
         this.oncontextmenu = null;
     }
 
-    start(): void {
-        void this.startInternal();
+    async start(): Promise<void> {
+        if (this.currentRecordingSessionId) return;
+        this.classList.add("recording");
+        this.labelElement.innerHTML = "Recording...";
+        this.indicatorElement.innerHTML = "Stop recording";
+        this.currentRecordingSessionId = await window.actions.startKeyRecordingSession();
     }
 
     stop(): void {
@@ -105,11 +97,18 @@ export default class KeyRecorder extends HTMLElement {
         keyElements.forEach(e => e.remove());
     }
 
-    private async startInternal(): Promise<void> {
-        if (this.currentRecordingSessionId) return;
-        this.classList.add("recording");
-        this.labelElement.innerHTML = "Recording...";
-        this.indicatorElement.innerHTML = "Stop recording";
-        this.currentRecordingSessionId = await window.actions.startKeyRecordingSession();
+    private addGlobalListeners(): void {
+        GlobalEvents.addHandler("onKeyRecordingProgress", this.handleRecoringProgress);
     }
+
+    private removeGlobalListeners(): void {
+        GlobalEvents.removeHandler("onKeyRecordingProgress", this.handleRecoringProgress);
+    }
+
+    // Handlers
+
+    private handleRecoringProgress = (args: KeyRecordingArgs): void => {
+        if (args.uuid === this.currentRecordingSessionId)
+            this.keys = args.combination;
+    };
 }

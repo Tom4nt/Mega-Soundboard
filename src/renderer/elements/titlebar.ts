@@ -1,3 +1,5 @@
+import GlobalEvents from "../util/globalEvents";
+
 export default class Titlebar extends HTMLElement {
     private dragAreaElement!: HTMLDivElement;
     private sizeButton!: HTMLButtonElement;
@@ -7,7 +9,7 @@ export default class Titlebar extends HTMLElement {
     constructor() {
         super();
 
-        window.events.onWindowStateChanged.addHandler(s => {
+        GlobalEvents.addHandler("onWindowStateChanged", s => {
             if (s == "maximized" || s == "restored") {
                 this.isMaximized = s == "maximized";
                 this.update();

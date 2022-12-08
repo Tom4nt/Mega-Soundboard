@@ -7,6 +7,7 @@ import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
 import { SoundChangedArgs } from "../../shared/interfaces";
+import GlobalEvents from "../util/globalEvents";
 
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
@@ -98,13 +99,15 @@ export default class SoundItem extends Draggable {
     private addGlobalListeners(): void {
         MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
-        window.events.onSoundChanged.addHandler(this.handleSoundChanged);
+        GlobalEvents.addHandler("onSoundChanged", this.handleSoundChanged);
+        GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
     private removeGlobalListeners(): void {
         MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
-        window.events.onSoundChanged.removeHandler(this.handleSoundChanged);
+        GlobalEvents.removeHandler("onSoundChanged", this.handleSoundChanged);
+        GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
     // Handlers
@@ -123,6 +126,12 @@ export default class SoundItem extends Draggable {
         if (Sound.equals(e.sound, this.sound)) {
             this.sound = e.sound;
             this.update();
+        }
+    };
+
+    private handleKeybindPressed = async (keys: number[]): Promise<void> => {
+        if (Keys.equals(keys, this.sound.keys)) {
+            await MSR.instance.audioManager.playSound(this.sound);
         }
     };
 }

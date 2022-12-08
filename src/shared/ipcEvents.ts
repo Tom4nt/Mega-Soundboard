@@ -1,5 +1,12 @@
 import { ExposedEvent } from "./events";
-import { NonOptional, SoundAddedArgs, SoundboardAddedArgs, SoundChangedArgs, WindowState } from "./interfaces";
+import {
+    KeyRecordingArgs,
+    NonOptional,
+    SoundAddedArgs,
+    SoundboardAddedArgs,
+    SoundChangedArgs,
+    WindowState
+} from "./interfaces";
 import { Settings, Sound, Soundboard } from "./models";
 
 class ConcreteEvents {
@@ -14,7 +21,8 @@ class ConcreteEvents {
     onSoundboardRemoved: ExposedEvent<Soundboard> | null = null;
     onWindowStateChanged: ExposedEvent<WindowState> | null = null;
     onWindowFocusChanged: ExposedEvent<boolean> | null = null;
-    onKeyRecordingProgress: ExposedEvent<number[]> | null = null;
+    onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
+    onKeybindPressed: ExposedEvent<number[]> | null = null;
     onCurrentSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onMinToTrayChanged: ExposedEvent<boolean> | null = null;
     onUpdateAvailable: ExposedEvent<void> | null = null;

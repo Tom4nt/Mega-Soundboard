@@ -3,6 +3,7 @@ import { Sound, Soundboard } from "../../shared/models";
 import { Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
+import GlobalEvents from "../util/globalEvents";
 import Draggable from "./draggable";
 
 export default class SoundboardItem extends Draggable {
@@ -79,13 +80,13 @@ export default class SoundboardItem extends Draggable {
     }
 
     private addGlobalListeners(): void {
-        window.events.onSoundboardChanged.addHandler(this.handleSoundboardChanged);
+        GlobalEvents.addHandler("onSoundboardChanged", this.handleSoundboardChanged);
         MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
     }
 
     private removeGlobalListeners(): void {
-        window.events.onSoundboardChanged.removeHandler(this.handleSoundboardChanged);
+        GlobalEvents.removeHandler("onSoundboardChanged", this.handleSoundboardChanged);
         MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
     }

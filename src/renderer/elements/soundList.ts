@@ -2,6 +2,7 @@ import { Sound } from "../../shared/models";
 import { SoundItem } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
+import GlobalEvents from "../util/globalEvents";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
 
@@ -35,15 +36,15 @@ export default class SoundList extends HTMLElement {
 
         this.append(infoSpan, itemsContainer);
 
-        window.events.onSoundAdded.addHandler(e => {
+        GlobalEvents.addHandler("onSoundAdded", e => {
             this.addSound(e.sound, e.index);
         });
 
-        window.events.onSoundRemoved.addHandler(s => {
+        GlobalEvents.addHandler("onSoundRemoved", s => {
             this.removeSound(s);
         });
 
-        window.events.onCurrentSoundboardChanged.addHandler(sb => {
+        GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
             this.loadSounds(sb.sounds, sb.uuid);
         });
 

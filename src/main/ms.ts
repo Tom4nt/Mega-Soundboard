@@ -7,6 +7,7 @@ import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
 import SoundUtils from "./utils/soundUtils";
 import { Soundboard } from "../shared/models";
+import KeybindManager from "./managers/keybindManager";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -31,6 +32,7 @@ export default class MS {
         public readonly trayManager: TrayManager,
         public readonly soundboardsCache: SoundboardsCache,
         public readonly settingsCache: SettingsCache,
+        public readonly keybindManager: KeybindManager,
     ) {
         MS.instance = this;
         this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;

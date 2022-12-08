@@ -5,6 +5,7 @@ import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import { Settings } from "../shared/models";
 import AudioManager from "./audioManager";
+import GlobalEvents from "./util/globalEvents";
 
 //#region Elements
 
@@ -71,8 +72,8 @@ async function init(): Promise<void> {
     enabeKeybindsToggler.isOn = content.settings.enableKeybinds;
     overlapSoundsToggler.isOn = content.settings.overlapSounds;
 
-    window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
-    window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
+    GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
+    GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -258,12 +259,12 @@ async function browseAndAddSounds(): Promise<void> {
 //         updateButton.firstElementChild.style.width = `${progress}%`;
 // });
 
-window.events.onUpdateReady.addHandler(() => {
+GlobalEvents.addHandler("onUpdateReady", () => {
     updateButton.style.display = "inherit";
     console.log("READY TO UPDATE");
 });
 
-window.events.onWindowFocusChanged.addHandler(s => {
+GlobalEvents.addHandler("onWindowFocusChanged", s => {
     if (s) document.body.classList.add("focused");
     else document.body.classList.remove("focused");
 });

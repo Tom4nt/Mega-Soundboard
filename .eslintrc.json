@@ -23,6 +23,7 @@
         "class-methods-use-this": "warn",
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/no-unnecessary-condition": "warn",
+        "@typescript-eslint/require-await": "off",
         "@typescript-eslint/no-misused-promises": [
             "error",
             {

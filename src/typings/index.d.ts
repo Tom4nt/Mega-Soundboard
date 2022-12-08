@@ -8,8 +8,9 @@ declare global {
     }
 
     interface Window {
-        events: Events,
+        // events: Events,
         actions: Actions,
+        addListener: <T extends keyof Events>(name: T, f: (param: unknown) => void) => void;
         getInitialContent: () => InitialContent,
     }
 }

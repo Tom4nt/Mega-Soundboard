@@ -1,6 +1,5 @@
 import { app, dialog } from "electron";
 import { autoUpdater } from "electron-updater";
-import "electron-reload";
 import MS from "./ms";
 import WindowManager from "./managers/windowManager";
 import TrayManager from "./managers/trayManager";
@@ -10,6 +9,7 @@ import SoundboardsCache from "./data/soundboardsCache";
 import SettingsCache from "./data/settingsCache";
 import DataAccess from "./data/dataAccess";
 import InitialContent from "../shared/models/initialContent";
+import KeybindManager from "./managers/keybindManager";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -62,9 +62,10 @@ async function init(): Promise<void> {
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
     const s = settingsCache.settings;
+    const keybindManager = new KeybindManager();
     const trayManager = TrayManager.createTray(winManager.mainWindow, s.enableKeybinds, s.overlapSounds);
 
-    new MS(winManager, trayManager, soundboardsCache, settingsCache);
+    new MS(winManager, trayManager, soundboardsCache, settingsCache, keybindManager);
     await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);
 
     winManager.loadingWindow.close();
@@ -77,6 +78,7 @@ async function init(): Promise<void> {
 
 let canQuit = false;
 async function exit(): Promise<void> {
+    KeybindManager.stopUIOhook();
     await MS.instance.settingsCache.save();
     canQuit = true;
     app.quit();
@@ -87,6 +89,4 @@ app.on("before-quit", e => {
         e.preventDefault();
         void exit();
     }
-    // ioHook.unregisterAllShortcuts();
-    // ioHook.stop();
 });
