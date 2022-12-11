@@ -10,9 +10,9 @@ import {
 import { Settings, Sound, Soundboard } from "./models";
 
 class ConcreteEvents {
-    onDevicesChanged: ExposedEvent<Settings> | null = null;
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
     onOverlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
+    onSettingsChanged: ExposedEvent<Settings> | null = null;
     onSoundAdded: ExposedEvent<SoundAddedArgs> | null = null;
     onSoundChanged: ExposedEvent<SoundChangedArgs> | null = null;
     onSoundRemoved: ExposedEvent<Sound> | null = null;

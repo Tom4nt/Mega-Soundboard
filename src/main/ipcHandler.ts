@@ -185,18 +185,17 @@ export default class IPCHandler {
             return r.filePaths[0];
         });
 
-        this.handleAction("isPathValid", async (path, type) => {
-            if (type === "folder") {
-                return await Utils.isPathValid(path, type);
-            }
-            else {
-                return await Utils.isPathValid(path, "file", SharedUtils.validSoundExts);
-            }
-        });
-
         this.handleAction("getNameFromPath", p => {
             const name = Utils.getNameFromFile(p);
             return Promise.resolve(name);
+        });
+
+        this.handleAction("getDefaultMovePath", async () => {
+            return MS.defaultSoundsPath;
+        });
+
+        this.handleAction("parsePath", async p => {
+            return Utils.parsePath(p);
         });
 
 

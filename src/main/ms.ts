@@ -8,6 +8,9 @@ import FolderWatcher from "./folderWatcher";
 import SoundUtils from "./utils/soundUtils";
 import { Soundboard } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
+import Keys from "../shared/keys";
+import { app } from "electron";
+import path = require("path");
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -16,6 +19,7 @@ export default class MS {
 
     private currentSoundboardWatcher: FolderWatcher | null = null;
 
+    static readonly defaultSoundsPath = path.join(app.getPath("appData"), "MegaSoundboard/Sounds");
     static readonly latestWithLog = 3; // Increments on every version that should display the changelog.
 
     private static _instance?: MS;
@@ -37,11 +41,18 @@ export default class MS {
         MS.instance = this;
         this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;
         this.isOverlapEnabled = settingsCache.settings.overlapSounds;
+
+        keybindManager.onKeybindPressed.addHandler(async keybind => {
+            if (Keys.equals(keybind, settingsCache.settings.enableKeybindsKeys)) {
+                await this.toggleKeybindsState();
+            }
+        });
     }
 
     async toggleKeybindsState(): Promise<void> {
         this.isKeybindsEnabled = !this.isKeybindsEnabled;
         this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled);
+        this.keybindManager.raiseExternal = this.isKeybindsEnabled;
         EventSender.send("onKeybindsStateChanged", this.isKeybindsEnabled);
         await this.settingsCache.save({ enableKeybinds: this.isKeybindsEnabled });
     }
@@ -60,7 +71,7 @@ export default class MS {
 
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
         const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
-        this.settingsCache.setCurrentSoundboard(index);
+        this.settingsCache.settings.selectedSoundboard = index;
 
         if (this.currentSoundboardWatcher) this.currentSoundboardWatcher.stop();
         this.currentSoundboardWatcher = null;
@@ -83,8 +94,12 @@ export default class MS {
             if (sound) void MS.instance.soundboardsCache.removeSound(sound.uuid);
         });
 
-        await watcher.syncSounds(soundboard);
+        try {
+            await watcher.syncSounds(soundboard);
+            await watcher.start();
+        } catch (error) {
+            // The folder is invalid and the soundboard will be shown as empty.
+        }
         EventSender.send("onCurrentSoundboardChanged", soundboard);
-        await watcher.start();
     }
 }

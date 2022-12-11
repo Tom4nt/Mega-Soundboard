@@ -83,7 +83,7 @@ async function init(): Promise<void> {
     }
 
     const sb = soundboards[content.settings.selectedSoundboard];
-    soundList.loadSounds(sb.sounds, sb.uuid);
+    soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
     soundboardList.selectSoundboard(sb);
 }
 

@@ -3,6 +3,7 @@ import { Settings, Sound } from "src/shared/models";
 import { UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
 import GlobalEvents from "./util/globalEvents";
+import Keys from "../shared/keys";
 
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
@@ -21,6 +22,7 @@ export default class AudioManager {
     private mainDeviceVolume: number;
     private secondaryDevice: string | null;
     private secondaryDeviceVolume: number;
+    private stopSoundsKeys: number[];
 
     private uiMediaElement = new Audio();
 
@@ -38,25 +40,28 @@ export default class AudioManager {
         this.secondaryDevice = settings.secondaryDevice;
         this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
         this.overlapSounds = settings.overlapSounds;
+        this.stopSoundsKeys = settings.stopSoundsKeys;
+
+        GlobalEvents.addHandler("onSettingsChanged", settings => {
+            this.overlapSounds = settings.overlapSounds;
+            this.mainDevice = settings.mainDevice;
+            this.mainDeviceVolume = settings.mainDeviceVolume;
+            this.secondaryDevice = settings.secondaryDevice;
+            this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
+        });
 
         GlobalEvents.addHandler("onKeybindsStateChanged", s => {
-            if (s) void this.playUISound(UISoundPath.ON);
-            else void this.playUISound(UISoundPath.OFF);
-        });
-
-        GlobalEvents.addHandler("onOverlapSoundsStateChanged", s => {
-            this.overlapSounds = s;
-        });
-
-        GlobalEvents.addHandler("onDevicesChanged", s => {
-            this.mainDevice = s.mainDevice;
-            this.mainDeviceVolume = s.mainDeviceVolume;
-            this.secondaryDevice = s.secondaryDevice;
-            this.secondaryDeviceVolume = s.secondaryDeviceVolume;
+            void this.playUISound(s ? UISoundPath.ON : UISoundPath.OFF);
         });
 
         GlobalEvents.addHandler("onSoundRemoved", s => {
             this.stopSound(s.uuid);
+        });
+
+        GlobalEvents.addHandler("onKeybindPressed", keybind => {
+            if (Keys.equals(keybind, this.stopSoundsKeys)) {
+                this.stopAllSounds();
+            }
         });
     }
 

@@ -17,6 +17,7 @@ export default class SoundList extends HTMLElement {
     private containerElement!: HTMLDivElement;
     private dragDummyElement!: HTMLDivElement;
     private dragDepth = 0;
+    private allowImport = true;
 
     protected connectedCallback(): void {
         const infoSpan = document.createElement("span");
@@ -45,7 +46,7 @@ export default class SoundList extends HTMLElement {
         });
 
         GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
-            this.loadSounds(sb.sounds, sb.uuid);
+            this.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
         });
 
         document.addEventListener("mousemove", e => {
@@ -63,13 +64,13 @@ export default class SoundList extends HTMLElement {
         this.addEventListener("dragenter", this.handleDragEnter);
         this.addEventListener("dragover", e => {
             e.preventDefault();
-            // this.handleDragOver(e);
         });
         this.addEventListener("dragleave", this.handleFileDrop);
         this.addEventListener("drop", this.handleFileDrop);
     }
 
-    loadSounds(sounds: Sound[], soundboardUuid: string): void {
+    loadSounds(sounds: Sound[], soundboardUuid: string, allowImport: boolean): void {
+        this.allowImport = allowImport;
         this.currentSoundboardId = soundboardUuid;
         this.clear();
         for (const sound of sounds) {
@@ -216,7 +217,7 @@ export default class SoundList extends HTMLElement {
 
     private handleDragEnter = (e: DragEvent): void => {
         e.preventDefault();
-        if (MSR.instance.modalManager.hasOpenModal) return;
+        if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
         this.dragDepth++;
         console.log(this.dragDepth);
         this.showDragDummy();

@@ -9,19 +9,15 @@ export default class SettingsCache {
     async setMainDevice(id?: string, volume?: number): Promise<void> {
         if (id !== undefined) this.settings.mainDevice = id;
         if (volume !== undefined) this.settings.mainDeviceVolume = volume;
+        EventSender.send("onSettingsChanged", this.settings);
         await DataAccess.saveSettings(this.settings);
-        EventSender.send("onDevicesChanged", this.settings);
     }
 
     async setSecondaryDevice(id?: string | null, volume?: number): Promise<void> {
         if (id !== undefined) this.settings.secondaryDevice = id;
         if (volume !== undefined) this.settings.secondaryDeviceVolume = volume;
+        EventSender.send("onSettingsChanged", this.settings);
         await DataAccess.saveSettings(this.settings);
-        EventSender.send("onDevicesChanged", this.settings);
-    }
-
-    setCurrentSoundboard(index: number): void {
-        this.settings.selectedSoundboard = index;
     }
 
     async save(values?: OptionalSettings): Promise<void> {
@@ -33,6 +29,7 @@ export default class SettingsCache {
                     this.setSettingsValue(key, proposed);
             }
         }
+        EventSender.send("onSettingsChanged", this.settings);
         await DataAccess.saveSettings(this.settings);
     }
 

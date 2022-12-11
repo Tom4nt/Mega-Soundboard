@@ -45,22 +45,10 @@ export default class Utils {
         }
     }
 
-    /** Verifies if the path is not empty, the file/folder exists, and if it is within the accepted extensions. */
-    static async isPathValid(path: PathLike, type: "folder"): Promise<boolean>;
-    static async isPathValid(path: PathLike, type: "file", validExtensions: string[]): Promise<boolean>;
-    static async isPathValid(path: PathLike, type: "file" | "folder", validExtensions?: string[]): Promise<boolean> {
-        if (! await this.isPathOK(path)) return false;
-
-        const s = await fs.stat(path);
-        if (type == "file" && validExtensions) {
-            if (s.isDirectory()) return false;
-
-            const ext = p.extname(path.toString()).substring(1);
-            return validExtensions.includes(ext) || validExtensions.length == 0;
-
-        } else {
-            return s.isDirectory();
-        }
+    static parsePath(path: string): string | null {
+        const res = p.parse(path);
+        const parsed = p.join(res.dir, res.base);
+        return res.dir === "" ? null : parsed;
     }
 
     static objectToMap(object: object): Map<string, unknown> {

@@ -37,7 +37,7 @@ export default class SettingsModal extends Modal {
         this.stopSoundsRecorder.keys = settings.stopSoundsKeys;
         this.keybindsStateRecorder.keys = settings.enableKeybindsKeys;
         this.minimizeToTrayToggler.isOn = settings.minToTray;
-        this.soundsLocationFileSelector.value = settings.soundsLocation ?? "";
+        this.soundsLocationFileSelector.value = settings.soundsLocation ?? await window.actions.getDefaultMovePath();
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
@@ -52,21 +52,17 @@ export default class SettingsModal extends Modal {
         return !this.stopSoundsRecorder.isRecording && !this.keybindsStateRecorder.isRecording;
     }
 
-    private async validate(): Promise<boolean> {
-        const soundsPath = this.soundsLocationFileSelector.value;
-        const pathValid = await window.actions.isPathValid(soundsPath, "folder");
-        if (!soundsPath || pathValid)
-            return true;
-        else {
+    private async validate(finalSoundsPath: string | null): Promise<boolean> {
+        if (!finalSoundsPath) {
             this.soundsLocationFileSelector.warn();
             return false;
         }
+        return true;
     }
 
     private async save(): Promise<void> {
-        if (!await this.validate()) return;
-        let soundsPath: string | null = this.soundsLocationFileSelector.value;
-        if (!soundsPath) soundsPath = null;
+        const soundsPath = await window.actions.parsePath(this.soundsLocationFileSelector.value);
+        if (! await this.validate(soundsPath)) return;
 
         window.actions.saveSettings({
             enableKeybindsKeys: this.keybindsStateRecorder.keys,

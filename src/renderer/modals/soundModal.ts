@@ -94,33 +94,27 @@ export default class SoundModal extends Modal {
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
     }
 
-    private async validate(): Promise<boolean> {
+    private async validate(finalPath: string | null): Promise<boolean> {
         let valid = true;
         if (!this.nameElement.value || !this.nameElement.value.trim()) {
             this.nameElement.warn();
             valid = false;
         }
 
-        if (!this.pathElement.value || !this.pathElement.value.trim()) {
+        if (!finalPath) {
             this.pathElement.warn();
             valid = false;
-        }
-
-        if (valid) {
-            if (! await window.actions.isPathValid(this.pathElement.value, "sound")) {
-                valid = false;
-                this.pathElement.warn();
-            }
         }
 
         return valid;
     }
 
     private async save(): Promise<void> {
-        if (! await this.validate()) return;
+        const path = await window.actions.parsePath(this.pathElement.value);
+        if (!await this.validate(path) || !path) return;
 
         this.loadedSound.name = this.nameElement.value;
-        this.loadedSound.path = this.pathElement.value;
+        this.loadedSound.path = path;
         this.loadedSound.volume = this.volumeElement.value;
         this.loadedSound.keys = this.keysElement.keys;
 

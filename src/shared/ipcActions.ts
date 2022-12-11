@@ -1,4 +1,4 @@
-import { IDevice, NonOptional, Optional } from "./interfaces";
+import { NonOptional } from "./interfaces";
 import { OptionalSettings, Settings, Sound, Soundboard } from "./models";
 
 class ConcreteActions {
@@ -42,8 +42,9 @@ class ConcreteActions {
 
     browseSounds: (() => Promise<string[]>) | null = null;
     browseFolder: (() => Promise<string | undefined>) | null = null;
-    isPathValid: ((path: string, type: "sound" | "folder") => Promise<boolean>) | null = null;
     getNameFromPath: ((path: string) => Promise<string>) | null = null;
+    getDefaultMovePath: (() => Promise<string>) | null = null;
+    parsePath: ((path: string) => Promise<string | null>) | null = null;
 
     startKeyRecordingSession: (() => Promise<string>) | null = null;
     stopKeyRecordingSession: ((id: string) => void) | null = null;

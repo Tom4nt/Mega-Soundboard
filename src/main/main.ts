@@ -63,6 +63,7 @@ async function init(): Promise<void> {
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
     const s = settingsCache.settings;
     const keybindManager = new KeybindManager();
+    keybindManager.raiseExternal = s.enableKeybinds;
     const trayManager = TrayManager.createTray(winManager.mainWindow, s.enableKeybinds, s.overlapSounds);
 
     new MS(winManager, trayManager, soundboardsCache, settingsCache, keybindManager);

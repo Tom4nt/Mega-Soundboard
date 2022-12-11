@@ -81,12 +81,14 @@ export default class SoundboardItem extends Draggable {
 
     private addGlobalListeners(): void {
         GlobalEvents.addHandler("onSoundboardChanged", this.handleSoundboardChanged);
+        GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
         MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
     }
 
     private removeGlobalListeners(): void {
         GlobalEvents.removeHandler("onSoundboardChanged", this.handleSoundboardChanged);
+        GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
         MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
         MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
     }
@@ -145,5 +147,11 @@ export default class SoundboardItem extends Draggable {
         const sound = this.soundboard.sounds.find(x => x.uuid == uuid);
         if (!sound) return;
         this.updatePlayingIndicator(-1);
+    };
+
+    private handleKeybindPressed = (keybind: number[]): void => {
+        if (Keys.equals(keybind, this.soundboard.keys)) {
+            window.actions.setCurrentSoundboard(this.soundboard.uuid);
+        }
     };
 }

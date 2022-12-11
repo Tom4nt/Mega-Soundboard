@@ -82,15 +82,15 @@ export default class SoundboardModal extends Modal {
         this.removeButton.style.display = this.isLast || this.isNew ? "none" : "";
     }
 
-    private async validate(): Promise<boolean> {
+    private async validate(finalPath: string | null): Promise<boolean> {
         let valid = true;
         if (!this.nameElement.value || !this.nameElement.value.trim()) {
             this.nameElement.warn();
             valid = false;
         }
 
-        const isPathValid = await window.actions.isPathValid(this.folderElement.value, "folder");
-        if (this.folderElement.value && !isPathValid) {
+        const isEmpty = this.folderElement.value === "";
+        if (!isEmpty && finalPath === null) {
             this.folderElement.warn();
             valid = false;
         }
@@ -99,12 +99,13 @@ export default class SoundboardModal extends Modal {
     }
 
     private async save(): Promise<void> {
-        if (! await this.validate()) return;
+        const path = await window.actions.parsePath(this.folderElement.value);
+        if (! await this.validate(path)) return;
 
         this.loadedSoundboard.name = this.nameElement.value;
         this.loadedSoundboard.keys = this.keysElement.keys;
         this.loadedSoundboard.volume = this.volumeElement.value;
-        if (this.folderElement.value) this.loadedSoundboard.linkedFolder = this.folderElement.value;
+        if (this.folderElement.value) this.loadedSoundboard.linkedFolder = path;
         this._onSaved.raise(this.loadedSoundboard);
 
         this.close();

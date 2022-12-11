@@ -5,7 +5,7 @@ import KeyRecordingSession from "../../shared/models/keyRecordingSession";
 import EventSender from "../eventSender";
 
 export default class KeybindManager {
-    lock = false;
+    raiseExternal = true;
 
     get onKeybindPressed(): ExposedEvent<number[]> { return this._onKeybindPressed.expose(); }
     private _onKeybindPressed = new Event<number[]>();
@@ -57,6 +57,6 @@ export default class KeybindManager {
 
     private sendKeybindPressed(): void {
         this._onKeybindPressed.raise(this.currentCombination);
-        EventSender.send("onKeybindPressed", this.currentCombination);
+        if (this.raiseExternal) EventSender.send("onKeybindPressed", this.currentCombination);
     }
 }
