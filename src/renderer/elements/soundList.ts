@@ -49,6 +49,10 @@ export default class SoundList extends HTMLElement {
             this.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
         });
 
+        GlobalEvents.addHandler("onSoundboardChanged", sb => {
+            if (sb.linkedFolder !== null) this.loadSounds(sb.sounds, sb.uuid, true);
+        });
+
         document.addEventListener("mousemove", e => {
             if (Draggable.currentElement && Draggable.currentElement instanceof SoundItem) {
                 if (!this.dragElement) {
@@ -219,16 +223,14 @@ export default class SoundList extends HTMLElement {
         e.preventDefault();
         if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
         this.dragDepth++;
-        console.log(this.dragDepth);
         this.showDragDummy();
         this.handleDragOver(e);
     };
 
     private handleFileDrop = (e: DragEvent): void => {
         e.preventDefault();
-        if (MSR.instance.modalManager.hasOpenModal) return;
+        if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
         this.dragDepth--;
-        console.log(this.dragDepth);
         if (this.dragDepth === 0)
             void this.onFileDrop(e);
     };

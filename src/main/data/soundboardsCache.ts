@@ -4,6 +4,7 @@ import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
+import SoundboardUtils from "../utils/soundboardUtils";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -76,6 +77,7 @@ export default class SoundboardsCache {
     async editSoundboard(soundboard: Soundboard): Promise<void> {
         const existingIndex = this.findSoundboardIndex(soundboard.uuid);
         this.soundboards[existingIndex] = soundboard;
+        await SoundboardUtils.syncSounds(soundboard);
         EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }

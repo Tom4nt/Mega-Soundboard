@@ -36,7 +36,7 @@ export default class Utils {
         return array.every(i => typeof i === "number");
     }
 
-    static async isPathOK(path: PathLike): Promise<boolean> {
+    static async isPathAccessible(path: PathLike): Promise<boolean> {
         try {
             await fs.access(path, fsConstants.F_OK);
             return true;
@@ -45,10 +45,27 @@ export default class Utils {
         }
     }
 
+    /** Throws an Error if the path is not a directory or if it's not accessible. */
+    static async verifyAccessibleDirectory(path: string): Promise<void> {
+        if (!await Utils.isPathAccessible(path))
+            throw Error("The specified path cannot be accessed.");
+        if (!(await fs.stat(path)).isDirectory())
+            throw Error("The specified path is not valid because it is not a directory.");
+    }
+
     static parsePath(path: string): string | null {
         const res = p.parse(path);
         const parsed = p.join(res.dir, res.base);
         return res.dir === "" ? null : parsed;
+    }
+
+    static folderContains(basePath: string, files: string[], fileToCompare: string): boolean {
+        let contains = false;
+        for (const file of files) {
+            const path = p.join(basePath, file);
+            if (p.resolve(fileToCompare) == p.resolve(path)) contains = true;
+        }
+        return contains;
     }
 
     static objectToMap(object: object): Map<string, unknown> {

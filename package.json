@@ -36,9 +36,9 @@
     "build": {
         "appId": "com.tom4nt.megasoundboard",
         "productName": "Mega Soundboard",
-        "icon": "res/icon.ico",
+        "icon": "out/res/icon.ico",
         "files": [
-            "src/**/*"
+            "out/**/*"
         ],
         "publish": {
             "provider": "github",

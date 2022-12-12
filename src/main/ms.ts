@@ -11,6 +11,7 @@ import KeybindManager from "./managers/keybindManager";
 import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
+import SoundboardUtils from "./utils/soundboardUtils";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -95,7 +96,7 @@ export default class MS {
         });
 
         try {
-            await watcher.syncSounds(soundboard);
+            await SoundboardUtils.syncSounds(soundboard);
             await watcher.start();
         } catch (error) {
             // The folder is invalid and the soundboard will be shown as empty.

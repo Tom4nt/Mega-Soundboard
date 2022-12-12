@@ -23,7 +23,7 @@ export default class DataAccess {
     static async getSettingsFromSaveFile(): Promise<Settings> {
         const settings = new Settings();
 
-        const hasAcess = await Utils.isPathOK(settingsPath);
+        const hasAcess = await Utils.isPathAccessible(settingsPath);
         if (hasAcess) {
             try {
                 const JSONtext = await fs.readFile(settingsPath, "utf-8");
