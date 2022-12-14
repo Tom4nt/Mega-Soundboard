@@ -1,6 +1,6 @@
 <!-- PROJECT LOGO -->
 <p align="center">
-  <img src="res/icon.ico" alt="Logo" width="80" height="80">
+  <img src="src/res/icon.ico" alt="Logo" width="80" height="80">
   <h3 align="center">Mega Soundboard</h3>
 
   <p align="center">
@@ -19,13 +19,13 @@
 Mega Soundboard is an app that allows you to organize sound files and play them to two output devices at the same time, optionally with keybinds.
 
 ### Main features
-* Arrange sounds in 'folders' called soundboards.
+* Arrange sounds in soundboards.
 * Use keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
 * Configure volume per output device, soundboard and sound.
 
 ### Built With
 * [Electron](https://www.electronjs.org/)
-* [iohook](https://wilix-team.github.io/iohook/)
+* [uiohook-napi](https://github.com/SnosMe/uiohook-napi/)
 
 ### Installation
 Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soundboard/releases).
@@ -42,9 +42,3 @@ Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soun
 <!-- LICENSE -->
 ## License
 Distributed under the MIT License. [More information](https://github.com/Tom4nt/Mega-Soundboard/blob/master/LICENSE).
-
-
-<!-- CONTACT -->
-## Contact
-
-Tomás Antunes - tmsntns@gmail.com
