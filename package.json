@@ -51,19 +51,5 @@
             "name": "Mega Soundboard Package",
             "description": "Mega Soundboard Package"
         }
-    },
-    "iohook": {
-        "targets": [
-            "node-93",
-            "electron-98"
-        ],
-        "platforms": [
-            "win32",
-            "darwin",
-            "linux"
-        ],
-        "arches": [
-            "x64"
-        ]
     }
 }

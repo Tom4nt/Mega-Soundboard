@@ -14,31 +14,37 @@
   </p>
 </p>
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+---
+
 Mega Soundboard is an app that allows you to organize sound files and play them to two output devices at the same time, optionally with keybinds.
 
-### Main features
-* Arrange sounds in soundboards.
-* Use keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
-* Configure volume per output device, soundboard and sound.
+![d](doc/images/main.png)
+![d](doc/images/addSoundboard.png)
+![d](doc/images/settings.png)
+![d](doc/images/quickSettings.png)
+![d](doc/images/devices.png)
 
-### Built With
+## Main features
+* Arrange sounds in soundboards.
+* Use global keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
+* Configure volume per output device, soundboard and sound.
+* Folder-linked Soundboards: Sounds can synced between a folder on your system and a Soundboard. They are synced instantly and based on events (no polling).
+* Move the source file to a specified folder before importing a sound.
+
+## Built With
 * [Electron](https://www.electronjs.org/)
 * [uiohook-napi](https://github.com/SnosMe/uiohook-napi/)
 
-### Installation
-Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soundboard/releases).
+## Installation
+Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soundboard/releases). Currently prebuilt and tested only on Windows.
 
-### Contributing
-#### Prerequisites
+## Contributing
+### Prerequisites
 * npm
-#### Build and run
+### Build and run
 1. Clone repo
 2. Install dependencies with `npm install`
 3. Run with `npm run start`
 
-
-<!-- LICENSE -->
 ## License
 Distributed under the MIT License. [More information](https://github.com/Tom4nt/Mega-Soundboard/blob/master/LICENSE).
