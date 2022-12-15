@@ -48,6 +48,7 @@ export default class AudioManager {
             this.mainDeviceVolume = settings.mainDeviceVolume;
             this.secondaryDevice = settings.secondaryDevice;
             this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
+            this.stopSoundsKeys = settings.stopSoundsKeys;
         });
 
         GlobalEvents.addHandler("onKeybindsStateChanged", s => {

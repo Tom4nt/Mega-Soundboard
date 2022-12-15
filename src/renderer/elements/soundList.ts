@@ -50,7 +50,8 @@ export default class SoundList extends HTMLElement {
         });
 
         GlobalEvents.addHandler("onSoundboardChanged", sb => {
-            if (sb.linkedFolder !== null) this.loadSounds(sb.sounds, sb.uuid, true);
+            if (sb.linkedFolder !== null && this.currentSoundboardId == sb.uuid)
+                this.loadSounds(sb.sounds, sb.uuid, true);
         });
 
         document.addEventListener("mousemove", e => {
