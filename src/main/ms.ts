@@ -12,7 +12,6 @@ import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
 import SoundboardUtils from "./utils/soundboardUtils";
-import * as keyDown from "../../build/Release/sendKey";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -50,13 +49,19 @@ export default class MS {
             }
         });
 
-        keybindManager.onKeybindPressed.addHandler(async kb => {
-            if (Keys.equals(kb, [1])) {
-                keyDown.sendKeyDown(19);
-                await new Promise<void>(p => setTimeout(() => p(), 1000));
-                keyDown.sendKeyUp(19);
-            }
-        });
+        MS.tryLoadSendKey(keybindManager);
+    }
+
+    private static tryLoadSendKey(keybindManager: KeybindManager): void {
+        import("../../build/Release/sendKey").then(mod => {
+            keybindManager.onKeybindPressed.addHandler(async kb => {
+                if (Keys.equals(kb, [1])) {
+                    mod.sendKeyDown(19);
+                    await new Promise<void>(p => setTimeout(() => p(), 1000));
+                    mod.sendKeyUp(19);
+                }
+            });
+        }).catch(e => console.log(`sendKey module failed to load. See error below.\n${String(e)}`));
     }
 
     async toggleKeybindsState(): Promise<void> {
