@@ -12,6 +12,7 @@ import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
 import SoundboardUtils from "./utils/soundboardUtils";
+import * as keyDown from "../../build/Release/sendKey";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -46,6 +47,14 @@ export default class MS {
         keybindManager.onKeybindPressed.addHandler(async keybind => {
             if (Keys.equals(keybind, settingsCache.settings.enableKeybindsKeys)) {
                 await this.toggleKeybindsState();
+            }
+        });
+
+        keybindManager.onKeybindPressed.addHandler(async kb => {
+            if (Keys.equals(kb, [1])) {
+                keyDown.sendKeyDown(19);
+                await new Promise<void>(p => setTimeout(() => p(), 1000));
+                keyDown.sendKeyUp(19);
             }
         });
     }
