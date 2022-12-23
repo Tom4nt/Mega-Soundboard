@@ -37,16 +37,6 @@ setInterval(() => {
     void autoUpdater.checkForUpdates();
 }, 5 * 60 * 1000);
 
-// type KeyEvent = { keycode: number };
-
-// ioHook.start();
-// ioHook.on("keydown", (event: KeyEvent) => {
-//     win.webContents.send("key.down", event.keycode);
-// });
-// ioHook.on("keyup", (event: KeyEvent) => {
-//     win.webContents.send("key.up", event.keycode);
-// });
-
 IPCHandler.init();
 
 app.on("ready", function () {

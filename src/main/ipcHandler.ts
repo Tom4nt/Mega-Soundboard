@@ -207,6 +207,14 @@ export default class IPCHandler {
             MS.instance.keybindManager.stopRecordingSession(uuid);
         });
 
+        this.handleAction("holdPTT", async () => {
+            return MS.instance.keybindManager.holdKeys(MS.instance.settingsCache.settings.pttKeys);
+        });
+
+        this.handleAction("releasePTT", async handle => {
+            MS.instance.keybindManager.releaseKeys(handle);
+        });
+
 
         this.handleAction("getNewsHtml", async () => {
             return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");

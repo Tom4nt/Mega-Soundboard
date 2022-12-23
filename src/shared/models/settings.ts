@@ -15,6 +15,7 @@ export default class Settings {
         public secondaryDeviceVolume = 100,
         public selectedSoundboard = 0,
         public latestLogViewed = 0,
-        public soundsLocation: string | null = null
+        public soundsLocation: string | null = null,
+        public pttKeys: number[] = [],
     ) { }
 }

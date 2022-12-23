@@ -12,6 +12,7 @@ export default class KeybindManager {
 
     private currentCombination: number[] = [];
     private sessions = new Map<string, KeyRecordingSession>();
+    private downKeys = new Map<string, number[]>();
 
     constructor() {
         uIOhook.on("keydown", e => {
@@ -43,6 +44,23 @@ export default class KeybindManager {
         const has = this.sessions.has(uuid);
         if (!has) throw Error(`Session with UUID ${uuid} was not found.`);
         this.sessions.delete(uuid);
+    }
+
+    holdKeys(keys: number[]): string {
+        for (const key of keys) {
+            uIOhook.keyToggle(key, "down");
+        }
+        const uuid = randomUUID();
+        this.downKeys.set(uuid, keys);
+        return uuid;
+    }
+
+    releaseKeys(handle: string): void {
+        const keys = this.downKeys.get(handle);
+        if (!keys) return;
+        for (const key of keys) {
+            uIOhook.keyToggle(key, "up");
+        }
     }
 
     private updateRecordingSessions(pressed: boolean): void {

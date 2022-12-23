@@ -6,13 +6,11 @@ import GlobalEvents from "../util/globalEvents";
 const NO_KEY_DESC = "No Keybind";
 
 export default class KeyRecorder extends HTMLElement {
-    useWebEvents = false;
-
     private labelElement!: HTMLSpanElement;
     private indicatorElement!: HTMLSpanElement;
 
     private currentRecordingSessionId: string | null = null;
-    // private recordingBuffer: number[] = [];
+    private recordingBuffer: number[] = [];
 
     private _onClear = new Event<void>;
     get onClear(): ExposedEvent<void> { return this._onClear.expose(); }
@@ -64,7 +62,7 @@ export default class KeyRecorder extends HTMLElement {
         this.classList.add("recording");
         this.labelElement.innerHTML = "Recording...";
         this.indicatorElement.innerHTML = "Stop recording";
-        await this.startRecording();
+        this.currentRecordingSessionId = await window.actions.startKeyRecordingSession();
     }
 
     stop(): void {
@@ -72,7 +70,7 @@ export default class KeyRecorder extends HTMLElement {
         this.classList.remove("recording");
         this.labelElement.innerHTML = NO_KEY_DESC;
         this.indicatorElement.innerHTML = "Record keybind";
-        this.stopRecording(this.currentRecordingSessionId);
+        window.actions.stopKeyRecordingSession(this.currentRecordingSessionId);
         this.currentRecordingSessionId = null;
     }
 
@@ -82,20 +80,6 @@ export default class KeyRecorder extends HTMLElement {
         this._onClear.raise();
         const keyElements = this.querySelectorAll(".key");
         keyElements.forEach(e => e.remove());
-    }
-
-    private async startRecording(): Promise<void> {
-        if (this.useWebEvents)
-            document.addEventListener("keydown", this.handleKeyDown);
-        else
-            this.currentRecordingSessionId = await window.actions.startKeyRecordingSession();
-    }
-
-    private stopRecording(id: string): void {
-        if (this.useWebEvents)
-            document.removeEventListener("keydown", this.handleKeyDown);
-        else
-            window.actions.stopKeyRecordingSession(id);
     }
 
     private setDisplayedKeys(keys: string[]): void {
@@ -126,9 +110,5 @@ export default class KeyRecorder extends HTMLElement {
     private handleRecoringProgress = (args: KeyRecordingArgs): void => {
         if (args.uuid === this.currentRecordingSessionId)
             this.keys = args.combination;
-    };
-
-    private handleKeyDown = (e: KeyboardEvent): void => {
-        // TODO
     };
 }

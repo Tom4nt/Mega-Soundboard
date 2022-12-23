@@ -48,6 +48,8 @@ class ConcreteActions {
 
     startKeyRecordingSession: (() => Promise<string>) | null = null;
     stopKeyRecordingSession: ((id: string) => void) | null = null;
+    holdPTT: (() => Promise<string>) | null = null;
+    releasePTT: ((handle: string) => Promise<void>) | null = null;
 
     getNewsHtml: (() => Promise<string>) | null = null;
 

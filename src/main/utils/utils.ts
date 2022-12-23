@@ -72,4 +72,8 @@ export default class Utils {
         const entries = Object.entries(object);
         return new Map<string, unknown>(entries);
     }
+
+    static wait(seconds: number): Promise<void> {
+        return new Promise<void>(p => setTimeout(() => p(), seconds * 1000));
+    }
 }

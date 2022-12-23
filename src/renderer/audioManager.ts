@@ -23,6 +23,7 @@ export default class AudioManager {
     private secondaryDevice: string | null;
     private secondaryDeviceVolume: number;
     private stopSoundsKeys: number[];
+    private currentKeyHoldHandle: string | null = null;
 
     private uiMediaElement = new Audio();
 
@@ -108,6 +109,7 @@ export default class AudioManager {
                     const instances = this.playingSounds.get(sound.uuid);
                     instances?.splice(instances.indexOf(instance), 1);
                     this._onStopSound.raise(sound.uuid);
+                    void this.updatePTTState();
                 }
             });
 
@@ -137,6 +139,7 @@ export default class AudioManager {
         }
 
         this._onPlaySound.raise(sound);
+        void this.updatePTTState();
     }
 
     /** Stops all instances of the specified Sound. */
@@ -151,6 +154,7 @@ export default class AudioManager {
             this._onStopSound.raise(uuid);
             console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
         }
+        void this.updatePTTState();
     }
 
     stopSounds(uuids: Iterable<string>): void {
@@ -171,9 +175,27 @@ export default class AudioManager {
         return instances !== undefined && instances.length > 0;
     }
 
+    isAnySoundPlaying(): boolean {
+        for (const instances of this.playingSounds.values()) {
+            if (instances.length > 0) return true;
+        }
+        return false;
+    }
+
     async playUISound(path: UISoundPath): Promise<void> {
         this.uiMediaElement.src = path;
         this.uiMediaElement.load();
         await this.uiMediaElement.play();
+    }
+
+    private async updatePTTState(): Promise<void> {
+        const playing = this.isAnySoundPlaying();
+        if (playing && !this.currentKeyHoldHandle) {
+            this.currentKeyHoldHandle = await window.actions.holdPTT();
+        }
+        if (!playing && this.currentKeyHoldHandle) {
+            await window.actions.releasePTT(this.currentKeyHoldHandle);
+            this.currentKeyHoldHandle = null;
+        }
     }
 }
