@@ -17,5 +17,6 @@ export default class Settings {
         public latestLogViewed = 0,
         public soundsLocation: string | null = null,
         public pttKeys: number[] = [],
+        public randomSoundKeys: number[] = [],
     ) { }
 }

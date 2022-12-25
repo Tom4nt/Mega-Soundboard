@@ -282,6 +282,15 @@ a {
 
 /* #region Right */
 
+#right-footer {
+    position: absolute;
+    display: flex;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    gap: 16px;
+}
+
 #panel-right {
     box-sizing: border-box;
     background-color: var(--color-normal);
@@ -289,6 +298,7 @@ a {
     border-radius: 8px 0 0 0;
     height: 100%;
     overflow: hidden;
+    position: relative;
 }
 
 #soundlist-actions {
@@ -303,19 +313,49 @@ a {
     border-radius: 8px;
 }
 
+#seekbar {
+    flex-grow: 1;
+    box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-normalL);
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    font-family: 'Roboto';
+    gap: 8px;
+}
+
+#seekbar ms-slider {
+    flex-grow: 1;
+}
+
+#seekbar span {
+    color: var(--color-white);
+    font-size: 14px;
+}
+
 #actionpanel {
-    position: absolute;
     box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.3);
     background-color: var(--color-normalL);
     font-size: 0;
     border-radius: 4px;
     padding: 8px;
-    bottom: 16px;
-    right: 16px;
+    align-self: flex-end;
 }
 
 #actionpanel *:not(:last-child) {
     margin-right: 8px;
+}
+
+#actionpanel * {
+    vertical-align: middle;
+}
+
+#actionpanel-separator {
+    width: 1px;
+    height: 28px;
+    display: inline-block;
+    background-color: var(--color-lightL);
 }
 
 

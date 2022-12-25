@@ -28,6 +28,7 @@ class ConcreteEvents {
     onUpdateAvailable: ExposedEvent<void> | null = null;
     onUpdateProgress: ExposedEvent<number> | null = null;
     onUpdateReady: ExposedEvent<void> | null = null;
+    onSoundPlayRequested: ExposedEvent<Sound> | null = null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -51,6 +51,8 @@ class ConcreteActions {
     holdPTT: (() => Promise<string>) | null = null;
     releasePTT: ((handle: string) => Promise<void>) | null = null;
 
+    playRandomSound: (() => void) | null = null;
+
     getNewsHtml: (() => Promise<string>) | null = null;
 
     getVersion: (() => Promise<string>) | null = null;

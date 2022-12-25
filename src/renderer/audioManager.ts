@@ -65,6 +65,10 @@ export default class AudioManager {
                 this.stopAllSounds();
             }
         });
+
+        GlobalEvents.addHandler("onSoundPlayRequested", async s => {
+            await this.playSound(s);
+        });
     }
 
     static parseDevices(settings: Settings): IDevice[] {

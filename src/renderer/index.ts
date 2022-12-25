@@ -28,6 +28,7 @@ let deviceSettings!: HTMLDivElement;
 let quickSettings!: HTMLDivElement;
 let deviceSettingsButton!: HTMLButtonElement;
 let quickSettingsButton!: HTMLButtonElement;
+let randomSoundButton!: HTMLButtonElement;
 let stopAllButton!: HTMLButtonElement;
 
 //#region Devices
@@ -120,6 +121,7 @@ function getElementReferences(): void {
     quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
     deviceSettingsButton = document.getElementById("btndevicesettings") as HTMLButtonElement;
     quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
+    randomSoundButton = document.getElementById("btn-randomsound") as HTMLButtonElement;
     stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
 
     mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
@@ -158,6 +160,10 @@ function addElementListeners(): void {
     });
 
     //#region Action Panel
+
+    randomSoundButton.addEventListener("click", () => {
+        window.actions.playRandomSound();
+    });
 
     stopAllButton.addEventListener("click", () => {
         MSR.instance.audioManager.stopAllSounds();

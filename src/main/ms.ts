@@ -43,9 +43,12 @@ export default class MS {
         this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;
         this.isOverlapEnabled = settingsCache.settings.overlapSounds;
 
-        keybindManager.onKeybindPressed.addHandler(async keybind => {
-            if (Keys.equals(keybind, settingsCache.settings.enableKeybindsKeys)) {
+        keybindManager.onKeybindPressed.addHandler(async kb => {
+            if (Keys.equals(kb, settingsCache.settings.enableKeybindsKeys)) {
                 await this.toggleKeybindsState();
+            }
+            if (Keys.equals(kb, settingsCache.settings.randomSoundKeys)) {
+                this.playRandomSound();
             }
         });
     }
@@ -68,6 +71,14 @@ export default class MS {
     flagChangelogViewed(): void {
         this.settingsCache.settings.latestLogViewed = MS.latestWithLog;
         void DataAccess.saveSettings(this.settingsCache.settings);
+    }
+
+    playRandomSound(): void {
+        const sb = this.soundboardsCache.soundboards[this.settingsCache.settings.selectedSoundboard];
+        const items = sb.sounds;
+        if (items.length <= 0) return;
+        const index = Math.floor(Math.random() * items.length);
+        EventSender.send("onSoundPlayRequested", items[index]);
     }
 
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {

@@ -216,6 +216,11 @@ export default class IPCHandler {
         });
 
 
+        this.handleAction("playRandomSound", async () => {
+            MS.instance.playRandomSound();
+        });
+
+
         this.handleAction("getNewsHtml", async () => {
             return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");
         });

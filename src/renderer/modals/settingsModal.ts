@@ -5,6 +5,7 @@ export default class SettingsModal extends Modal {
     private soundsLocationFileSelector!: FileSelector;
     private keybindsStateRecorder!: KeyRecorder;
     private stopSoundsRecorder!: KeyRecorder;
+    private randomSoundRecorder!: KeyRecorder;
     private pttRecorder!: KeyRecorder;
     private minimizeToTrayToggler!: Toggler;
 
@@ -16,6 +17,7 @@ export default class SettingsModal extends Modal {
     protected getContent(): HTMLElement[] {
         this.stopSoundsRecorder = new KeyRecorder();
         this.keybindsStateRecorder = new KeyRecorder();
+        this.randomSoundRecorder = new KeyRecorder();
         this.pttRecorder = new KeyRecorder();
         this.soundsLocationFileSelector = new FileSelector("", "folder");
         this.minimizeToTrayToggler = new Toggler("Minimize to tray");
@@ -27,10 +29,12 @@ export default class SettingsModal extends Modal {
             this.stopSoundsRecorder,
             Modal.getLabel("Enable/Disable keybinds"),
             this.keybindsStateRecorder,
+            Modal.getLabel("Play random Sound"),
+            this.randomSoundRecorder,
             Modal.getLabel("PTT keys to press"),
             this.pttRecorder,
             this.minimizeToTrayToggler,
-            Modal.getLabel("Moved Sounds Location"),
+            Modal.getLabel("Sound location"),
             this.soundsLocationFileSelector
         ];
     }
@@ -40,6 +44,7 @@ export default class SettingsModal extends Modal {
 
         this.stopSoundsRecorder.keys = settings.stopSoundsKeys;
         this.keybindsStateRecorder.keys = settings.enableKeybindsKeys;
+        this.randomSoundRecorder.keys = settings.randomSoundKeys;
         this.pttRecorder.keys = settings.pttKeys;
         this.minimizeToTrayToggler.isOn = settings.minToTray;
         this.soundsLocationFileSelector.value = settings.soundsLocation ?? await window.actions.getDefaultMovePath();
@@ -75,6 +80,7 @@ export default class SettingsModal extends Modal {
             soundsLocation: soundsPath,
             minToTray: this.minimizeToTrayToggler.isOn,
             pttKeys: this.pttRecorder.keys,
+            randomSoundKeys: this.randomSoundRecorder.keys,
         });
         this.close();
     }

@@ -69,7 +69,6 @@ ms-soundboardlist .item .desc {
     color: var(--color-gray);
     float: right;
     font-size: 12px;
-    line-height: 1.45;
     flex-shrink: 0;
 }
 
