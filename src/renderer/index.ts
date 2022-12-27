@@ -1,5 +1,5 @@
 import Actions from "./util/actions";
-import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox } from "./elements";
+import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
@@ -30,6 +30,7 @@ let deviceSettingsButton!: HTMLButtonElement;
 let quickSettingsButton!: HTMLButtonElement;
 let randomSoundButton!: HTMLButtonElement;
 let stopAllButton!: HTMLButtonElement;
+let seekbar!: Seekbar;
 
 //#region Devices
 let mainDeviceDropdown!: Dropdown;
@@ -86,6 +87,8 @@ async function init(): Promise<void> {
     const sb = soundboards[content.settings.selectedSoundboard];
     soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
     soundboardList.selectSoundboard(sb);
+
+    MSR.instance.audioManager.onMainAudioChanged.addHandler(elem => seekbar.currentMedia = elem);
 }
 
 function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {
@@ -123,6 +126,7 @@ function getElementReferences(): void {
     quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
     randomSoundButton = document.getElementById("btn-randomsound") as HTMLButtonElement;
     stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
+    seekbar = document.getElementById("seekbar") as Seekbar;
 
     mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
     secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;

@@ -28,10 +28,14 @@ export default class AudioManager {
     private uiMediaElement = new Audio();
 
     get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
-    readonly _onPlaySound = new Event<Sound>();
+    private readonly _onPlaySound = new Event<Sound>();
 
     get onStopSound(): ExposedEvent<string> { return this._onStopSound.expose(); }
-    readonly _onStopSound = new Event<string>();
+    private readonly _onStopSound = new Event<string>();
+
+    private mainAudio: HTMLAudioElement | null = null;
+    private readonly _onMainAudioChanged = new Event<HTMLAudioElement | null>();
+    get onMainAudioChanged(): ExposedEvent<HTMLAudioElement | null> { return this._onMainAudioChanged.expose(); }
 
     playingSounds = new Map<string, AudioInstance[]>;
 
@@ -121,6 +125,17 @@ export default class AudioManager {
             const p = audio.setSinkId(device.id).catch(() => { console.error(`Error setting SinkId for ${device.id}.`); });
             sinkIdPromises.push(p);
             audioElements.push(audio);
+        }
+
+        if (!this.overlapSounds) {
+            this.mainAudio = audioElements[0];
+            this._onMainAudioChanged.raise(this.mainAudio);
+            this.mainAudio.addEventListener("ended", e => {
+                if (this.mainAudio === e.target) {
+                    this.mainAudio = null;
+                    this._onMainAudioChanged.raise(null);
+                }
+            });
         }
 
         console.log(`Added and playing instance of sound at ${sound.uuid}.`);

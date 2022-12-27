@@ -13,6 +13,7 @@ import Dropdown from "./elements/dropdown";
 import Tooltip from "./elements/tooltip";
 import SearchBox from "./elements/searchBox";
 import IconButton from "./elements/iconButton";
+import Seekbar from "./elements/seekbar";
 
 export {
     KeyRecorder,
@@ -30,6 +31,7 @@ export {
     Tooltip,
     SearchBox,
     IconButton,
+    Seekbar,
 };
 
 customElements.define("ms-dropdown", Dropdown);
@@ -47,3 +49,4 @@ customElements.define("ms-textfield", TextField);
 customElements.define("ms-titlebar", Titlebar);
 customElements.define("ms-toggler", Toggler);
 customElements.define("ms-tooltip", Tooltip);
+customElements.define("ms-seekbar", Seekbar);
