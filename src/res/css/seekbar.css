@@ -8,6 +8,12 @@ ms-seekbar {
     align-items: center;
     font-family: 'Roboto';
     gap: 8px;
+    opacity: 0;
+    transition: all .2s;
+}
+
+ms-seekbar.visible {
+    opacity: 1;
 }
 
 ms-seekbar ms-slider {

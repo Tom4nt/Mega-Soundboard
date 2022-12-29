@@ -131,7 +131,11 @@ export default class SoundItem extends Draggable {
 
     private handleKeybindPressed = async (keys: number[]): Promise<void> => {
         if (Keys.equals(keys, this.sound.keys)) {
-            await MSR.instance.audioManager.playSound(this.sound);
+            try {
+                await MSR.instance.audioManager.playSound(this.sound);
+            } catch (error) {
+                await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
+            }
         }
     };
 }

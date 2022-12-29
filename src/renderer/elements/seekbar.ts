@@ -1,3 +1,4 @@
+import Utils from "../util/utils";
 import IconButton from "./iconButton";
 import Slider from "./slider";
 
@@ -13,6 +14,8 @@ export default class Seekbar extends HTMLElement {
         if (this._currentMedia) this.removeMediaListeners(this._currentMedia);
         this._currentMedia = value;
         if (value) this.addMediaListeners(value);
+        this.setVisibility(value != null);
+        this.update();
     }
 
     constructor() {
@@ -49,6 +52,26 @@ export default class Seekbar extends HTMLElement {
         media.removeEventListener("pause", this.handlePause);
     }
 
+    private setVisibility(value: boolean): void {
+        if (value)
+            this.classList.add("visible");
+        else
+            this.classList.remove("visible");
+    }
+
+    private update(): void {
+        if (!this.currentMedia) return;
+        this.buttonElement.innerHTML = this.currentMedia.paused ? "play" : "pause";
+        this.updateTime();
+    }
+
+    private updateTime(): void {
+        const m = this.currentMedia;
+        if (!m) return;
+        this.sliderElement.value = m.currentTime / m.duration;
+        this.timeElement.innerHTML = Utils.getTimeString(m.currentTime);
+    }
+
     // Handlers
 
     private handlePlayPauseClick = (): void => {
@@ -59,10 +82,7 @@ export default class Seekbar extends HTMLElement {
     };
 
     private handleUpdate = (): void => {
-        const m = this.currentMedia;
-        if (!m) return;
-        this.sliderElement.value = m.currentTime / m.duration;
-        this.timeElement.innerHTML = m.currentTime.toString();
+        this.updateTime();
     };
 
     private handlePlay = (): void => {

@@ -51,4 +51,11 @@ export default class Utils {
         elem.href = `./css/${name}.css`;
         return elem;
     }
+
+    static getTimeString(seconds: number): string {
+        const ms = seconds * 1000;
+        const iso = new Date(ms).toISOString();
+        if (seconds < 3600) return iso.slice(14, 19);
+        else return iso.slice(11, 19);
+    }
 }

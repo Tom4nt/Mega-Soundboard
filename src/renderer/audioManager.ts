@@ -71,7 +71,11 @@ export default class AudioManager {
         });
 
         GlobalEvents.addHandler("onSoundPlayRequested", async s => {
-            await this.playSound(s);
+            try {
+                await this.playSound(s);
+            } catch (error) {
+                await this.playUISound(UISoundPath.ERROR);
+            }
         });
     }
 
@@ -92,7 +96,9 @@ export default class AudioManager {
     }
 
     async playSound(sound: Sound): Promise<void> {
-        if (!this.overlapSounds) this.stopAllSounds();
+        if (!this.overlapSounds) {
+            this.stopAllSounds();
+        }
 
         if (!sound.soundboardUuid) throw Error(MSG_ERR_NOT_CONNECTED);
         const sb = await window.actions.getSoundboard(sound.soundboardUuid);
@@ -127,6 +133,25 @@ export default class AudioManager {
             audioElements.push(audio);
         }
 
+        console.log(`Added and playing instance of sound at ${sound.uuid}.`);
+        await Promise.all(sinkIdPromises);
+
+        const playTasks: Promise<void>[] = [];
+        for (const audioElement of audioElements) {
+            const t = audioElement.play();
+            playTasks.push(t);
+        }
+
+        try {
+            await Promise.all(playTasks);
+        } catch (error) {
+            if (!this.overlapSounds) {
+                this.mainAudio = null;
+                this._onMainAudioChanged.raise(null);
+            }
+            throw error;
+        }
+
         if (!this.overlapSounds) {
             this.mainAudio = audioElements[0];
             this._onMainAudioChanged.raise(this.mainAudio);
@@ -137,17 +162,6 @@ export default class AudioManager {
                 }
             });
         }
-
-        console.log(`Added and playing instance of sound at ${sound.uuid}.`);
-        await Promise.all(sinkIdPromises);
-
-        const playTasks: Promise<void>[] = [];
-        for (const audioElement of audioElements) {
-            const t = audioElement.play();
-            playTasks.push(t);
-        }
-
-        await Promise.all(playTasks);
 
         const instances = this.playingSounds.get(sound.uuid);
         if (instances) {

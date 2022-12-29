@@ -47,7 +47,8 @@ export default class MS {
             if (Keys.equals(kb, settingsCache.settings.enableKeybindsKeys)) {
                 await this.toggleKeybindsState();
             }
-            if (Keys.equals(kb, settingsCache.settings.randomSoundKeys)) {
+            if (Keys.equals(kb, settingsCache.settings.randomSoundKeys)
+                && this.settingsCache.settings.enableKeybinds) {
                 this.playRandomSound();
             }
         });
