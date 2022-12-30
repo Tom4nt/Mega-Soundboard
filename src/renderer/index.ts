@@ -88,7 +88,9 @@ async function init(): Promise<void> {
     soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
     soundboardList.selectSoundboard(sb);
 
-    MSR.instance.audioManager.onMainAudioChanged.addHandler(elem => seekbar.currentMedia = elem);
+    MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
+        seekbar.currentMedia = audioInst?.audioElements[0] ?? null;
+    });
 }
 
 function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {

@@ -1,19 +1,11 @@
 import { Event, ExposedEvent } from "../shared/events";
 import { Settings, Sound } from "src/shared/models";
-import { UISoundPath } from "./models";
+import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
 import GlobalEvents from "./util/globalEvents";
 import Keys from "../shared/keys";
 
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
-
-class AudioInstance {
-    constructor(public readonly audioElements: HTMLAudioElement[]) { }
-    stop(): void {
-        this.audioElements.forEach(x => x.pause());
-        this.audioElements.length = 0;
-    }
-}
 
 export default class AudioManager {
     overlapSounds = false;
@@ -25,6 +17,7 @@ export default class AudioManager {
     private stopSoundsKeys: number[];
     private currentKeyHoldHandle: string | null = null;
 
+    /** Fixed Media Element used for App sounds. */
     private uiMediaElement = new Audio();
 
     get onPlaySound(): ExposedEvent<Sound> { return this._onPlaySound.expose(); }
@@ -33,11 +26,11 @@ export default class AudioManager {
     get onStopSound(): ExposedEvent<string> { return this._onStopSound.expose(); }
     private readonly _onStopSound = new Event<string>();
 
-    private mainAudio: HTMLAudioElement | null = null;
-    private readonly _onMainAudioChanged = new Event<HTMLAudioElement | null>();
-    get onMainAudioChanged(): ExposedEvent<HTMLAudioElement | null> { return this._onMainAudioChanged.expose(); }
+    /** Used when sounds do not overlap. */
+    private readonly _onSingleSoundChanged = new Event<AudioInstance | null>();
+    get onSingleInstanceChanged(): ExposedEvent<AudioInstance | null> { return this._onSingleSoundChanged.expose(); }
 
-    playingSounds = new Map<string, AudioInstance[]>;
+    playingSounds: AudioInstance[] = [];
 
     constructor(settings: Settings) {
         this.mainDevice = settings.mainDevice;
@@ -61,12 +54,12 @@ export default class AudioManager {
         });
 
         GlobalEvents.addHandler("onSoundRemoved", s => {
-            this.stopSound(s.uuid);
+            this.stopSoundInternal(s.uuid, true);
         });
 
         GlobalEvents.addHandler("onKeybindPressed", keybind => {
             if (Keys.equals(keybind, this.stopSoundsKeys)) {
-                this.stopAllSounds();
+                this.stopAllSoundsInternal(true);
             }
         });
 
@@ -96,123 +89,60 @@ export default class AudioManager {
     }
 
     async playSound(sound: Sound): Promise<void> {
-        if (!this.overlapSounds) {
-            this.stopAllSounds();
-        }
+        if (!this.overlapSounds) this.stopAllSoundsInternal(false);
 
         if (!sound.soundboardUuid) throw Error(MSG_ERR_NOT_CONNECTED);
         const sb = await window.actions.getSoundboard(sound.soundboardUuid);
-        const soundboardVolume = sb.volume;
-
-        const sinkIdPromises: Promise<void>[] = [];
-        const audioElements: HTMLAudioElement[] = [];
-
-        const instance = new AudioInstance(audioElements);
 
         // In the future, devices will be stored as an array and the user will be able to add/remove them.
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-        for (const device of devices) {
-            const audio = new Audio(sound.path);
-
-            audio.addEventListener("ended", () => {
-                audioElements.splice(audioElements.indexOf(audio), 1);
-                if (audioElements.length <= 0) {
-                    console.log(`Instance of ${sound.name} finished playing.`);
-                    const instances = this.playingSounds.get(sound.uuid);
-                    instances?.splice(instances.indexOf(instance), 1);
-                    this._onStopSound.raise(sound.uuid);
-                    void this.updatePTTState();
-                }
-            });
-
-            audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100) * (soundboardVolume / 100), 2);
-            const p = audio.setSinkId(device.id).catch(() => { console.error(`Error setting SinkId for ${device.id}.`); });
-            sinkIdPromises.push(p);
-            audioElements.push(audio);
-        }
-
-        console.log(`Added and playing instance of sound at ${sound.uuid}.`);
-        await Promise.all(sinkIdPromises);
-
-        const playTasks: Promise<void>[] = [];
-        for (const audioElement of audioElements) {
-            const t = audioElement.play();
-            playTasks.push(t);
-        }
+        const instance = await AudioInstance.create(sound, devices, sb.volume / 100);
+        instance.onStop.addHandler(() => {
+            console.log(`Instance of ${sound.name} finished playing.`);
+            this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);
+            this._onStopSound.raise(sound.uuid);
+            void this.updatePTTState();
+            this.raiseSingleSoundUpdate();
+        });
 
         try {
-            await Promise.all(playTasks);
+            await instance.play();
         } catch (error) {
-            if (!this.overlapSounds) {
-                this.mainAudio = null;
-                this._onMainAudioChanged.raise(null);
-            }
+            this.raiseSingleSoundUpdate();
             throw error;
         }
 
-        if (!this.overlapSounds) {
-            this.mainAudio = audioElements[0];
-            this._onMainAudioChanged.raise(this.mainAudio);
-            this.mainAudio.addEventListener("ended", e => {
-                if (this.mainAudio === e.target) {
-                    this.mainAudio = null;
-                    this._onMainAudioChanged.raise(null);
-                }
-            });
-        }
-
-        const instances = this.playingSounds.get(sound.uuid);
-        if (instances) {
-            instances.push(instance);
-        }
-        else {
-            this.playingSounds.set(sound.uuid, [instance]);
-        }
-
+        console.log(`Added and playing instance of sound at ${sound.uuid}.`);
+        this.playingSounds.push(instance);
         this._onPlaySound.raise(sound);
+        this.raiseSingleSoundUpdate();
         void this.updatePTTState();
     }
 
     /** Stops all instances of the specified Sound. */
     stopSound(uuid: string): void {
-        const instances = this.playingSounds.get(uuid);
-        if (!instances || instances.length <= 0) return;
-        const instancesCopy = [...instances];
-
-        for (const instance of instancesCopy) {
-            instance.stop();
-            instances.splice(instances.indexOf(instance), 1);
-            this._onStopSound.raise(uuid);
-            console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
-        }
-        void this.updatePTTState();
+        this.stopSoundInternal(uuid, true);
     }
 
     stopSounds(uuids: Iterable<string>): void {
         for (const soundId of uuids) {
-            this.stopSound(soundId);
+            this.stopSoundInternal(soundId, false);
         }
     }
 
     stopAllSounds(): void {
-        for (const playingSound of this.playingSounds) {
-            const id = playingSound[0];
-            this.stopSound(id);
-        }
+        this.stopAllSoundsInternal(true);
     }
 
     isSoundPlaying(uuid: string): boolean {
-        const instances = this.playingSounds.get(uuid);
-        return instances !== undefined && instances.length > 0;
+        const instance = this.playingSounds.find(x => x.sound.uuid == uuid);
+        return instance !== undefined;
     }
 
     isAnySoundPlaying(): boolean {
-        for (const instances of this.playingSounds.values()) {
-            if (instances.length > 0) return true;
-        }
-        return false;
+        return this.playingSounds.length > 0;
     }
 
     async playUISound(path: UISoundPath): Promise<void> {
@@ -230,5 +160,35 @@ export default class AudioManager {
             await window.actions.releasePTT(this.currentKeyHoldHandle);
             this.currentKeyHoldHandle = null;
         }
+    }
+
+    private raiseSingleSoundUpdate(): void {
+        if (!this.overlapSounds && this.playingSounds.length > 0) {
+            this._onSingleSoundChanged.raise(this.playingSounds[0]);
+        } else {
+            this._onSingleSoundChanged.raise(null);
+        }
+    }
+
+    private stopAllSoundsInternal(raiseSingleSoundUpdate: boolean): void {
+        for (const playingSound of this.playingSounds) {
+            const id = playingSound.sound.uuid;
+            this.stopSoundInternal(id, raiseSingleSoundUpdate);
+        }
+    }
+
+    private stopSoundInternal(uuid: string, raiseSingleSoundUpdate: boolean): void {
+        const instances = this.playingSounds.filter(x => x.sound.uuid == uuid);
+        if (instances.length <= 0) return;
+        const instancesCopy = [...instances];
+
+        for (const instance of instancesCopy) {
+            instance.pause();
+            this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);
+            this._onStopSound.raise(uuid);
+            console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
+        }
+        void this.updatePTTState();
+        if (raiseSingleSoundUpdate) this.raiseSingleSoundUpdate();
     }
 }
