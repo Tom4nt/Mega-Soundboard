@@ -4,6 +4,8 @@ import Slider from "./slider";
 
 export default class Seekbar extends HTMLElement {
     private didConnect = false;
+    private wasPaused = false;
+    private isScrubbing = false;
     private sliderElement: Slider;
     private buttonElement: IconButton;
     private timeElement: HTMLSpanElement;
@@ -12,6 +14,7 @@ export default class Seekbar extends HTMLElement {
     get currentMedia(): HTMLMediaElement | null { return this._currentMedia; }
     set currentMedia(value: HTMLMediaElement | null) {
         if (this._currentMedia) this.removeMediaListeners(this._currentMedia);
+        this.isScrubbing = false;
         this._currentMedia = value;
         if (value) this.addMediaListeners(value);
         this.setVisibility(value != null);
@@ -35,6 +38,8 @@ export default class Seekbar extends HTMLElement {
 
         this.sliderElement.max = 1;
         this.sliderElement.step = null;
+        this.sliderElement.addEventListener("change", this.handleChange);
+        this.sliderElement.addEventListener("input", this.handleInput);
 
         this.append(this.buttonElement, this.timeElement, this.sliderElement);
         this.didConnect = true;
@@ -79,6 +84,23 @@ export default class Seekbar extends HTMLElement {
         const m = this.currentMedia;
         if (m.paused) void m.play();
         else m.pause();
+    };
+
+    private handleChange = (): void => {
+        if (!this.currentMedia) return;
+        if (!this.wasPaused)
+            void this.currentMedia.play();
+        this.isScrubbing = false;
+    };
+
+    private handleInput = (): void => {
+        if (!this.currentMedia) return;
+        if (!this.isScrubbing) {
+            this.isScrubbing = true;
+            this.wasPaused = this.currentMedia.paused;
+            this.currentMedia.pause();
+        }
+        this.currentMedia.currentTime = this.currentMedia.duration * this.sliderElement.value;
     };
 
     private handleUpdate = (): void => {

@@ -110,6 +110,7 @@ export default class AudioManager {
         try {
             await instance.play();
         } catch (error) {
+            void this.updatePTTState();
             this.raiseSingleSoundUpdate();
             throw error;
         }
@@ -117,8 +118,8 @@ export default class AudioManager {
         console.log(`Added and playing instance of sound at ${sound.uuid}.`);
         this.playingSounds.push(instance);
         this._onPlaySound.raise(sound);
-        this.raiseSingleSoundUpdate();
         void this.updatePTTState();
+        this.raiseSingleSoundUpdate();
     }
 
     /** Stops all instances of the specified Sound. */
@@ -163,21 +164,21 @@ export default class AudioManager {
     }
 
     private raiseSingleSoundUpdate(): void {
-        if (!this.overlapSounds && this.playingSounds.length > 0) {
+        if (this.playingSounds.length == 1) {
             this._onSingleSoundChanged.raise(this.playingSounds[0]);
         } else {
             this._onSingleSoundChanged.raise(null);
         }
     }
 
-    private stopAllSoundsInternal(raiseSingleSoundUpdate: boolean): void {
+    private stopAllSoundsInternal(raiseUpdates: boolean): void {
         for (const playingSound of this.playingSounds) {
             const id = playingSound.sound.uuid;
-            this.stopSoundInternal(id, raiseSingleSoundUpdate);
+            this.stopSoundInternal(id, raiseUpdates);
         }
     }
 
-    private stopSoundInternal(uuid: string, raiseSingleSoundUpdate: boolean): void {
+    private stopSoundInternal(uuid: string, raiseUpdates: boolean): void {
         const instances = this.playingSounds.filter(x => x.sound.uuid == uuid);
         if (instances.length <= 0) return;
         const instancesCopy = [...instances];
@@ -188,7 +189,9 @@ export default class AudioManager {
             this._onStopSound.raise(uuid);
             console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
         }
-        void this.updatePTTState();
-        if (raiseSingleSoundUpdate) this.raiseSingleSoundUpdate();
+        if (raiseUpdates) {
+            void this.updatePTTState();
+            this.raiseSingleSoundUpdate();
+        }
     }
 }

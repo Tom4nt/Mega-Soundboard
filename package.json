@@ -39,8 +39,7 @@
         "productName": "Mega Soundboard",
         "icon": "out/res/icon.ico",
         "files": [
-            "out/**/*",
-            "build/**/*"
+            "out/**/*"
         ],
         "publish": {
             "provider": "github",
