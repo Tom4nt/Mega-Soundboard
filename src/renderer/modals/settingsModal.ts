@@ -8,6 +8,7 @@ export default class SettingsModal extends Modal {
     private randomSoundRecorder!: KeyRecorder;
     private pttRecorder!: KeyRecorder;
     private minimizeToTrayToggler!: Toggler;
+    private processKeysOnReleaseToggler!: Toggler;
 
     constructor() {
         super(false);
@@ -21,6 +22,7 @@ export default class SettingsModal extends Modal {
         this.pttRecorder = new KeyRecorder();
         this.soundsLocationFileSelector = new FileSelector("", "folder");
         this.minimizeToTrayToggler = new Toggler("Minimize to tray");
+        this.processKeysOnReleaseToggler = new Toggler("Process keybinds only on key release");
 
         void this.load();
 
@@ -34,6 +36,7 @@ export default class SettingsModal extends Modal {
             Modal.getLabel("PTT keys to press"),
             this.pttRecorder,
             this.minimizeToTrayToggler,
+            this.processKeysOnReleaseToggler,
             Modal.getLabel("Sound location"),
             this.soundsLocationFileSelector
         ];
@@ -48,6 +51,7 @@ export default class SettingsModal extends Modal {
         this.pttRecorder.keys = settings.pttKeys;
         this.minimizeToTrayToggler.isOn = settings.minToTray;
         this.soundsLocationFileSelector.value = settings.soundsLocation ?? await window.actions.getDefaultMovePath();
+        this.processKeysOnReleaseToggler.isOn = settings.processKeysOnRelease;
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
@@ -81,6 +85,7 @@ export default class SettingsModal extends Modal {
             minToTray: this.minimizeToTrayToggler.isOn,
             pttKeys: this.pttRecorder.keys,
             randomSoundKeys: this.randomSoundRecorder.keys,
+            processKeysOnRelease: this.processKeysOnReleaseToggler.isOn,
         });
         this.close();
     }

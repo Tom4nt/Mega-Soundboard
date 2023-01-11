@@ -21,7 +21,7 @@ export default class MS {
     private currentSoundboardWatcher: FolderWatcher | null = null;
 
     static readonly defaultSoundsPath = path.join(app.getPath("appData"), "MegaSoundboard/Sounds");
-    static readonly latestWithLog = 3; // Increments on every version that should display the changelog.
+    static readonly latestWithLog = 4; // Increments on every version that should display the changelog.
 
     private static _instance?: MS;
     public static get instance(): MS {

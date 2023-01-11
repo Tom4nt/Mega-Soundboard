@@ -18,5 +18,6 @@ export default class Settings {
         public soundsLocation: string | null = null,
         public pttKeys: number[] = [],
         public randomSoundKeys: number[] = [],
+        public processKeysOnRelease = false,
     ) { }
 }

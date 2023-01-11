@@ -172,7 +172,8 @@ export default class AudioManager {
     }
 
     private stopAllSoundsInternal(raiseUpdates: boolean): void {
-        for (const playingSound of this.playingSounds) {
+        const playingSoundsCopy = [...this.playingSounds];
+        for (const playingSound of playingSoundsCopy) {
             const id = playingSound.sound.uuid;
             this.stopSoundInternal(id, raiseUpdates);
         }

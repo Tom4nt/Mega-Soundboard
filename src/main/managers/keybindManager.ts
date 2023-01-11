@@ -6,6 +6,7 @@ import EventSender from "../eventSender";
 
 export default class KeybindManager {
     raiseExternal = true;
+    processKeysOnRelease = true;
 
     get onKeybindPressed(): ExposedEvent<number[]> { return this._onKeybindPressed.expose(); }
     private _onKeybindPressed = new Event<number[]>();
@@ -13,15 +14,28 @@ export default class KeybindManager {
     private currentCombination: number[] = [];
     private sessions = new Map<string, KeyRecordingSession>();
     private downKeys = new Map<string, number[]>();
+    /** Indicates whether a keybind was processed when a key was relased to avoid processing on the next key release. */
+    private processedKeybindOnRelease = true;
 
     constructor() {
         uIOhook.on("keydown", e => {
-            if (!this.currentCombination.includes(e.keycode))
+            if (!this.currentCombination.includes(e.keycode)) {
                 this.currentCombination.push(e.keycode);
-            this.updateRecordingSessions(true);
-            this.sendKeybindPressed();
+            } else {
+                return;
+            }
+            if (!this.processKeysOnRelease) {
+                this.updateRecordingSessions();
+                this.sendKeybindPressed();
+            }
+            this.processedKeybindOnRelease = false;
         });
         uIOhook.on("keyup", e => {
+            if (this.processKeysOnRelease && !this.processedKeybindOnRelease) {
+                this.updateRecordingSessions();
+                this.sendKeybindPressed();
+                this.processedKeybindOnRelease = true;
+            }
             const index = this.currentCombination.indexOf(e.keycode);
             if (index >= 0) this.currentCombination.splice(index, 1);
         });
@@ -63,9 +77,9 @@ export default class KeybindManager {
         }
     }
 
-    private updateRecordingSessions(pressed: boolean): void {
+    private updateRecordingSessions(): void {
         for (const session of this.sessions.values()) {
-            session.update(this.currentCombination, pressed);
+            session.update(this.currentCombination);
             EventSender.send("onKeyRecordingProgress", {
                 combination: session.combination,
                 uuid: session.uuid

@@ -144,6 +144,8 @@ export default class IPCHandler {
 
         this.handleAction("saveSettings", settings => {
             void MS.instance.settingsCache.save(settings);
+            if (settings.processKeysOnRelease != null)
+                MS.instance.keybindManager.processKeysOnRelease = settings.processKeysOnRelease;
         });
 
         this.handleAction("shouldShowChangelog", () => {

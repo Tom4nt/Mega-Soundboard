@@ -5,8 +5,7 @@ export default class KeyRecordingSession {
 
     constructor(readonly uuid: string) { }
 
-    public update(combination: number[], pressed: boolean): void {
-        if (!pressed) return;
+    public update(combination: number[]): void {
         this._combination = [...combination];
     }
 }
