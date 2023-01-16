@@ -38,6 +38,7 @@ export default class DataAccess {
 
     static async saveSettings(settings: Settings): Promise<void> {
         const json = JSON.stringify(settings, undefined, 4);
+        await fs.mkdir(savePath, { recursive: true });
         await fs.writeFile(settingsPath, json);
         console.log("Saved Settings.");
     }
@@ -45,6 +46,7 @@ export default class DataAccess {
     static async saveSoundboards(soundboards: Soundboard[]): Promise<void> {
         const obj = { soundboards: soundboards.map(x => Soundboard.toJSON(x)) };
         const json = JSON.stringify(obj, undefined, 4);
+        await fs.mkdir(savePath, { recursive: true });
         await fs.writeFile(soundboardsPath, json);
         console.log("Saved Soundboards.");
     }
