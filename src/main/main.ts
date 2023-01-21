@@ -17,6 +17,8 @@ app.commandLine.appendSwitch("disable-features", "ColorCorrectRendering");
 app.commandLine.appendSwitch("disable-color-correct-rendering");
 app.commandLine.appendSwitch("disable-features", "HardwareMediaKeyHandling");
 
+let windowManager: WindowManager | null = null;
+
 // Prevent other instances
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -24,8 +26,8 @@ if (!gotLock) {
 } else {
     app.on("second-instance", (_e, args) => {
         console.log(args[args.length - 1].toString());
-        MS.instance.windowManager.mainWindow.show();
-        MS.instance.windowManager.mainWindow.focus();
+        windowManager?.mainWindow.show();
+        windowManager?.mainWindow.focus();
     });
 }
 
@@ -47,20 +49,20 @@ app.on("ready", function () {
 });
 
 async function init(): Promise<void> {
-    const winManager = new WindowManager();
-    await winManager.showLoadingWindow();
+    windowManager = new WindowManager();
+    await windowManager.showLoadingWindow();
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
     const s = settingsCache.settings;
     const keybindManager = new KeybindManager();
     keybindManager.raiseExternal = s.enableKeybinds;
-    const trayManager = TrayManager.createTray(winManager.mainWindow, s.enableKeybinds, s.overlapSounds);
+    const trayManager = TrayManager.createTray(windowManager.mainWindow, s.enableKeybinds, s.overlapSounds);
 
-    new MS(winManager, trayManager, soundboardsCache, settingsCache, keybindManager);
+    new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
     await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);
 
-    winManager.loadingWindow.close();
-    await winManager.showMainWindow(() => new InitialContent(
+    windowManager.loadingWindow.close();
+    await windowManager.showMainWindow(() => new InitialContent(
         settingsCache.settings,
         soundboardsCache.soundboards,
         settingsCache.shouldShowChangelog()

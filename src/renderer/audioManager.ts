@@ -12,7 +12,7 @@ export default class AudioManager {
 
     private mainDevice: string;
     private mainDeviceVolume: number;
-    private secondaryDevice: string | null;
+    private secondaryDevice: string;
     private secondaryDeviceVolume: number;
     private stopSoundsKeys: number[];
     private currentKeyHoldHandle: string | null = null;
@@ -76,7 +76,7 @@ export default class AudioManager {
         const devices: IDevice[] = [
             { id: settings.mainDevice, volume: settings.mainDeviceVolume }
         ];
-        if (settings.secondaryDevice && settings.secondaryDeviceVolume) {
+        if (settings.secondaryDevice) {
             devices.push({ id: settings.secondaryDevice, volume: settings.secondaryDeviceVolume });
         }
         return devices;

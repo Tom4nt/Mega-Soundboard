@@ -218,7 +218,7 @@ function addElementListeners(): void {
 }
 
 function loadDevices(devices: MediaDeviceInfo[]): void {
-    secondaryDeviceDropdown.addItem(new DropdownDeviceItem("None", null));
+    secondaryDeviceDropdown.addItem(new DropdownDeviceItem("None", ""));
     for (const device of devices) {
         if (device.deviceId === "default") {
             mainDeviceDropdown.addItem(new DropdownDeviceItem("Default", "default"));

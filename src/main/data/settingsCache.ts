@@ -14,7 +14,7 @@ export default class SettingsCache {
     }
 
     async setSecondaryDevice(id?: string | null, volume?: number): Promise<void> {
-        if (id !== undefined) this.settings.secondaryDevice = id;
+        if (id !== undefined) this.settings.secondaryDevice = id ?? "";
         if (volume !== undefined) this.settings.secondaryDeviceVolume = volume;
         EventSender.send("onSettingsChanged", this.settings);
         await DataAccess.saveSettings(this.settings);

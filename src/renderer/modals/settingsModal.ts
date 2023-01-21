@@ -50,7 +50,8 @@ export default class SettingsModal extends Modal {
         this.randomSoundRecorder.keys = settings.randomSoundKeys;
         this.pttRecorder.keys = settings.pttKeys;
         this.minimizeToTrayToggler.isOn = settings.minToTray;
-        this.soundsLocationFileSelector.value = settings.soundsLocation ?? await window.actions.getDefaultMovePath();
+        this.soundsLocationFileSelector.value =
+            settings.soundsLocation ? settings.soundsLocation : await window.actions.getDefaultMovePath();
         this.processKeysOnReleaseToggler.isOn = settings.processKeysOnRelease;
     }
 
@@ -76,7 +77,7 @@ export default class SettingsModal extends Modal {
 
     private async save(): Promise<void> {
         const soundsPath = await window.actions.parsePath(this.soundsLocationFileSelector.value);
-        if (! await this.validate(soundsPath)) return;
+        if (! await this.validate(soundsPath) || soundsPath === null) return;
 
         window.actions.saveSettings({
             enableKeybindsKeys: this.keybindsStateRecorder.keys,

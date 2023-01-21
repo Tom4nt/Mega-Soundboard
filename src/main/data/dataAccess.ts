@@ -21,16 +21,17 @@ export default class DataAccess {
     }
 
     static async getSettingsFromSaveFile(): Promise<Settings> {
-        const settings = new Settings();
+        let settings = new Settings();
 
         const hasAcess = await Utils.isPathAccessible(settingsPath);
         if (hasAcess) {
             try {
                 const JSONtext = await fs.readFile(settingsPath, "utf-8");
-                const jsonData = JSON.parse(JSONtext) as Map<string, unknown>;
-                Object.assign(settings, jsonData);
+                const jsonObj = JSON.parse(JSONtext) as Map<string, unknown>;
+                const jsonMap = Utils.objectToMap(jsonObj);
+                settings = DataAccess.getSettings(jsonMap);
             } catch (error) {
-                console.error("Settings could not be loaded.");
+                console.error(error);
             }
         }
         return settings;
@@ -137,5 +138,17 @@ export default class DataAccess {
         if (keysRes) keys = data.get("keys") as number[];
 
         return new Sound(randomUUID(), name, path, volume, keys);
+    }
+
+    private static getSettings(data: Map<string, unknown>): Settings {
+        const settings = new Settings();
+        for (const iterator of Object.keys(new Settings()) as (keyof Settings)[]) {
+            const val = data.get(iterator);
+            const defaultType = typeof settings[iterator];
+            if (typeof val === defaultType && (Array.isArray(settings[iterator]) == Array.isArray(val))) {
+                settings[iterator] = val as never;
+            }
+        }
+        return settings;
     }
 }
