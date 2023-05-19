@@ -1,117 +1,127 @@
+import { AudioInstance } from "../models";
 import Utils from "../util/utils";
 import IconButton from "./iconButton";
 import Slider from "./slider";
 
 export default class Seekbar extends HTMLElement {
-    private didConnect = false;
-    private wasPaused = false;
-    private isScrubbing = false;
-    private sliderElement: Slider;
-    private buttonElement: IconButton;
-    private timeElement: HTMLSpanElement;
+	private didConnect = false;
+	private wasPaused = false;
+	private isScrubbing = false;
+	private sliderElement: Slider;
+	private buttonElement: IconButton;
+	private timeElement: HTMLSpanElement;
 
-    private _currentMedia: HTMLMediaElement | null = null;
-    get currentMedia(): HTMLMediaElement | null { return this._currentMedia; }
-    set currentMedia(value: HTMLMediaElement | null) {
-        if (this._currentMedia) this.removeMediaListeners(this._currentMedia);
-        this.isScrubbing = false;
-        this._currentMedia = value;
-        if (value) this.addMediaListeners(value);
-        this.setVisibility(value != null);
-        this.update();
-    }
+	private _currentInstance: AudioInstance | null = null;
+	get currentInstance(): AudioInstance | null {
+		return this._currentInstance;
+	}
+	set currentInstance(value: AudioInstance | null) {
+		if (this._currentInstance) {
+			this.removeInstanceListeners(this._currentInstance);
+		}
+		this.isScrubbing = false;
+		this._currentInstance = value;
+		if (value) this.addInstanceListeners(value);
+		this.setVisibility(value != null);
+		this.update();
+	}
 
-    constructor() {
-        super();
-        this.sliderElement = new Slider("");
-        this.buttonElement = new IconButton();
-        this.timeElement = document.createElement("span");
-    }
+	constructor() {
+		super();
+		this.sliderElement = new Slider("");
+		this.buttonElement = new IconButton();
+		this.timeElement = document.createElement("span");
+	}
 
-    protected connectedCallback(): void {
-        if (this.didConnect) return;
+	protected connectedCallback(): void {
+		if (this.didConnect) return;
 
-        this.buttonElement.innerHTML = "play";
-        this.buttonElement.addEventListener("click", this.handlePlayPauseClick);
+		this.buttonElement.innerHTML = "play";
+		this.buttonElement.addEventListener("click", this.handlePlayPauseClick);
 
-        this.timeElement.innerHTML = "00:00";
+		this.timeElement.innerHTML = "00:00";
 
-        this.sliderElement.max = 1;
-        this.sliderElement.step = null;
-        this.sliderElement.addEventListener("change", this.handleChange);
-        this.sliderElement.addEventListener("input", this.handleInput);
+		this.sliderElement.max = 1;
+		this.sliderElement.step = null;
+		this.sliderElement.addEventListener("change", this.handleChange);
+		this.sliderElement.addEventListener("input", this.handleInput);
 
-        this.append(this.buttonElement, this.timeElement, this.sliderElement);
-        this.didConnect = true;
-    }
+		this.append(this.buttonElement, this.timeElement, this.sliderElement);
+		this.didConnect = true;
+	}
 
-    private addMediaListeners(media: HTMLMediaElement): void {
-        media.addEventListener("timeupdate", this.handleUpdate);
-        media.addEventListener("play", this.handlePlay);
-        media.addEventListener("pause", this.handlePause);
-    }
+	private addInstanceListeners(instance: AudioInstance): void {
+		instance.onTimeUpdate.addHandler(this.handleUpdate);
+		instance.onPlay.addHandler(this.handlePlay);
+		instance.onPause.addHandler(this.handlePause);
+	}
 
-    private removeMediaListeners(media: HTMLMediaElement): void {
-        media.removeEventListener("timeupdate", this.handleUpdate);
-        media.removeEventListener("play", this.handlePlay);
-        media.removeEventListener("pause", this.handlePause);
-    }
+	private removeInstanceListeners(instance: AudioInstance): void {
+		instance.onTimeUpdate.removeHandler(this.handleUpdate);
+		instance.onPlay.removeHandler(this.handlePlay);
+		instance.onPause.removeHandler(this.handlePause);
+	}
 
-    private setVisibility(value: boolean): void {
-        if (value)
-            this.classList.add("visible");
-        else
-            this.classList.remove("visible");
-    }
+	private setVisibility(value: boolean): void {
+		if (value) {
+			this.classList.add("visible");
+		} else {
+			this.classList.remove("visible");
+		}
+	}
 
-    private update(): void {
-        if (!this.currentMedia) return;
-        this.buttonElement.innerHTML = this.currentMedia.paused ? "play" : "pause";
-        this.updateTime();
-    }
+	private update(): void {
+		if (!this.currentInstance) return;
+		this.buttonElement.innerHTML = this.currentInstance.isPaused
+			? "play"
+			: "pause";
+		this.updateTime();
+	}
 
-    private updateTime(): void {
-        const m = this.currentMedia;
-        if (!m) return;
-        this.sliderElement.value = m.currentTime / m.duration;
-        this.timeElement.innerHTML = Utils.getTimeString(m.currentTime);
-    }
+	private updateTime(): void {
+		const m = this.currentInstance;
+		if (!m) return;
+		this.sliderElement.value = m.currentTime / m.duration;
+		this.timeElement.innerHTML = Utils.getTimeString(m.currentTime);
+	}
 
-    // Handlers
+	// Handlers
 
-    private handlePlayPauseClick = (): void => {
-        if (!this.currentMedia) return;
-        const m = this.currentMedia;
-        if (m.paused) void m.play();
-        else m.pause();
-    };
+	private handlePlayPauseClick = (): void => {
+		if (!this.currentInstance) return;
+		const m = this.currentInstance;
+		if (m.isPaused) void m.play();
+		else m.pause();
+	};
 
-    private handleChange = (): void => {
-        if (!this.currentMedia) return;
-        if (!this.wasPaused)
-            void this.currentMedia.play();
-        this.isScrubbing = false;
-    };
+	private handleChange = (): void => {
+		if (!this.currentInstance) return;
+		if (!this.wasPaused) {
+			void this.currentInstance.play();
+		}
+		this.isScrubbing = false;
+	};
 
-    private handleInput = (): void => {
-        if (!this.currentMedia) return;
-        if (!this.isScrubbing) {
-            this.isScrubbing = true;
-            this.wasPaused = this.currentMedia.paused;
-            this.currentMedia.pause();
-        }
-        this.currentMedia.currentTime = this.currentMedia.duration * this.sliderElement.value;
-    };
+	private handleInput = (): void => {
+		if (!this.currentInstance) return;
+		if (!this.isScrubbing) {
+			this.isScrubbing = true;
+			this.wasPaused = this.currentInstance.isPaused;
+			this.currentInstance.pause();
+		}
+		this.currentInstance.currentTime =
+			this.currentInstance.duration * this.sliderElement.value;
+	};
 
-    private handleUpdate = (): void => {
-        this.updateTime();
-    };
+	private handleUpdate = (): void => {
+		this.updateTime();
+	};
 
-    private handlePlay = (): void => {
-        this.buttonElement.innerHTML = "pause";
-    };
+	private handlePlay = (): void => {
+		this.buttonElement.innerHTML = "pause";
+	};
 
-    private handlePause = (): void => {
-        this.buttonElement.innerHTML = "play";
-    };
+	private handlePause = (): void => {
+		this.buttonElement.innerHTML = "play";
+	};
 }

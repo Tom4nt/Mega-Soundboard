@@ -89,7 +89,7 @@ async function init(): Promise<void> {
     soundboardList.selectSoundboard(sb);
 
     MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
-        seekbar.currentMedia = audioInst?.audioElements[0] ?? null;
+        seekbar.currentInstance = audioInst;
     });
 }
 

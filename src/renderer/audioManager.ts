@@ -99,19 +99,19 @@ export default class AudioManager {
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
         const instance = await AudioInstance.create(sound, devices, sb.volume / 100);
-        instance.onStop.addHandler(() => {
+        instance.onEnd.addHandler(() => {
             console.log(`Instance of ${sound.name} finished playing.`);
             this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);
             this._onStopSound.raise(sound.uuid);
             void this.updatePTTState();
-            this.raiseSingleSoundUpdate();
+            this.raiseSingleSoundCheckUpdate();
         });
 
         try {
             await instance.play();
         } catch (error) {
             void this.updatePTTState();
-            this.raiseSingleSoundUpdate();
+            this.raiseSingleSoundCheckUpdate();
             throw error;
         }
 
@@ -119,7 +119,7 @@ export default class AudioManager {
         this.playingSounds.push(instance);
         this._onPlaySound.raise(sound);
         void this.updatePTTState();
-        this.raiseSingleSoundUpdate();
+        this.raiseSingleSoundCheckUpdate();
     }
 
     /** Stops all instances of the specified Sound. */
@@ -131,6 +131,8 @@ export default class AudioManager {
         for (const soundId of uuids) {
             this.stopSoundInternal(soundId, false);
         }
+        void this.updatePTTState();
+        this.raiseSingleSoundCheckUpdate();
     }
 
     stopAllSounds(): void {
@@ -163,7 +165,7 @@ export default class AudioManager {
         }
     }
 
-    private raiseSingleSoundUpdate(): void {
+    private raiseSingleSoundCheckUpdate(): void {
         if (this.playingSounds.length == 1) {
             this._onSingleSoundChanged.raise(this.playingSounds[0]);
         } else {
@@ -185,14 +187,14 @@ export default class AudioManager {
         const instancesCopy = [...instances];
 
         for (const instance of instancesCopy) {
-            instance.pause();
+            instance.stop();
             this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);
             this._onStopSound.raise(uuid);
             console.log(`Stopped an instance of the Sound with UUID ${uuid}.`);
         }
         if (raiseUpdates) {
             void this.updatePTTState();
-            this.raiseSingleSoundUpdate();
+            this.raiseSingleSoundCheckUpdate();
         }
     }
 }

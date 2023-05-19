@@ -4,7 +4,17 @@ import { Sound } from "../../shared/models";
 
 /** Represents a single sound playing on multiple devices. */
 export default class AudioInstance {
-    public get onStop(): ExposedEvent<void> { return this.stopEvent.expose(); }
+    public get onEnd(): ExposedEvent<void> { return this.stopEvent.expose(); }
+    public get onPause(): ExposedEvent<void> { return this.pauseEvent.expose(); }
+    public get onPlay(): ExposedEvent<void> { return this.playEvent.expose(); }
+    public get onTimeUpdate(): ExposedEvent<void> { return this.timeUpdateEvent.expose(); }
+
+    public get currentTime(): number { return this.getAny()?.currentTime ?? 0; }
+    public set currentTime(value: number) { this.audioElements.forEach(e => e.currentTime = value); }
+
+    public get isPaused(): boolean { return this.getAny()?.paused ?? true; }
+
+    public readonly duration: number;
 
     public static async create(
         sound: Sound,
@@ -14,6 +24,10 @@ export default class AudioInstance {
         const sinkIdPromises: Promise<void>[] = [];
         const audioElements: HTMLAudioElement[] = [];
         const stopEvent = new Event<void>();
+        const pauseEvent = new Event<void>();
+        const playEvent = new Event<void>();
+        const timeUpdateEvent = new Event<void>();
+
         for (const device of devices) {
             const audio = new Audio(sound.path);
             audio.addEventListener("ended", () => {
@@ -28,8 +42,15 @@ export default class AudioInstance {
             sinkIdPromises.push(p);
             audioElements.push(audio);
         }
+
+        audioElements[0].addEventListener("pause", () => pauseEvent.raise());
+        audioElements[0].addEventListener("play", () => playEvent.raise());
+        audioElements[0].addEventListener("timeupdate", () => timeUpdateEvent.raise());
+
         await Promise.all(sinkIdPromises);
-        return new AudioInstance(sound, audioElements, volumeMult, stopEvent);
+        return new AudioInstance(
+            sound, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
+        );
     }
 
     private constructor(
@@ -37,10 +58,19 @@ export default class AudioInstance {
         public readonly audioElements: HTMLAudioElement[],
         public readonly volumeMult: number,
         private readonly stopEvent: Event<void>,
-    ) { }
+        private readonly pauseEvent: Event<void>,
+        private readonly playEvent: Event<void>,
+        private readonly timeUpdateEvent: Event<void>,
+    ) {
+        this.duration = audioElements.length > 0 ? audioElements[0].duration : 0;
+    }
 
     pause(): void {
         this.audioElements.forEach(x => x.pause());
+    }
+
+    stop(): void {
+        this.pause();
         this.audioElements.length = 0;
     }
 
@@ -51,5 +81,10 @@ export default class AudioInstance {
             playTasks.push(t);
         }
         await Promise.all(playTasks);
+    }
+
+    // Audio elements are always synced so we can get info from any of them.
+    private getAny(): HTMLAudioElement | null {
+        return this.audioElements.length > 0 ? this.audioElements[0] : null;
     }
 }
