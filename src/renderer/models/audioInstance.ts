@@ -21,15 +21,28 @@ export default class AudioInstance {
         devices: IDevice[],
         volumeMult: number,
     ): Promise<AudioInstance> {
-        const sinkIdPromises: Promise<void>[] = [];
         const audioElements: HTMLAudioElement[] = [];
         const stopEvent = new Event<void>();
         const pauseEvent = new Event<void>();
         const playEvent = new Event<void>();
         const timeUpdateEvent = new Event<void>();
 
+        let isFirst = true;
         for (const device of devices) {
             const audio = new Audio(sound.path);
+
+            try {
+                await audio.setSinkId(device.id);
+            } catch (error) {
+                if (isFirst) { // We must play to at least one device.
+                    // If setSinkId fails, it is set to the default device.
+                    console.log(`Invalid sinkId: '${device.id}'. Using default device.`);
+                } else {
+                    console.log(`Ignoring invalid sinkId '${device.id}'.`);
+                    continue;
+                }
+            }
+
             audio.addEventListener("ended", () => {
                 audioElements.splice(audioElements.indexOf(audio), 1);
                 if (audioElements.length <= 0) {
@@ -38,16 +51,23 @@ export default class AudioInstance {
             });
 
             audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100) * (volumeMult), 2);
-            const p = audio.setSinkId(device.id).catch(() => { console.error(`Error setting SinkId for ${device.id}.`); });
-            sinkIdPromises.push(p);
             audioElements.push(audio);
+            isFirst = false;
+        }
+
+        // Wait for metadata to load only if it's not ready. (otherwise loadedmetadata would never fire)
+        if (audioElements[0].readyState <= 0) {
+            await new Promise<void>((resolve) => {
+                audioElements[0].addEventListener("loadedmetadata", () => {
+                    resolve();
+                });
+            });
         }
 
         audioElements[0].addEventListener("pause", () => pauseEvent.raise());
         audioElements[0].addEventListener("play", () => playEvent.raise());
         audioElements[0].addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
-        await Promise.all(sinkIdPromises);
         return new AudioInstance(
             sound, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
         );

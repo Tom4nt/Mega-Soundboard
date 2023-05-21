@@ -100,11 +100,19 @@ function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void 
 }
 
 function selectDevices(settings: Settings): void {
-    mainDeviceDropdown.selectIfFound(item =>
+    const foundMain = mainDeviceDropdown.selectIfFound(item =>
         item instanceof DropdownDeviceItem && item.device === settings.mainDevice);
 
-    secondaryDeviceDropdown.selectIfFound(item =>
+    // If main device not found, load Default.
+    if (!foundMain) mainDeviceDropdown.selectIfFound(item =>
+        item instanceof DropdownDeviceItem && item.device == "default");
+
+    const foundSecondary = secondaryDeviceDropdown.selectIfFound(item =>
         item instanceof DropdownDeviceItem && item.device === settings.secondaryDevice);
+
+    // If secondary device not found, load None.
+    if (!foundSecondary) secondaryDeviceDropdown.selectIfFound(item =>
+        item instanceof DropdownDeviceItem && item.device === "");
 }
 
 function setVolumes(settings: Settings): void {
