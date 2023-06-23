@@ -37,7 +37,7 @@ export default class FolderWatcher {
     }
 
     private async handleChange(info: fs.FileChangeInfo<string>): Promise<void> {
-        if (info.eventType != "rename") return;
+        if (info.eventType != "rename" || !info.filename) return;
         const path = p.join(this.folder, info.filename);
         const exists = await Utils.isPathAccessible(path);
 

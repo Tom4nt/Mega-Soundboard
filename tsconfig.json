@@ -9,6 +9,7 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
     // "paths": {
     //   // "@node/*": [ "node_modules/*" ],
     //   "app/*": [ "src/app/*" ],
