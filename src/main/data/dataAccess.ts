@@ -3,6 +3,7 @@ import * as p from "path";
 import Utils from "../utils/utils";
 import { Settings, Sound, Soundboard } from "../../shared/models";
 import { promises as fs, constants as fsc } from "fs";
+import * as fsSync from "fs";
 import { randomUUID } from "crypto";
 
 const savePath = p.join(app.getPath("appData"), "\\MegaSoundboard");
@@ -41,6 +42,13 @@ export default class DataAccess {
         const json = JSON.stringify(settings, undefined, 4);
         await fs.mkdir(savePath, { recursive: true });
         await fs.writeFile(settingsPath, json);
+        console.log("Saved Settings.");
+    }
+
+    static saveSettingsSync(settings: Settings): void {
+        const json = JSON.stringify(settings, undefined, 4);
+        fsSync.mkdirSync(savePath, { recursive: true });
+        fsSync.writeFileSync(settingsPath, json);
         console.log("Saved Settings.");
     }
 

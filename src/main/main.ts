@@ -69,17 +69,7 @@ async function init(): Promise<void> {
     ));
 }
 
-let canQuit = false;
-async function exit(): Promise<void> {
+app.on("before-quit", () => {
     KeybindManager.stopUIOhook();
-    await MS.instance.settingsCache.save();
-    canQuit = true;
-    app.quit();
-}
-
-app.on("before-quit", e => {
-    if (!canQuit) {
-        e.preventDefault();
-        void exit();
-    }
+    MS.instance.settingsCache.saveSync();
 });
