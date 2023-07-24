@@ -290,6 +290,12 @@ a {
     left: 16px;
     right: 16px;
     gap: 16px;
+    flex-direction: row-reverse;
+    pointer-events: none;
+}
+
+#right-footer>* {
+    pointer-events: initial;
 }
 
 #panel-right {
@@ -394,6 +400,5 @@ a {
         box-shadow: none
     }
 }
-
 
 /* #endregion */

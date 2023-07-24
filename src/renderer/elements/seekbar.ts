@@ -47,6 +47,7 @@ export default class Seekbar extends HTMLElement {
 		this.sliderElement.addEventListener("input", this.handleInput);
 
 		this.append(this.buttonElement, this.timeElement, this.sliderElement);
+		this.style.display = "none";
 		this.didConnect = true;
 	}
 
@@ -64,9 +65,14 @@ export default class Seekbar extends HTMLElement {
 
 	private setVisibility(value: boolean): void {
 		if (value) {
+			this.style.display = "";
+			void this.offsetWidth; // Trigger reflow
 			this.classList.add("visible");
 		} else {
 			this.classList.remove("visible");
+			setTimeout(() => {
+				if (!this.currentInstance) this.style.display = "none";
+			}, 200);
 		}
 	}
 
