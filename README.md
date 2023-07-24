@@ -10,7 +10,7 @@
     ·
     <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=bug&template=bug_report.md&title=">Report a Bug</a>
     ·
-    <a href="https://github.com/Tom4nt/Mega-Soundboard/discussions?discussions_q=category%3AIdeas">Request Feature</a>
+    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=New+Feature&projects=&template=feature_request.md&title=">Request Feature</a>
   </p>
 </p>
 
