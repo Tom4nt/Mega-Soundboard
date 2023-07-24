@@ -8,9 +8,9 @@
     <br/>
     <a href="https://github.com/Tom4nt/Mega-Soundboard/releases">Download</a>
     ·
-    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=bug&template=bug_report.md&title=">Report a Bug</a>
+    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=BUG&projects=&template=bug_report.md&title=">Report a Bug</a>
     ·
-    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=New+Feature&projects=&template=feature_request.md&title=">Request Feature</a>
+    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=New+Feature&projects=&template=feature-request.md&title=">Request Feature</a>
   </p>
 </p>
 
