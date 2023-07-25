@@ -149,6 +149,12 @@ function getElementReferences(): void {
 }
 
 function addElementListeners(): void {
+    addEventListener("keyup", (ev) => {
+        if (ev.ctrlKey && ev.key == "+") window.actions.zoom("in");
+        else if (ev.ctrlKey && ev.key == "-") window.actions.zoom("out");
+        else if (ev.ctrlKey && ev.key == "0") window.actions.zoom("reset");
+    });
+
     msbutton.addEventListener("click", () => {
         new MSModal().open();
     });
@@ -261,23 +267,6 @@ async function browseAndAddSounds(): Promise<void> {
 //#endregion
 
 //#region Main Events
-
-// window.events.onUpdateAvailable.addHandler(() => {
-//     // updateButton.updateReady = false;
-//     updateButton.style.display = "inline-block";
-//     updateButton.classList.add("downloading");
-//     updateButton.classList.remove("update");
-//     if (updateButton.firstElementChild?.firstElementChild) {
-//         updateButton.firstElementChild.firstElementChild.innerHTML = "Downloading Update";
-//         if (updateButton.firstElementChild instanceof HTMLElement)
-//             updateButton.firstElementChild.style.width = "0%";
-//     }
-// });
-
-// window.events.onUpdateProgress.addHandler(progress => {
-//     if (updateButton.firstElementChild instanceof HTMLElement)
-//         updateButton.firstElementChild.style.width = `${progress}%`;
-// });
 
 GlobalEvents.addHandler("onUpdateReady", () => {
     updateButton.style.display = "inherit";

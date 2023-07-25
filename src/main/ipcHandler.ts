@@ -38,6 +38,17 @@ export default class IPCHandler {
             app.quit();
         });
 
+        this.handleAction("zoom", (action) => {
+            const webContents = MS.instance.windowManager.mainWindow.webContents;
+            if (action == "reset") webContents.zoomFactor = 1;
+            else {
+                let targetZoom = webContents.zoomFactor + (action == "in" ? 0.1 : -0.1);
+                if (targetZoom > 5) targetZoom = 5;
+                if (targetZoom < 0.25) targetZoom = 0.25;
+                webContents.zoomFactor = targetZoom;
+            }
+        });
+
 
         this.handleAction("addSounds", (sounds, soundboardId, move, startIndex) => {
             void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, move, startIndex);

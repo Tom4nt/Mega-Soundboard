@@ -5,6 +5,7 @@ class ConcreteActions {
     minimize: (() => void) | null = null;
     toggleMaximizedState: (() => void) | null = null;
     close: (() => void) | null = null;
+    zoom: ((action: "in" | "out" | "reset") => void) | null = null;
 
     notifyContentLoaded: (() => void) | null = null;
 
