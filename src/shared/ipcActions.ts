@@ -5,7 +5,11 @@ class ConcreteActions {
     minimize: (() => void) | null = null;
     toggleMaximizedState: (() => void) | null = null;
     close: (() => void) | null = null;
-    zoom: ((action: "in" | "out" | "reset") => void) | null = null;
+
+    zoomIncrement: ((value: number) => void) | null = null;
+    zoomSet: ((val: number) => void) | null = null;
+    zoomGet: (() => Promise<number>) | null = null;
+    zoomReset: (() => void) | null = null;
 
     notifyContentLoaded: (() => void) | null = null;
 

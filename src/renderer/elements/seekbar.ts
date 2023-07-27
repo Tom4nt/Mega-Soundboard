@@ -28,7 +28,7 @@ export default class Seekbar extends HTMLElement {
 
 	constructor() {
 		super();
-		this.sliderElement = new Slider("");
+		this.sliderElement = new Slider(null);
 		this.buttonElement = new IconButton();
 		this.timeElement = document.createElement("span");
 	}

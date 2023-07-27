@@ -14,6 +14,13 @@ export default class Tooltip extends HTMLElement {
         this.update();
     }
 
+    private _isEnabled = true;
+    get isEnabled(): boolean { return this._isEnabled; }
+    set isEnabled(val: boolean) {
+        this._isEnabled = val;
+        if (!val) this.hide();
+    }
+
     private _side: Side;
     get side(): Side {
         return this._side;
@@ -52,6 +59,8 @@ export default class Tooltip extends HTMLElement {
     }
 
     show(rect: DOMRect): void {
+        if (!this.isEnabled) return;
+
         this.isShown = true;
         const layer = document.getElementById("tooltip-layer") as HTMLDivElement;
         layer.append(this);
@@ -64,6 +73,7 @@ export default class Tooltip extends HTMLElement {
     }
 
     hide(): void {
+        if (!this.isShown) return;
         this.isShown = false;
         this.style.opacity = "0";
         this.style.transform = "scale(0.8)";

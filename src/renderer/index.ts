@@ -150,9 +150,9 @@ function getElementReferences(): void {
 
 function addElementListeners(): void {
     addEventListener("keyup", (ev) => {
-        if (ev.ctrlKey && ev.key == "+") window.actions.zoom("in");
-        else if (ev.ctrlKey && ev.key == "-") window.actions.zoom("out");
-        else if (ev.ctrlKey && ev.key == "0") window.actions.zoom("reset");
+        if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);
+        else if (ev.ctrlKey && ev.key == "-") window.actions.zoomIncrement(-0.1);
+        else if (ev.ctrlKey && ev.key == "0") window.actions.zoomReset();
     });
 
     msbutton.addEventListener("click", () => {

@@ -9,6 +9,8 @@ import SoundUtils from "./utils/soundUtils";
 import { randomUUID } from "crypto";
 import SharedUtils from "../shared/sharedUtils";
 import Utils from "./utils/utils";
+import ZoomUtils from "./utils/zoomUtils";
+import EventSender from "./eventSender";
 
 export default class IPCHandler {
     public static handleAction<T extends keyof Actions>(name: T, handler: Actions[T]): void {
@@ -38,15 +40,27 @@ export default class IPCHandler {
             app.quit();
         });
 
-        this.handleAction("zoom", (action) => {
-            const webContents = MS.instance.windowManager.mainWindow.webContents;
-            if (action == "reset") webContents.zoomFactor = 1;
-            else {
-                let targetZoom = webContents.zoomFactor + (action == "in" ? 0.1 : -0.1);
-                if (targetZoom > 5) targetZoom = 5;
-                if (targetZoom < 0.25) targetZoom = 0.25;
-                webContents.zoomFactor = targetZoom;
-            }
+
+        this.handleAction("zoomIncrement", (value) => {
+            const wc = MS.instance.windowManager.mainWindow.webContents;
+            ZoomUtils.incrementZoomFactor(wc, value);
+            EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
+        });
+
+        this.handleAction("zoomSet", (value) => {
+            const wc = MS.instance.windowManager.mainWindow.webContents;
+            ZoomUtils.setZoomFactor(wc, value);
+            EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
+        });
+
+        this.handleAction("zoomGet", async () => {
+            return MS.instance.windowManager.mainWindow.webContents.getZoomFactor();
+        });
+
+        this.handleAction("zoomReset", () => {
+            const wc = MS.instance.windowManager.mainWindow.webContents;
+            wc.setZoomFactor(1);
+            EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
         });
 
 

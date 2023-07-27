@@ -1,5 +1,6 @@
-import { KeyRecorder, Toggler, FileSelector } from "../elements";
+import { KeyRecorder, Toggler, FileSelector, Slider } from "../elements";
 import { Modal } from "../modals";
+import GlobalEvents from "../util/globalEvents";
 
 export default class SettingsModal extends Modal {
     private soundsLocationFileSelector!: FileSelector;
@@ -9,13 +10,14 @@ export default class SettingsModal extends Modal {
     private pttRecorder!: KeyRecorder;
     private minimizeToTrayToggler!: Toggler;
     private processKeysOnReleaseToggler!: Toggler;
+    private zoomSlider!: Slider;
 
     constructor() {
         super(false);
         this.modalTitle = "Settings";
     }
 
-    protected getContent(): HTMLElement[] {
+    protected override getContent(): HTMLElement[] {
         this.stopSoundsRecorder = new KeyRecorder();
         this.keybindsStateRecorder = new KeyRecorder();
         this.randomSoundRecorder = new KeyRecorder();
@@ -23,6 +25,7 @@ export default class SettingsModal extends Modal {
         this.soundsLocationFileSelector = new FileSelector("", "folder");
         this.minimizeToTrayToggler = new Toggler("Minimize to tray");
         this.processKeysOnReleaseToggler = new Toggler("Process keybinds only on key release");
+        this.zoomSlider = new Slider("", "&times;");
 
         void this.load();
 
@@ -38,7 +41,10 @@ export default class SettingsModal extends Modal {
             this.minimizeToTrayToggler,
             this.processKeysOnReleaseToggler,
             Modal.getLabel("Sound location"),
-            this.soundsLocationFileSelector
+            this.soundsLocationFileSelector,
+            Modal.getLabel("Zoom factor"),
+            this.zoomSlider,
+            SettingsModal.getZoomLabel(),
         ];
     }
 
@@ -53,6 +59,12 @@ export default class SettingsModal extends Modal {
         this.soundsLocationFileSelector.value =
             settings.soundsLocation ? settings.soundsLocation : await window.actions.getDefaultMovePath();
         this.processKeysOnReleaseToggler.isOn = settings.processKeysOnRelease;
+
+        this.zoomSlider.step = 0.1;
+        this.zoomSlider.min = 0.2;
+        this.zoomSlider.max = 2;
+        this.zoomSlider.value = await window.actions.zoomGet();
+        this.zoomSlider.onValueChange.addHandler(s => window.actions.zoomSet(s.value));
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
@@ -62,6 +74,20 @@ export default class SettingsModal extends Modal {
         ];
         return buttons;
     }
+
+    protected override connectedCallback(): void {
+        super.connectedCallback();
+        GlobalEvents.addHandler("onZoomFactorChanged", this.zoomFactorChangedHandler);
+    }
+
+    protected override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        GlobalEvents.removeHandler("onZoomFactorChanged", this.zoomFactorChangedHandler);
+    }
+
+    private zoomFactorChangedHandler = (factor: number): void => {
+        this.zoomSlider.value = factor;
+    };
 
     protected canCloseWithKey(): boolean {
         return !this.stopSoundsRecorder.isRecording && !this.keybindsStateRecorder.isRecording;
@@ -89,5 +115,16 @@ export default class SettingsModal extends Modal {
             processKeysOnRelease: this.processKeysOnReleaseToggler.isOn,
         });
         this.close();
+    }
+
+    private static getZoomLabel(): HTMLParagraphElement {
+        // I hate the inline HTML, but it will be fixed with the redesign.
+        const html = `
+            Use <span class='key'>CTRL</span> <span class='key'>+</span>/<span class='key'>-</span>
+            to zoom in/out. <span class='key'>CTRL</span> <span class='key'>0</span> to reset.
+        `;
+        const label = document.createElement("p");
+        label.innerHTML = html;
+        return label;
     }
 }

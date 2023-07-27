@@ -5,7 +5,6 @@ export default class Slider extends HTMLElement {
     private didConnect = false;
     private progressColor: string;
     private mainColor: string;
-    private labelText: string;
 
     private inputElement!: HTMLInputElement;
     private tooltip?: Tooltip;
@@ -35,14 +34,13 @@ export default class Slider extends HTMLElement {
     }
 
     private get textValue(): string {
-        return `${this.inputElement.value}%`;
+        return `${this.inputElement.value}${this.suffix}`;
     }
 
-    constructor(labelText: string) {
+    constructor(private labelText: string | null, private suffix = "%") {
         super();
         this.progressColor = "var(--color-white)";
         this.mainColor = "var(--color-darkL)";
-        this.labelText = labelText;
         this.inputElement = document.createElement("input");
         this.inputElement.min = "0";
         this.inputElement.max = "100";
@@ -52,11 +50,9 @@ export default class Slider extends HTMLElement {
         const labelAttr = this.getAttribute("label");
         if (!this.labelText && labelAttr) this.labelText = labelAttr;
 
-        if (this.labelText) {
-            this.tooltip = new Tooltip();
-            this.tooltip.attach(this);
-            this.tooltip.domRectGetter = (): DOMRect => this.getThumbDOMRect();
-        }
+        this.tooltip = new Tooltip();
+        this.tooltip.attach(this);
+        this.tooltip.domRectGetter = (): DOMRect => this.getThumbDOMRect();
 
         if (this.didConnect) return;
 
@@ -88,7 +84,7 @@ export default class Slider extends HTMLElement {
     }
 
     private updateSliderColor(): void {
-        const percentVal = (this.value / (this.max - this.min)) * 100;
+        const percentVal = ((this.value - this.min) / (this.max - this.min)) * 100;
         this.inputElement.style.background =
             `linear-gradient(to right, ${this.progressColor} 0%, ${this.progressColor} ${percentVal}%,
                  ${this.mainColor} ${percentVal}%, ${this.mainColor} 100%)`;
@@ -98,7 +94,7 @@ export default class Slider extends HTMLElement {
         if (!this.tooltip) return;
         if (this.labelText) this.tooltip.tooltipText = `${this.labelText} | ${this.textValue}`;
         else this.tooltip.tooltipText = this.textValue;
-
+        this.tooltip.isEnabled = this.labelText !== null;
         this.tooltip.notifyPositionUpdate();
     }
 
@@ -106,7 +102,7 @@ export default class Slider extends HTMLElement {
         const thisRect = this.getBoundingClientRect();
         const thumbW = 12;
         const w = this.inputElement.clientWidth - thumbW;
-        thisRect.x += (w * (this.value / 100)) - w / 2;
+        thisRect.x += (w * ((this.value - this.min) / (this.max - this.min))) - w / 2;
         return thisRect;
     }
 }
