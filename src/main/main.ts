@@ -49,10 +49,12 @@ app.on("ready", function () {
 });
 
 async function init(): Promise<void> {
-    windowManager = new WindowManager();
-    await windowManager.showLoadingWindow();
     const soundboardsCache = new SoundboardsCache(await DataAccess.getSoundboardsFromSaveFile());
     const settingsCache = new SettingsCache(await DataAccess.getSettingsFromSaveFile());
+
+    const settings = settingsCache.settings;
+    windowManager = new WindowManager(settings.windowSize, settings.windowPosition, settings.windowIsMaximized);
+    await windowManager.showLoadingWindow();
     const s = settingsCache.settings;
     const keybindManager = new KeybindManager();
     keybindManager.raiseExternal = s.enableKeybinds;

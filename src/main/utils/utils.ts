@@ -76,4 +76,9 @@ export default class Utils {
     static wait(seconds: number): Promise<void> {
         return new Promise<void>(p => setTimeout(() => p(), seconds * 1000));
     }
+
+    static isPointInsideRect(point: [number, number], rect: Electron.Rectangle): boolean {
+        return point[0] >= rect.x && point[0] <= rect.x + rect.width &&
+            point[1] >= rect.y && point[1] <= rect.y + rect.height;
+    }
 }

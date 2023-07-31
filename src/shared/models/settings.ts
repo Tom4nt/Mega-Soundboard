@@ -19,5 +19,8 @@ export default class Settings {
         public pttKeys: number[] = [],
         public randomSoundKeys: number[] = [],
         public processKeysOnRelease = false,
+        public windowSize: number[] = [],
+        public windowPosition: number[] = [],
+        public windowIsMaximized: boolean = false,
     ) { }
 }
