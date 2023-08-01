@@ -93,10 +93,18 @@ export default class SoundboardsCache {
     }
 
     async removeSoundboard(uuid: string): Promise<void> {
-        const index = this.soundboards.findIndex((s) => s.uuid === uuid);
+        const index = this.findSoundboardIndex(uuid);
         const soundboard = this.soundboards[index];
         this.soundboards.splice(index, 1);
         EventSender.send("onSoundboardRemoved", soundboard);
+        await DataAccess.saveSoundboards(this.soundboards);
+    }
+
+    async sortSoundboard(uuid: string): Promise<void> {
+        const index = this.findSoundboardIndex(uuid);
+        const soundboard = this.soundboards[index];
+        soundboard.sounds = soundboard.sounds.sort((a, b) => Sound.compare(a, b));
+        EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 

@@ -10,6 +10,12 @@ export default class Sound {
         public keys: number[]) {
     }
 
+    static compare(a: Sound, b: Sound): number {
+        if (a.name > b.name) return 1;
+        if (a.name < b.name) return -1;
+        return 0;
+    }
+
     static equals(from: Sound, to: Sound): boolean {
         return from.uuid == to.uuid;
     }

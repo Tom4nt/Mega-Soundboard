@@ -144,6 +144,10 @@ export default class IPCHandler {
             return Promise.resolve(index);
         });
 
+        this.handleAction("sortSoundboard", async soundboardId => {
+            await MS.instance.soundboardsCache.sortSoundboard(soundboardId);
+        });
+
 
         this.handleAction("flagChangelogViewed", () => {
             MS.instance.flagChangelogViewed();

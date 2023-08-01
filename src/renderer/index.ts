@@ -15,13 +15,14 @@ import GlobalEvents from "./util/globalEvents";
 let msbutton!: HTMLButtonElement;
 let soundboardList!: SoundboardList;
 let updateButton!: HTMLButtonElement;
+let addSoundboardButton!: HTMLButtonElement;
 //#endregion
 
 //#region Right
 let searchBox!: SearchBox;
 let soundList!: SoundList;
 let addSoundButton!: HTMLButtonElement;
-let addSoundboardButton!: HTMLButtonElement;
+let sortButton!: HTMLButtonElement;
 
 //#region Action Panel
 let deviceSettings!: HTMLDivElement;
@@ -124,11 +125,12 @@ function getElementReferences(): void {
     msbutton = document.getElementById("logo") as HTMLButtonElement;
     soundboardList = document.getElementById("soundboardlist") as SoundboardList;
     updateButton = document.getElementById("update-button") as HTMLButtonElement;
+    addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
 
     searchBox = document.getElementById("searchbox") as SearchBox;
     soundList = document.getElementById("soundlist") as SoundList;
     addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
-    addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
+    sortButton = document.getElementById("sort-button") as HTMLButtonElement;
 
     deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
     quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
@@ -169,6 +171,12 @@ function addElementListeners(): void {
 
     addSoundButton.addEventListener("click", () => {
         void browseAndAddSounds();
+    });
+
+    sortButton.addEventListener("click", () => {
+        const currentSoundboard = soundboardList.getSelectedSoundboard();
+        if (!currentSoundboard) return;
+        void window.actions.sortSoundboard(currentSoundboard.uuid);
     });
 
     searchBox.onInput.addHandler(v => {

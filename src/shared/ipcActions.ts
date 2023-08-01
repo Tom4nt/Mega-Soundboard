@@ -29,6 +29,7 @@ class ConcreteActions {
     setCurrentSoundboard: ((id: string) => void) | null = null;
     getSoundboards: (() => Promise<Soundboard[]>) | null = null;
     getInitialSoundboardIndex: (() => Promise<number>) | null = null;
+    sortSoundboard: ((soundboardId: string) => Promise<void>) | null = null;
 
     flagChangelogViewed: (() => void) | null = null;
     installUpdate: (() => void) | null = null;
