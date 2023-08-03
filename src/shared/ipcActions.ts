@@ -42,6 +42,7 @@ class ConcreteActions {
     shouldShowChangelog: (() => Promise<boolean>) | null = null;
     toggleKeybindsState: (() => void) | null = null;
     toggleOverlapSoundsState: (() => void) | null = null;
+    toggleLoopSoundsState: (() => void) | null = null;
 
     openRepo: (() => void) | null = null;
     openBugReport: (() => void) | null = null;

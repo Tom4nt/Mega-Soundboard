@@ -10,6 +10,13 @@ const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not con
 export default class AudioManager {
     overlapSounds = false;
 
+    private _loopSounds = false;
+    get loopSounds(): boolean { return this._loopSounds; }
+    set loopSounds(value: boolean) {
+        this._loopSounds = value;
+        this.playingSounds.forEach(e => e.loop = value);
+    }
+
     private mainDevice: string;
     private mainDeviceVolume: number;
     private secondaryDevice: string;
@@ -38,10 +45,12 @@ export default class AudioManager {
         this.secondaryDevice = settings.secondaryDevice;
         this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
         this.overlapSounds = settings.overlapSounds;
+        this.loopSounds = settings.loopSounds;
         this.stopSoundsKeys = settings.stopSoundsKeys;
 
         GlobalEvents.addHandler("onSettingsChanged", settings => {
             this.overlapSounds = settings.overlapSounds;
+            this.loopSounds = settings.loopSounds;
             this.mainDevice = settings.mainDevice;
             this.mainDeviceVolume = settings.mainDeviceVolume;
             this.secondaryDevice = settings.secondaryDevice;
@@ -98,7 +107,7 @@ export default class AudioManager {
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-        const instance = await AudioInstance.create(sound, devices, sb.volume / 100);
+        const instance = await AudioInstance.create(sound, devices, sb.volume / 100, this.loopSounds);
         instance.onEnd.addHandler(() => {
             console.log(`Instance of ${sound.name} finished playing.`);
             this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);

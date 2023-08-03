@@ -12,6 +12,9 @@ export default class AudioInstance {
     public get currentTime(): number { return this.getAny()?.currentTime ?? 0; }
     public set currentTime(value: number) { this.audioElements.forEach(e => e.currentTime = value); }
 
+    public get loop(): boolean { return this.getAny()?.loop ?? false; }
+    public set loop(value: boolean) { this.audioElements.forEach(e => e.loop = value); }
+
     public get isPaused(): boolean { return this.getAny()?.paused ?? true; }
 
     public readonly duration: number;
@@ -20,6 +23,7 @@ export default class AudioInstance {
         sound: Sound,
         devices: IDevice[],
         volumeMult: number,
+        loop: boolean,
     ): Promise<AudioInstance> {
         const audioElements: HTMLAudioElement[] = [];
         const stopEvent = new Event<void>();
@@ -30,6 +34,7 @@ export default class AudioInstance {
         let isFirst = true;
         for (const device of devices) {
             const audio = new Audio(sound.path);
+            audio.loop = loop; // TODO: Update loop for current playing
 
             try {
                 await audio.setSinkId(device.id);

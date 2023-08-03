@@ -189,6 +189,10 @@ export default class IPCHandler {
             await MS.instance.toggleOverlapSoundsState();
         });
 
+        this.handleAction("toggleLoopSoundsState", async () => {
+            await MS.instance.toggleLoopSoundsState();
+        });
+
 
         this.handleAction("openRepo", () => {
             void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard");

@@ -43,6 +43,7 @@ let secondaryDeviceVolumeSlider!: Slider;
 //#region QuickSettings
 let enabeKeybindsToggler!: Toggler;
 let overlapSoundsToggler!: Toggler;
+let loopSoundsToggler!: Toggler;
 let buttonMoreSettings!: HTMLButtonElement;
 //#endregion
 
@@ -74,9 +75,11 @@ async function init(): Promise<void> {
 
     enabeKeybindsToggler.isOn = content.settings.enableKeybinds;
     overlapSoundsToggler.isOn = content.settings.overlapSounds;
+    loopSoundsToggler.isOn = content.settings.loopSounds;
 
     GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
     GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
+    GlobalEvents.addHandler("onLoopSoundsChanged", state => loopSoundsToggler.isOn = state);
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -147,6 +150,7 @@ function getElementReferences(): void {
 
     enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds") as Toggler;
     overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds") as Toggler;
+    loopSoundsToggler = quickSettings.querySelector("#toggler-loopSounds") as Toggler;
     buttonMoreSettings = quickSettings.querySelector("#button-more-settings") as HTMLButtonElement;
 }
 
@@ -229,6 +233,10 @@ function addElementListeners(): void {
 
     enabeKeybindsToggler.onToggle.addHandler(() => {
         window.actions.toggleKeybindsState();
+    });
+
+    loopSoundsToggler.onToggle.addHandler(() => {
+        window.actions.toggleLoopSoundsState();
     });
 
     buttonMoreSettings.addEventListener("click", () => {

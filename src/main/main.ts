@@ -58,7 +58,7 @@ async function init(): Promise<void> {
     const s = settingsCache.settings;
     const keybindManager = new KeybindManager();
     keybindManager.raiseExternal = s.enableKeybinds;
-    const trayManager = TrayManager.createTray(windowManager.mainWindow, s.enableKeybinds, s.overlapSounds);
+    const trayManager = TrayManager.createTray(windowManager.mainWindow, s.enableKeybinds, s.overlapSounds, s.loopSounds);
 
     new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
     await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);

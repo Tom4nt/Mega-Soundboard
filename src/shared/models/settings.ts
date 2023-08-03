@@ -9,6 +9,7 @@ export default class Settings {
         public enableKeybinds = true,
         public enableKeybindsKeys: number[] = [],
         public overlapSounds = true,
+        public loopSounds = false,
         public mainDevice = "default",
         public secondaryDevice = "",
         public mainDeviceVolume = 100,

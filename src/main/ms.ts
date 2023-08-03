@@ -17,6 +17,7 @@ import SoundboardUtils from "./utils/soundboardUtils";
 export default class MS {
     isKeybindsEnabled = false;
     isOverlapEnabled = false;
+    isLoopSoundsEnabled = false;
 
     private currentSoundboardWatcher: FolderWatcher | null = null;
 
@@ -42,6 +43,7 @@ export default class MS {
         MS.instance = this;
         this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;
         this.isOverlapEnabled = settingsCache.settings.overlapSounds;
+        this.isLoopSoundsEnabled = settingsCache.settings.loopSounds;
 
         keybindManager.onKeybindPressed.addHandler(async kb => {
             if (Keys.equals(kb, settingsCache.settings.enableKeybindsKeys)) {
@@ -56,7 +58,7 @@ export default class MS {
 
     async toggleKeybindsState(): Promise<void> {
         this.isKeybindsEnabled = !this.isKeybindsEnabled;
-        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled);
+        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
         this.keybindManager.raiseExternal = this.isKeybindsEnabled;
         EventSender.send("onKeybindsStateChanged", this.isKeybindsEnabled);
         await this.settingsCache.save({ enableKeybinds: this.isKeybindsEnabled });
@@ -64,9 +66,16 @@ export default class MS {
 
     async toggleOverlapSoundsState(): Promise<void> {
         this.isOverlapEnabled = !this.isOverlapEnabled;
-        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled);
+        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
         EventSender.send("onOverlapSoundsStateChanged", this.isOverlapEnabled);
         await this.settingsCache.save({ overlapSounds: this.isOverlapEnabled });
+    }
+
+    async toggleLoopSoundsState(): Promise<void> {
+        this.isLoopSoundsEnabled = !this.isLoopSoundsEnabled;
+        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
+        EventSender.send("onLoopSoundsChanged", this.isLoopSoundsEnabled);
+        await this.settingsCache.save({ loopSounds: this.isLoopSoundsEnabled });
     }
 
     flagChangelogViewed(): void {

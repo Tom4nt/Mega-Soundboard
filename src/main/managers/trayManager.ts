@@ -8,7 +8,8 @@ const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
 
 enum TrayItem {
     EnableKybinds = "trayIcon:enableKeybinds",
-    EnableOverlapSounds = "trayIcon:enableOverlapSounds"
+    EnableOverlapSounds = "trayIcon:enableOverlapSounds",
+    LoopSounds = "trayIcon:loopSounds"
 }
 
 export default class TrayManager {
@@ -17,7 +18,7 @@ export default class TrayManager {
 
     private constructor() { /* */ }
 
-    static createTray(win: BrowserWindow, keybindsEnabled: boolean, overlapSounds: boolean): TrayManager {
+    static createTray(win: BrowserWindow, keybindsEnabled: boolean, overlapSounds: boolean, loopSounds: boolean): TrayManager {
         const instance = new TrayManager();
         instance.tray = new Tray(iconWhitePath);
         instance.trayMenu = Menu.buildFromTemplate([{
@@ -34,6 +35,14 @@ export default class TrayManager {
             type: "checkbox",
             click: (): void => {
                 void MS.instance.toggleOverlapSoundsState();
+            }
+        },
+        {
+            id: TrayItem.LoopSounds,
+            label: "Loop sounds",
+            type: "checkbox",
+            click: (): void => {
+                void MS.instance.toggleLoopSoundsState();
             }
         },
         { type: "separator" },
@@ -56,11 +65,11 @@ export default class TrayManager {
             win.show();
         });
 
-        instance.update(keybindsEnabled, overlapSounds);
+        instance.update(keybindsEnabled, overlapSounds, loopSounds);
         return instance;
     }
 
-    update(keybindsEnabled: boolean, overlapSounds: boolean): void {
+    update(keybindsEnabled: boolean, overlapSounds: boolean, loopSounds: boolean): void {
         if (keybindsEnabled) {
             this.tray.setImage(iconWhitePath);
             this.tray.setToolTip("Mega Soundboard");
@@ -74,5 +83,8 @@ export default class TrayManager {
 
         const overlapItem = this.trayMenu.getMenuItemById(TrayItem.EnableOverlapSounds);
         if (overlapItem) overlapItem.checked = overlapSounds;
+
+        const loopSoundsItem = this.trayMenu.getMenuItemById(TrayItem.LoopSounds);
+        if (loopSoundsItem) loopSoundsItem.checked = loopSounds;
     }
 }
