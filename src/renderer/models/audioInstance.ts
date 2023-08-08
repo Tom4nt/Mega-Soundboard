@@ -34,7 +34,7 @@ export default class AudioInstance {
         let isFirst = true;
         for (const device of devices) {
             const audio = new Audio(sound.path);
-            audio.loop = loop; // TODO: Update loop for current playing
+            audio.loop = loop;
 
             try {
                 await audio.setSinkId(device.id);

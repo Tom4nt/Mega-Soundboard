@@ -21,6 +21,7 @@ export default class DataAccess {
         }
     }
 
+    // TODO: Convert old static properties to new dynamic Quick Settings.
     static async getSettingsFromSaveFile(): Promise<Settings> {
         let settings = new Settings();
 

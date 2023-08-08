@@ -4,7 +4,7 @@
     "description": "Mega Soundboard",
     "main": "out/main/main.js",
     "scripts": {
-        "build": "npm run copy && tsc --build && npm run bundle",
+        "build": "npx eslint src && npm run copy && tsc --build && npm run bundle",
         "start": "npm run build && electron .",
         "startLast": "electron .",
         "bundle": "npm run bundle-index && npm run bundle-preload",

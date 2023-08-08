@@ -1,16 +1,16 @@
+import { ActionName, actions } from "../../shared/quickActions";
 import { KeyRecorder, Toggler, FileSelector, Slider } from "../elements";
 import { Modal } from "../modals";
 import GlobalEvents from "../util/globalEvents";
 
 export default class SettingsModal extends Modal {
     private soundsLocationFileSelector!: FileSelector;
-    private keybindsStateRecorder!: KeyRecorder;
-    private stopSoundsRecorder!: KeyRecorder;
-    private randomSoundRecorder!: KeyRecorder;
     private pttRecorder!: KeyRecorder;
     private minimizeToTrayToggler!: Toggler;
     private processKeysOnReleaseToggler!: Toggler;
     private zoomSlider!: Slider;
+
+    private quickActionRecorders: Map<ActionName, KeyRecorder> = new Map();
 
     constructor() {
         super(false);
@@ -18,9 +18,6 @@ export default class SettingsModal extends Modal {
     }
 
     protected override getContent(): HTMLElement[] {
-        this.stopSoundsRecorder = new KeyRecorder();
-        this.keybindsStateRecorder = new KeyRecorder();
-        this.randomSoundRecorder = new KeyRecorder();
         this.pttRecorder = new KeyRecorder();
         this.soundsLocationFileSelector = new FileSelector("", "folder");
         this.minimizeToTrayToggler = new Toggler("Minimize to tray");
@@ -30,12 +27,7 @@ export default class SettingsModal extends Modal {
         void this.load();
 
         return [
-            Modal.getLabel("Stop all Sounds"),
-            this.stopSoundsRecorder,
-            Modal.getLabel("Enable/Disable keybinds"),
-            this.keybindsStateRecorder,
-            Modal.getLabel("Play random Sound"),
-            this.randomSoundRecorder,
+            ...this.getQuickActionContent(),
             Modal.getLabel("PTT keys to press"),
             this.pttRecorder,
             this.minimizeToTrayToggler,
@@ -48,12 +40,23 @@ export default class SettingsModal extends Modal {
         ];
     }
 
+    private getQuickActionContent(): HTMLElement[] {
+        const elements: HTMLElement[] = [];
+        let key: ActionName;
+        for (key in actions) {
+            const name = actions[key].name;
+            elements.push(Modal.getLabel(name));
+            const recorder = new KeyRecorder();
+            elements.push(recorder);
+            this.quickActionRecorders.set(key, recorder);
+        }
+        return elements;
+    }
+
     private async load(): Promise<void> {
         const settings = await window.actions.getSettings();
+        this.loadQuickActions(settings.quickActionKeys);
 
-        this.stopSoundsRecorder.keys = settings.stopSoundsKeys;
-        this.keybindsStateRecorder.keys = settings.enableKeybindsKeys;
-        this.randomSoundRecorder.keys = settings.randomSoundKeys;
         this.pttRecorder.keys = settings.pttKeys;
         this.minimizeToTrayToggler.isOn = settings.minToTray;
         this.soundsLocationFileSelector.value =
@@ -65,6 +68,15 @@ export default class SettingsModal extends Modal {
         this.zoomSlider.max = 2;
         this.zoomSlider.value = await window.actions.zoomGet();
         this.zoomSlider.onValueChange.addHandler(s => window.actions.zoomSet(s.value));
+    }
+
+    private loadQuickActions(actionKeys: { [name: string]: number[] }): void {
+        let key: ActionName;
+        for (key in actions) {
+            const recorder = this.quickActionRecorders.get(key);
+            if (recorder && Object.keys(actionKeys).includes(key))
+                recorder.keys = actionKeys[key];
+        }
     }
 
     protected getFooterButtons(): HTMLButtonElement[] {
@@ -90,7 +102,9 @@ export default class SettingsModal extends Modal {
     };
 
     protected canCloseWithKey(): boolean {
-        return !this.stopSoundsRecorder.isRecording && !this.keybindsStateRecorder.isRecording;
+        const anyQuickActionsRecording = Array.from(this.quickActionRecorders.values()).some(x => x.isRecording);
+        const anyRecording = anyQuickActionsRecording || this.pttRecorder.isRecording;
+        return !anyRecording;
     }
 
     private async validate(finalSoundsPath: string | null): Promise<boolean> {
@@ -106,15 +120,26 @@ export default class SettingsModal extends Modal {
         if (! await this.validate(soundsPath) || soundsPath === null) return;
 
         window.actions.saveSettings({
-            enableKeybindsKeys: this.keybindsStateRecorder.keys,
-            stopSoundsKeys: this.stopSoundsRecorder.keys,
+            quickActionKeys: this.getQuickActionKeys(),
             soundsLocation: soundsPath,
             minToTray: this.minimizeToTrayToggler.isOn,
             pttKeys: this.pttRecorder.keys,
-            randomSoundKeys: this.randomSoundRecorder.keys,
             processKeysOnRelease: this.processKeysOnReleaseToggler.isOn,
         });
         this.close();
+    }
+
+    private getQuickActionKeys(): { [name: string]: number[] } {
+        const res: { [name: string]: number[] } = {};
+        let key: ActionName;
+        for (key in actions) {
+            const recorder = this.quickActionRecorders.get(key);
+            if (!recorder) continue;
+
+            if (recorder.keys.length === 0) delete res[key];
+            else res[key] = recorder.keys;
+        }
+        return res;
     }
 
     private static getZoomLabel(): HTMLParagraphElement {

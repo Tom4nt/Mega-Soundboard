@@ -1,16 +1,11 @@
 import { app, BrowserWindow, Menu, Tray } from "electron";
-import MS from "../ms";
 import * as path from "path";
 import Utils from "../utils/utils";
+import { isAction, actions } from "../../shared/quickActions";
+import { actionBindings } from "../quickActionBindings";
 
 const iconWhitePath = path.join(Utils.resourcesPath, "icon_white.ico");
 const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
-
-enum TrayItem {
-    EnableKybinds = "trayIcon:enableKeybinds",
-    EnableOverlapSounds = "trayIcon:enableOverlapSounds",
-    LoopSounds = "trayIcon:loopSounds"
-}
 
 export default class TrayManager {
     private tray!: Tray;
@@ -18,46 +13,40 @@ export default class TrayManager {
 
     private constructor() { /* */ }
 
-    static createTray(win: BrowserWindow, keybindsEnabled: boolean, overlapSounds: boolean, loopSounds: boolean): TrayManager {
+    static createTray(win: BrowserWindow, quickActionStates: { [name: string]: boolean }): TrayManager {
         const instance = new TrayManager();
         instance.tray = new Tray(iconWhitePath);
-        instance.trayMenu = Menu.buildFromTemplate([{
-            id: TrayItem.EnableKybinds,
-            label: "Enable keybinds",
-            type: "checkbox",
-            click: (): void => {
-                void MS.instance.toggleKeybindsState();
-            }
-        },
-        {
-            id: TrayItem.EnableOverlapSounds,
-            label: "Overlap sounds",
-            type: "checkbox",
-            click: (): void => {
-                void MS.instance.toggleOverlapSoundsState();
-            }
-        },
-        {
-            id: TrayItem.LoopSounds,
-            label: "Loop sounds",
-            type: "checkbox",
-            click: (): void => {
-                void MS.instance.toggleLoopSoundsState();
-            }
-        },
-        { type: "separator" },
-        {
-            label: "Show",
-            click: (): void => {
-                win.show();
-            }
-        },
-        {
-            label: "Close",
-            click: (): void => {
-                app.quit();
-            }
+
+        const trayItems: Electron.MenuItemConstructorOptions[] = [];
+        let key: keyof typeof actions;
+        for (key in actions) {
+            const keyI = key;
+            const action = actions[keyI];
+            trayItems.push({
+                id: keyI,
+                label: action.name,
+                type: action.default === null ? "normal" : "checkbox",
+                click: (): void => {
+                    void actionBindings[keyI](keyI as never);
+                }
+            });
         }
+
+        instance.trayMenu = Menu.buildFromTemplate([
+            ...trayItems,
+            { type: "separator" },
+            {
+                label: "Show",
+                click: (): void => {
+                    win.show();
+                }
+            },
+            {
+                label: "Close",
+                click: (): void => {
+                    app.quit();
+                }
+            }
         ]);
 
         instance.tray.setContextMenu(instance.trayMenu);
@@ -65,26 +54,20 @@ export default class TrayManager {
             win.show();
         });
 
-        instance.update(keybindsEnabled, overlapSounds, loopSounds);
+        instance.update(quickActionStates);
         return instance;
     }
 
-    update(keybindsEnabled: boolean, overlapSounds: boolean, loopSounds: boolean): void {
-        if (keybindsEnabled) {
-            this.tray.setImage(iconWhitePath);
-            this.tray.setToolTip("Mega Soundboard");
-        } else {
-            this.tray.setImage(iconPausedPath);
-            this.tray.setToolTip("Mega Soundboard (Keybinds disabled)");
+    update(quickActionStates: { [name: string]: boolean }): void {
+        for (const k in quickActionStates) {
+            if (!isAction(k)) return;
+            const keysItem = this.trayMenu.getMenuItemById(k);
+            if (keysItem) keysItem.checked = quickActionStates[k];
+
+            if (k === "toggleKeybinds") { // Specific for this action.
+                this.tray.setImage(quickActionStates[k] ? iconWhitePath : iconPausedPath);
+                this.tray.setToolTip(quickActionStates[k] ? "Mega Soundboard" : "Mega Soundboard (Keybinds disabled)");
+            }
         }
-
-        const keysItem = this.trayMenu.getMenuItemById(TrayItem.EnableKybinds);
-        if (keysItem) keysItem.checked = keybindsEnabled;
-
-        const overlapItem = this.trayMenu.getMenuItemById(TrayItem.EnableOverlapSounds);
-        if (overlapItem) overlapItem.checked = overlapSounds;
-
-        const loopSoundsItem = this.trayMenu.getMenuItemById(TrayItem.LoopSounds);
-        if (loopSoundsItem) loopSoundsItem.checked = loopSounds;
     }
 }

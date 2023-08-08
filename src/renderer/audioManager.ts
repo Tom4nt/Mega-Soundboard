@@ -1,9 +1,8 @@
 import { Event, ExposedEvent } from "../shared/events";
-import { Settings, Sound } from "src/shared/models";
+import { Settings, Sound } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
 import GlobalEvents from "./util/globalEvents";
-import Keys from "../shared/keys";
 
 const MSG_ERR_NOT_CONNECTED = "This sound cannot be played because it is not connected to a Soundboard.";
 
@@ -21,7 +20,6 @@ export default class AudioManager {
     private mainDeviceVolume: number;
     private secondaryDevice: string;
     private secondaryDeviceVolume: number;
-    private stopSoundsKeys: number[];
     private currentKeyHoldHandle: string | null = null;
 
     /** Fixed Media Element used for App sounds. */
@@ -44,18 +42,16 @@ export default class AudioManager {
         this.mainDeviceVolume = settings.mainDeviceVolume;
         this.secondaryDevice = settings.secondaryDevice;
         this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
-        this.overlapSounds = settings.overlapSounds;
-        this.loopSounds = settings.loopSounds;
-        this.stopSoundsKeys = settings.stopSoundsKeys;
+        this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
+        this.loopSounds = Settings.getActionState(settings, "toggleSoundLooping");
 
         GlobalEvents.addHandler("onSettingsChanged", settings => {
-            this.overlapSounds = settings.overlapSounds;
-            this.loopSounds = settings.loopSounds;
+            this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
+            this.loopSounds = Settings.getActionState(settings, "toggleSoundLooping");
             this.mainDevice = settings.mainDevice;
             this.mainDeviceVolume = settings.mainDeviceVolume;
             this.secondaryDevice = settings.secondaryDevice;
             this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
-            this.stopSoundsKeys = settings.stopSoundsKeys;
         });
 
         GlobalEvents.addHandler("onKeybindsStateChanged", s => {
@@ -63,13 +59,11 @@ export default class AudioManager {
         });
 
         GlobalEvents.addHandler("onSoundRemoved", s => {
-            this.stopSoundInternal(s.uuid, true);
+            this.stopSound(s.uuid);
         });
 
-        GlobalEvents.addHandler("onKeybindPressed", keybind => {
-            if (Keys.equals(keybind, this.stopSoundsKeys)) {
-                this.stopAllSoundsInternal(true);
-            }
+        GlobalEvents.addHandler("onStopAllSounds", () => {
+            this.stopAllSounds();
         });
 
         GlobalEvents.addHandler("onSoundPlayRequested", async s => {

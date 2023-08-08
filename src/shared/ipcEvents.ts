@@ -30,6 +30,7 @@ class ConcreteEvents {
     onUpdateProgress: ExposedEvent<number> | null = null;
     onUpdateReady: ExposedEvent<void> | null = null;
     onSoundPlayRequested: ExposedEvent<Sound> | null = null;
+    onStopAllSounds: ExposedEvent<void> | null = null;
     onZoomFactorChanged: ExposedEvent<number> | null = null;
 }
 

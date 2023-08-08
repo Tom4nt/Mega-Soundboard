@@ -6,19 +6,17 @@ import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
 import SoundUtils from "./utils/soundUtils";
-import { Soundboard } from "../shared/models";
+import { Settings, Soundboard } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
 import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
 import SoundboardUtils from "./utils/soundboardUtils";
+import { actionBindings } from "./quickActionBindings";
+import { isAction } from "../shared/quickActions";
 
 /** Represents the app instance in the main process. */
 export default class MS {
-    isKeybindsEnabled = false;
-    isOverlapEnabled = false;
-    isLoopSoundsEnabled = false;
-
     private currentSoundboardWatcher: FolderWatcher | null = null;
 
     static readonly defaultSoundsPath = path.join(app.getPath("appData"), "MegaSoundboard/Sounds");
@@ -41,41 +39,22 @@ export default class MS {
         public readonly keybindManager: KeybindManager,
     ) {
         MS.instance = this;
-        this.isKeybindsEnabled = settingsCache.settings.enableKeybinds;
-        this.isOverlapEnabled = settingsCache.settings.overlapSounds;
-        this.isLoopSoundsEnabled = settingsCache.settings.loopSounds;
-
         keybindManager.onKeybindPressed.addHandler(async kb => {
-            if (Keys.equals(kb, settingsCache.settings.enableKeybindsKeys)) {
-                await this.toggleKeybindsState();
-            }
-            if (Keys.equals(kb, settingsCache.settings.randomSoundKeys)
-                && this.settingsCache.settings.enableKeybinds) {
-                this.playRandomSound();
+            const s = this.settingsCache.settings;
+            const keybindsEnabled = Settings.getActionState(s, "toggleKeybinds");
+            if (keybindsEnabled) {
+                for (const k in s.quickActionKeys) {
+                    const keybind = s.quickActionKeys[k];
+                    if (Keys.equals(kb, keybind) && isAction(k)) {
+                        void actionBindings[k](k as never);
+                    }
+                }
+            } else {
+                if (Keys.equals(kb, Settings.getActionKeys(s, "toggleKeybinds"))) {
+                    void actionBindings["toggleKeybinds"]("toggleKeybinds");
+                }
             }
         });
-    }
-
-    async toggleKeybindsState(): Promise<void> {
-        this.isKeybindsEnabled = !this.isKeybindsEnabled;
-        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
-        this.keybindManager.raiseExternal = this.isKeybindsEnabled;
-        EventSender.send("onKeybindsStateChanged", this.isKeybindsEnabled);
-        await this.settingsCache.save({ enableKeybinds: this.isKeybindsEnabled });
-    }
-
-    async toggleOverlapSoundsState(): Promise<void> {
-        this.isOverlapEnabled = !this.isOverlapEnabled;
-        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
-        EventSender.send("onOverlapSoundsStateChanged", this.isOverlapEnabled);
-        await this.settingsCache.save({ overlapSounds: this.isOverlapEnabled });
-    }
-
-    async toggleLoopSoundsState(): Promise<void> {
-        this.isLoopSoundsEnabled = !this.isLoopSoundsEnabled;
-        this.trayManager.update(this.isKeybindsEnabled, this.isOverlapEnabled, this.isLoopSoundsEnabled);
-        EventSender.send("onLoopSoundsChanged", this.isLoopSoundsEnabled);
-        await this.settingsCache.save({ loopSounds: this.isLoopSoundsEnabled });
     }
 
     flagChangelogViewed(): void {
@@ -83,12 +62,8 @@ export default class MS {
         void DataAccess.saveSettings(this.settingsCache.settings);
     }
 
-    playRandomSound(): void {
-        const sb = this.soundboardsCache.soundboards[this.settingsCache.settings.selectedSoundboard];
-        const items = sb.sounds;
-        if (items.length <= 0) return;
-        const index = Math.floor(Math.random() * items.length);
-        EventSender.send("onSoundPlayRequested", items[index]);
+    static stopAllSounds(): void {
+        EventSender.send("onStopAllSounds");
     }
 
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {

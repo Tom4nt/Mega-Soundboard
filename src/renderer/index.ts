@@ -73,9 +73,9 @@ async function init(): Promise<void> {
         soundboardList.addSoundboard(sb);
     }
 
-    enabeKeybindsToggler.isOn = content.settings.enableKeybinds;
-    overlapSoundsToggler.isOn = content.settings.overlapSounds;
-    loopSoundsToggler.isOn = content.settings.loopSounds;
+    enabeKeybindsToggler.isOn = Settings.getActionState(content.settings, "toggleKeybinds");
+    overlapSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundOverlap");
+    loopSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundLooping");
 
     GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
     GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
@@ -194,7 +194,7 @@ function addElementListeners(): void {
     //#region Action Panel
 
     randomSoundButton.addEventListener("click", () => {
-        window.actions.playRandomSound();
+        void window.actions.executeQuickAction("playRandomSound");
     });
 
     stopAllButton.addEventListener("click", () => {
@@ -210,7 +210,7 @@ function addElementListeners(): void {
     });
 
     overlapSoundsToggler.onToggle.addHandler(() => {
-        window.actions.toggleOverlapSoundsState();
+        void window.actions.executeQuickAction("toggleSoundOverlap");
     });
 
     mainDeviceVolumeSlider.onValueChange.addHandler(s => {
@@ -232,11 +232,11 @@ function addElementListeners(): void {
     });
 
     enabeKeybindsToggler.onToggle.addHandler(() => {
-        window.actions.toggleKeybindsState();
+        void window.actions.executeQuickAction("toggleKeybinds");
     });
 
     loopSoundsToggler.onToggle.addHandler(() => {
-        window.actions.toggleLoopSoundsState();
+        void window.actions.executeQuickAction("toggleSoundLooping");
     });
 
     buttonMoreSettings.addEventListener("click", () => {

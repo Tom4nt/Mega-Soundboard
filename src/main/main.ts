@@ -3,13 +3,14 @@ import { autoUpdater } from "electron-updater";
 import MS from "./ms";
 import WindowManager from "./managers/windowManager";
 import TrayManager from "./managers/trayManager";
-import IPCHandler from "./ipcHandler";
 import EventSender from "./eventSender";
 import SoundboardsCache from "./data/soundboardsCache";
 import SettingsCache from "./data/settingsCache";
 import DataAccess from "./data/dataAccess";
 import InitialContent from "../shared/models/initialContent";
 import KeybindManager from "./managers/keybindManager";
+import { Settings } from "../shared/models";
+import IPCHandler from "./ipcHandler";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -39,7 +40,7 @@ setInterval(() => {
     void autoUpdater.checkForUpdates();
 }, 5 * 60 * 1000);
 
-IPCHandler.init();
+IPCHandler.register();
 
 app.on("ready", function () {
     void init().catch(e => {
@@ -57,8 +58,8 @@ async function init(): Promise<void> {
     await windowManager.showLoadingWindow();
     const s = settingsCache.settings;
     const keybindManager = new KeybindManager();
-    keybindManager.raiseExternal = s.enableKeybinds;
-    const trayManager = TrayManager.createTray(windowManager.mainWindow, s.enableKeybinds, s.overlapSounds, s.loopSounds);
+    keybindManager.raiseExternal = Settings.getActionState(s, "toggleKeybinds");
+    const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
 
     new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
     await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);

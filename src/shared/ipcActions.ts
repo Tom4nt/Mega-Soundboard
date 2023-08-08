@@ -1,5 +1,6 @@
 import { NonOptional } from "./interfaces";
 import { OptionalSettings, Settings, Sound, Soundboard } from "./models";
+import { ActionName } from "./quickActions";
 
 class ConcreteActions {
     minimize: (() => void) | null = null;
@@ -10,8 +11,6 @@ class ConcreteActions {
     zoomSet: ((val: number) => void) | null = null;
     zoomGet: (() => Promise<number>) | null = null;
     zoomReset: (() => void) | null = null;
-
-    notifyContentLoaded: (() => void) | null = null;
 
     addSounds: ((sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number) => void) | null = null;
     editSound: ((sound: Sound) => void) | null = null;
@@ -40,9 +39,7 @@ class ConcreteActions {
     getSettings: (() => Promise<Settings>) | null = null;
     saveSettings: ((settings: OptionalSettings) => void) | null = null;
     shouldShowChangelog: (() => Promise<boolean>) | null = null;
-    toggleKeybindsState: (() => void) | null = null;
-    toggleOverlapSoundsState: (() => void) | null = null;
-    toggleLoopSoundsState: (() => void) | null = null;
+    executeQuickAction: ((name: ActionName) => Promise<void>) | null = null;
 
     openRepo: (() => void) | null = null;
     openBugReport: (() => void) | null = null;
@@ -58,10 +55,7 @@ class ConcreteActions {
     holdPTT: (() => Promise<string>) | null = null;
     releasePTT: ((handle: string) => Promise<void>) | null = null;
 
-    playRandomSound: (() => void) | null = null;
-
     getNewsHtml: (() => Promise<string>) | null = null;
-
     getVersion: (() => Promise<string>) | null = null;
 }
 
