@@ -184,6 +184,13 @@ export default class Keys {
         else return this.shuffledEquals(pressed, toCompare);
     }
 
+    /** Checks if a value is valid for keys */
+    static isKeys(value: unknown): value is number[] {
+        if (!Array.isArray(value)) return false;
+        const array: Array<unknown> = value;
+        return array.every(i => typeof i === "number");
+    }
+
     private static exactEquals(pressed: number[], toCompare: number[]): boolean {
         if (pressed.length != toCompare.length) return false;
         for (let i = 0; i < pressed.length; i++) {

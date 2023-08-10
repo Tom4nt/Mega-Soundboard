@@ -7,7 +7,7 @@ import MS from "./ms";
 import path = require("path");
 import SoundUtils from "./utils/soundUtils";
 import { randomUUID } from "crypto";
-import SharedUtils from "../shared/sharedUtils";
+import { validSoundExts } from "../shared/sharedUtils";
 import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
@@ -202,7 +202,7 @@ const implementer: Actions = {
         const r = await dialog.showOpenDialog({
             properties: ["openFile", "multiSelections"],
             filters: [
-                { name: "Audio files", extensions: SharedUtils.validSoundExts }
+                { name: "Audio files", extensions: validSoundExts }
             ]
         });
         return r.filePaths;

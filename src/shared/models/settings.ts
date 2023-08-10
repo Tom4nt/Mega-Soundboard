@@ -48,3 +48,16 @@ export default class Settings {
         }
     }
 }
+
+// TODO: Convert old static properties to new dynamic Quick Settings.
+export function convertSettings(data: { [key: string]: unknown }): Settings {
+    const settings = new Settings();
+    for (const iterator of Object.keys(new Settings()) as (keyof Settings)[]) {
+        const val = data[iterator];
+        const defaultType = typeof settings[iterator];
+        if (typeof val === defaultType && (Array.isArray(settings[iterator]) == Array.isArray(val))) {
+            settings[iterator] = val as never;
+        }
+    }
+    return settings;
+}

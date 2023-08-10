@@ -2,7 +2,7 @@ import * as p from "path";
 import { randomUUID } from "crypto";
 import { Sound } from "../../shared/models";
 import Utils from "./utils";
-import SharedUtils from "../../shared/sharedUtils";
+import { validSoundExts } from "../../shared/sharedUtils";
 
 export default class SoundUtils {
 
@@ -23,7 +23,7 @@ export default class SoundUtils {
     static isValidSoundFile(path: string): boolean {
         let ext = p.extname(path);
         if (ext.startsWith(".")) ext = ext.substring(1);
-        return SharedUtils.validSoundExts.includes(ext);
+        return validSoundExts.includes(ext);
     }
 
     static getValidSoundPaths(paths: string[]): string[] {

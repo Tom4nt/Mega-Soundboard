@@ -15,25 +15,8 @@ export default class Utils {
         return p.basename(path, p.extname(path));
     }
 
-    static tryGetValue(data: Map<string, unknown>, keysToTry: string[], checkType: (v: unknown) => boolean): unknown {
-        let res: unknown = null;
-        keysToTry.every(key => {
-            if (checkType(data.get(key))) res = data.get(key);
-            else return true;
-            return false;
-        });
-        return res;
-    }
-
     static getFileNameNoExtension(path: string): string {
         return p.basename(path, p.extname(path));
-    }
-
-    /** Checks if a value is valid for keys */
-    static isKeys(value: unknown): boolean {
-        if (!Array.isArray(value)) return false;
-        const array: Array<unknown> = value;
-        return array.every(i => typeof i === "number");
     }
 
     static async isPathAccessible(path: PathLike): Promise<boolean> {
@@ -66,11 +49,6 @@ export default class Utils {
             if (p.resolve(fileToCompare) == p.resolve(path)) contains = true;
         }
         return contains;
-    }
-
-    static objectToMap(object: object): Map<string, unknown> {
-        const entries = Object.entries(object);
-        return new Map<string, unknown>(entries);
     }
 
     static wait(seconds: number): Promise<void> {
