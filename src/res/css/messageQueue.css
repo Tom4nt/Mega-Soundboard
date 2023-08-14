@@ -1,0 +1,50 @@
+.message-host {
+    left: 0;
+    bottom: 0;
+    position: absolute;
+    width: 35%;
+    max-width: 350px;
+    min-width: 260px;
+}
+
+.message {
+    margin: 10px;
+    background: var(--color-lightL);
+    border-radius: 4px;
+    font-family: 'Roboto';
+    color: var(--color-white);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.message .message-wrapper {
+    display: flex;
+    flex-grow: 1;
+    align-items: flex-start;
+}
+
+.message .message-content {
+    flex-grow: 1;
+    margin: 10px;
+}
+
+.message button {
+    font-size: 16px;
+    font-family: 'MSIcons';
+    background: transparent;
+    border: 0;
+    padding: 10px;
+}
+
+.message button:hover {
+    background: var(--color-gray);
+}
+
+.message .message-bar {
+    height: 2px;
+    background-color: var(--color-white);
+    width: 50%;
+    /* TODO: Dynamic width */
+}

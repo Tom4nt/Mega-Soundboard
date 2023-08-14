@@ -18,6 +18,7 @@
 @import 'News.css';
 @import 'InfoBalloon.css';
 @import 'seekbar.css';
+@import 'messageQueue.css';
 
 body,
 html {
@@ -84,6 +85,25 @@ a {
 .icon {
     font-family: 'MSIcons';
     font-size: 18px;
+}
+
+.drag-tag {
+    font-size: 12px;
+    background-color: #1B5E20;
+    color: white;
+    padding: 8px;
+    border-radius: 20px;
+    position: fixed;
+    pointer-events: none;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.drag-tag .icon {
+    font-family: 'MSIcons';
+    margin-right: 4px;
+    font-size: 14px;
+    vertical-align: bottom;
 }
 
 #content {

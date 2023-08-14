@@ -21,6 +21,7 @@ export default abstract class Draggable extends HTMLElement {
     private isDragging = false;
     private initialPos: Point = { x: 0, y: 0 };
     private offset: Point | null = null;
+    private currentDragTag: HTMLElement | null = null;
 
     constructor() {
         super();
@@ -41,7 +42,7 @@ export default abstract class Draggable extends HTMLElement {
             }
             if (this.isMouseDownOnThis && Draggable._currentElement) {
                 if (!this.isDragging) this.sartDrag();
-                if (this.offset) this.move(p, this.offset);
+                if (this.offset) this.move(p, this.offset, this.offsetHeight);
             }
         });
 
@@ -54,9 +55,29 @@ export default abstract class Draggable extends HTMLElement {
         });
     }
 
-    private move(pos: Point, offset: Point): void {
+    private static getDragTag(): HTMLElement {
+        const elem = document.createElement("div");
+        elem.className = "drag-tag";
+
+        const textSpan = document.createElement("span");
+        textSpan.innerText = "Move to {soundboardName}"; // TODO
+
+        const iconSpan = document.createElement("span");
+        iconSpan.className = "icon";
+        iconSpan.innerText = "move";
+
+        elem.append(iconSpan, textSpan);
+        return elem;
+    }
+
+    private move(pos: Point, offset: Point, tagVerticalOffset: number): void {
         if (!this.lockHorizontal) this.style.left = `${pos.x - offset.x}px`;
         if (!this.lockVertical) this.style.top = `${pos.y - offset.y}px`;
+
+        if (this.currentDragTag) {
+            this.currentDragTag.style.left = `${pos.x}px`;
+            this.currentDragTag.style.top = `${pos.y - offset.y + tagVerticalOffset}px`;
+        }
     }
 
     private updateOffset(): void {
@@ -75,6 +96,9 @@ export default abstract class Draggable extends HTMLElement {
         this.style.pointerEvents = "none";
         this.style.zIndex = "1";
 
+        this.currentDragTag = Draggable.getDragTag();
+        this.parentElement?.append(this.currentDragTag);
+
         this.classList.add(this.classDuringDrag);
     }
 
@@ -87,6 +111,8 @@ export default abstract class Draggable extends HTMLElement {
         this.style.width = "";
         this.style.top = "";
         this.style.left = "";
+
+        this.currentDragTag?.remove();
 
         this.classList.remove(this.classDuringDrag);
     }

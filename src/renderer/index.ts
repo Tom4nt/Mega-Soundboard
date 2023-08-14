@@ -6,6 +6,7 @@ import MSR from "./msr";
 import { Settings } from "../shared/models";
 import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
+import * as MessageQueue from "./messageQueue";
 
 //#region Elements
 
@@ -64,6 +65,8 @@ async function init(): Promise<void> {
 
     getElementReferences();
     addElementListeners();
+
+    MessageQueue.setHost(soundboardList);
 
     const devices = await AudioManager.getAudioDevices();
     loadDevicesPanel(devices, content.settings);
@@ -155,6 +158,11 @@ function getElementReferences(): void {
 }
 
 function addElementListeners(): void {
+    // TODO: Remove
+    document.getElementById("btn-test")?.addEventListener("click", () => {
+        MessageQueue.addMessage(new MessageQueue.Message(Date.now().toString(), 2000));
+    });
+
     addEventListener("keyup", (ev) => {
         if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);
         else if (ev.ctrlKey && ev.key == "-") window.actions.zoomIncrement(-0.1);
