@@ -1,4 +1,4 @@
-.message-host {
+ms-message-host {
     left: 0;
     bottom: 0;
     position: absolute;
@@ -17,6 +17,16 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition:
+        transform 200ms ease-out,
+        opacity 200ms ease-out;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.message.hidden {
+    transform: translateY(10px);
+    opacity: 0;
 }
 
 .message .message-wrapper {
@@ -28,6 +38,10 @@
 .message .message-content {
     flex-grow: 1;
     margin: 10px;
+}
+
+.message .message-content p {
+    margin: 0;
 }
 
 .message button {
@@ -45,6 +59,5 @@
 .message .message-bar {
     height: 2px;
     background-color: var(--color-white);
-    width: 50%;
-    /* TODO: Dynamic width */
+    transition-timing-function: linear;
 }

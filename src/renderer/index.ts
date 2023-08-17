@@ -1,16 +1,16 @@
 import Actions from "./util/actions";
-import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar } from "./elements";
+import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
-import { Settings } from "../shared/models";
+import { Message, Settings } from "../shared/models";
 import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
 
 //#region Elements
 
-// const fileDragOverlay = document.getElementById("filedragoverlay");
+let messageHost!: MessageHost;
 
 //#region Left
 let msbutton!: HTMLButtonElement;
@@ -66,7 +66,7 @@ async function init(): Promise<void> {
     getElementReferences();
     addElementListeners();
 
-    MessageQueue.setHost(soundboardList);
+    MessageQueue.setHost(messageHost);
 
     const devices = await AudioManager.getAudioDevices();
     loadDevicesPanel(devices, content.settings);
@@ -128,6 +128,8 @@ function setVolumes(settings: Settings): void {
 }
 
 function getElementReferences(): void {
+    messageHost = document.getElementById("message-host") as MessageHost;
+
     msbutton = document.getElementById("logo") as HTMLButtonElement;
     soundboardList = document.getElementById("soundboardlist") as SoundboardList;
     updateButton = document.getElementById("update-button") as HTMLButtonElement;
@@ -159,9 +161,16 @@ function getElementReferences(): void {
 
 function addElementListeners(): void {
     // TODO: Remove
+    const htmlMessage = `
+        <p>Hold <kbd>CTRL</kbd> to copy.</p>
+        <p>Hold <kbd>Shift</kbd> to group.</p>
+        <p>Try dragging it to <i>add_multiple</i></p>
+        `;
+
     document.getElementById("btn-test")?.addEventListener("click", () => {
-        MessageQueue.addMessage(new MessageQueue.Message(Date.now().toString(), 2000));
+        MessageQueue.pushMessage(new Message(htmlMessage, 0));
     });
+    // End todo
 
     addEventListener("keyup", (ev) => {
         if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);

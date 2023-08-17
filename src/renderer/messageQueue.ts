@@ -1,41 +1,50 @@
+import { Message } from "../shared/models";
 import Queue from "../shared/models/queue";
 
-export class Message {
-    public constructor(
-        public content: string,
-        public delay = 5000,) { }
+type MessageHost = {
+    addMessage: (message: Message) => void,
+    removeMessage: (message: Message) => void,
 }
 
 const messages = new Queue<Message>();
-let host: HTMLElement | undefined = undefined;
-let isWaiting = false;
+let host: MessageHost | undefined = undefined;
+let currentMessage: Message | null = null;
 
-export function setHost(element: HTMLElement): void {
-    host = element;
+export function setHost(messageHost: MessageHost): void {
+    host = messageHost;
 }
 
-export function addMessage(message: Message): void {
+export function pushMessage(message: Message): void {
     messages.enqueue(message);
+    message.onClose.addHandler(() => {
+        hideMessage(message);
+        check();
+    });
     check();
 }
 
 function check(): void {
-    if (!messages.isEmpty && !isWaiting) {
+    if (currentMessage === null && !messages.isEmpty) {
         const m = messages.dequeue();
-        isWaiting = true;
-        const element = showMessage(m);
-        setTimeout(() => {
-            isWaiting = false;
-            element.remove();
-            check();
-        }, m.delay);
+        showMessage(m);
     }
 }
 
-function showMessage(message: Message): HTMLElement {
-    const baseElement = document.createElement("p");
-    baseElement.innerHTML = message.content;
+function showMessage(message: Message): void {
+    throwIfHostNull(host);
+    currentMessage = message;
+    if (message.delay > 0) {
+        setTimeout(() => message.fireClose(), message.delay);
+    }
+    host.addMessage(message);
+}
+
+function hideMessage(message: Message): void {
+    throwIfHostNull(host);
+    currentMessage = null;
+    host.removeMessage(message);
+}
+
+function throwIfHostNull(host: MessageHost | undefined): asserts host is MessageHost {
     if (!host) throw "Message queue host element was not defined.";
-    host.append(baseElement);
-    return baseElement;
 }

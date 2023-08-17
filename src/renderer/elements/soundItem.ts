@@ -39,6 +39,12 @@ export default class SoundItem extends Draggable {
         }
     }
 
+    public setSoundDragTag(soundboardName: string, mode: "move" | "copy"): void {
+        const icon = soundboardName ? (mode === "copy" ? "add" : "move") : null;
+        const prefix = soundboardName ? (mode === "copy" ? "Copy to " : "Move to ") : "";
+        super.setDragTag(prefix + soundboardName, icon);
+    }
+
     update(): void {
         this.titleElement.innerHTML = this.sound.name;
         this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);

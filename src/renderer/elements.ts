@@ -14,6 +14,7 @@ import Tooltip from "./elements/tooltip";
 import SearchBox from "./elements/searchBox";
 import IconButton from "./elements/iconButton";
 import Seekbar from "./elements/seekbar";
+import MessageHost from "./elements/messageHost";
 
 export {
     KeyRecorder,
@@ -32,21 +33,29 @@ export {
     SearchBox,
     IconButton,
     Seekbar,
+    MessageHost,
 };
 
-customElements.define("ms-dropdown", Dropdown);
-customElements.define("ms-fileselector", FileSelector);
-customElements.define("ms-iconbutton", IconButton);
-customElements.define("ms-infoballoon", InfoBalloon);
-customElements.define("ms-keyrecorder", KeyRecorder);
-customElements.define("ms-searchbox", SearchBox);
-customElements.define("ms-slider", Slider);
-customElements.define("ms-soundboard", SoundboardItem);
-customElements.define("ms-soundboardlist", SoundboardList);
-customElements.define("ms-sound", SoundItem);
-customElements.define("ms-soundlist", SoundList);
-customElements.define("ms-textfield", TextField);
-customElements.define("ms-titlebar", Titlebar);
-customElements.define("ms-toggler", Toggler);
-customElements.define("ms-tooltip", Tooltip);
-customElements.define("ms-seekbar", Seekbar);
+const definitions: [string, CustomElementConstructor][] = [
+    ["ms-dropdown", Dropdown],
+    ["ms-fileselector", FileSelector],
+    ["ms-iconbutton", IconButton],
+    ["ms-infoballoon", InfoBalloon],
+    ["ms-keyrecorder", KeyRecorder],
+    ["ms-searchbox", SearchBox],
+    ["ms-slider", Slider],
+    ["ms-soundboard", SoundboardItem],
+    ["ms-soundboardlist", SoundboardList],
+    ["ms-sound", SoundItem],
+    ["ms-soundlist", SoundList],
+    ["ms-textfield", TextField],
+    ["ms-titlebar", Titlebar],
+    ["ms-toggler", Toggler],
+    ["ms-tooltip", Tooltip],
+    ["ms-seekbar", Seekbar],
+    ["ms-message-host", MessageHost],
+];
+
+for (const d of definitions) {
+    customElements.define(d[0], d[1]);
+}

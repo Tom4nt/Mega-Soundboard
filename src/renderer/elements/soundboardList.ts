@@ -52,6 +52,13 @@ export default class SoundboardList extends HTMLElement {
                 }
                 else if (d instanceof SoundItem && d.sound.soundboardUuid) {
                     const elem = this.getSoundboardElement(d.sound.soundboardUuid);
+                    // TODO: Temp
+                    const sbItem = this.getItemAtPosition(e.clientY, e.clientX);
+                    if (sbItem && elem)
+                        d.setSoundDragTag(Soundboard.equals(elem.soundboard, sbItem.soundboard) ?
+                            "" : sbItem.soundboard.name, "move"
+                        );
+                    // End todo
                     if (elem?.soundboard.linkedFolder === null)
                         this.selectMouseHoverItem(e, true);
                 }

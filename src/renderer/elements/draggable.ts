@@ -3,13 +3,18 @@ import { Point } from "../../shared/interfaces";
 
 const START_DIST = 5;
 
+type TagIcon = "move" | "add" | null;
+
 export default abstract class Draggable extends HTMLElement {
     static get currentElement(): Draggable | null { return Draggable._currentElement; }
-    private static _currentElement: Draggable | null = null;
+    private static _currentElement: Draggable | null = null; // TODO: Bad
 
     lockVertical = false;
     lockHorizontal = false;
     allowDrag = true;
+
+    private tagText = "";
+    private tagIcon: TagIcon = null;
 
     private _onDragEnd = new Event<void>;
     get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
@@ -21,7 +26,7 @@ export default abstract class Draggable extends HTMLElement {
     private isDragging = false;
     private initialPos: Point = { x: 0, y: 0 };
     private offset: Point | null = null;
-    private currentDragTag: HTMLElement | null = null;
+    private currentDragTag: HTMLDivElement | null = null;
 
     constructor() {
         super();
@@ -55,19 +60,39 @@ export default abstract class Draggable extends HTMLElement {
         });
     }
 
-    private static getDragTag(): HTMLElement {
+    protected setDragTag(text: string, icon: TagIcon): void {
+        this.tagText = text;
+        this.tagIcon = icon;
+        if (this.currentDragTag) this.populateDragTag(this.currentDragTag);
+    }
+
+    private getDragTag(): HTMLDivElement {
         const elem = document.createElement("div");
         elem.className = "drag-tag";
-
-        const textSpan = document.createElement("span");
-        textSpan.innerText = "Move to {soundboardName}"; // TODO
-
-        const iconSpan = document.createElement("span");
-        iconSpan.className = "icon";
-        iconSpan.innerText = "move";
-
-        elem.append(iconSpan, textSpan);
+        this.populateDragTag(elem);
         return elem;
+    }
+
+    private populateDragTag(root: HTMLDivElement): void {
+        root.innerHTML = ""; // Clear all children
+        let hasAny = false;
+
+        if (this.tagIcon) {
+            const iconSpan = document.createElement("span");
+            iconSpan.className = "icon";
+            iconSpan.innerText = this.tagIcon;
+            root.append(iconSpan);
+            hasAny = true;
+        }
+
+        if (this.tagText) {
+            const textSpan = document.createElement("span");
+            textSpan.innerText = this.tagText;
+            root.append(textSpan);
+            hasAny = true;
+        }
+
+        root.style.display = hasAny ? "" : "none";
     }
 
     private move(pos: Point, offset: Point, tagVerticalOffset: number): void {
@@ -96,7 +121,7 @@ export default abstract class Draggable extends HTMLElement {
         this.style.pointerEvents = "none";
         this.style.zIndex = "1";
 
-        this.currentDragTag = Draggable.getDragTag();
+        this.currentDragTag = this.getDragTag();
         this.parentElement?.append(this.currentDragTag);
 
         this.classList.add(this.classDuringDrag);

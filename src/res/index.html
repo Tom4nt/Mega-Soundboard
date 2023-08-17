@@ -80,16 +80,18 @@
 
         <div id="tooltip-layer"></div>
 
-        <!-- TODO -->
-        <div class="message-host">
-            <div class="message">
+        <!-- Message host -->
+        <ms-message-host id="message-host"></ms-message-host>
+
+        <template id="message">
+            <div class="message hidden">
                 <div class="message-wrapper">
                     <div class="message-content">Message test long message</div>
-                    <button>close</button>
+                    <button class="message-close-button">close</button>
                 </div>
                 <div class="message-bar"></div>
             </div>
-        </div>
+        </template>
     </div>
 </body>
 
