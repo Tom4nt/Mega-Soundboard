@@ -7,7 +7,7 @@ type TagIcon = "move" | "add" | null;
 
 export default abstract class Draggable extends HTMLElement {
     static get currentElement(): Draggable | null { return Draggable._currentElement; }
-    private static _currentElement: Draggable | null = null; // TODO: Bad
+    private static _currentElement: Draggable | null = null;
 
     lockVertical = false;
     lockHorizontal = false;
@@ -60,7 +60,7 @@ export default abstract class Draggable extends HTMLElement {
         });
     }
 
-    protected setDragTag(text: string, icon: TagIcon): void {
+    setDragTag(text: string, icon: TagIcon): void {
         this.tagText = text;
         this.tagIcon = icon;
         if (this.currentDragTag) this.populateDragTag(this.currentDragTag);
@@ -95,7 +95,7 @@ export default abstract class Draggable extends HTMLElement {
         root.style.display = hasAny ? "" : "none";
     }
 
-    private move(pos: Point, offset: Point, tagVerticalOffset: number): void {
+    protected move(pos: Point, offset: Point, tagVerticalOffset: number): void {
         if (!this.lockHorizontal) this.style.left = `${pos.x - offset.x}px`;
         if (!this.lockVertical) this.style.top = `${pos.y - offset.y}px`;
 
@@ -138,7 +138,6 @@ export default abstract class Draggable extends HTMLElement {
         this.style.left = "";
 
         this.currentDragTag?.remove();
-
         this.classList.remove(this.classDuringDrag);
     }
 

@@ -1,6 +1,6 @@
 import Keys from "../../shared/keys";
 import { Sound, Soundboard } from "../../shared/models";
-import { Tooltip } from "../elements";
+import { SoundItem, Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
 import GlobalEvents from "../util/globalEvents";
@@ -76,7 +76,29 @@ export default class SoundboardItem extends Draggable {
             if (!this.isSelected) this.select();
         });
 
+        this.addEventListener("mousemove", () => {
+            // TODO: Test
+            const isLinked = this.soundboard.linkedFolder !== null;
+            if (Draggable.currentElement && !isLinked) {
+                const d = Draggable.currentElement;
+                if (!(d instanceof SoundItem)) return;
+                d.setSoundDragTag(this.soundboard.name, "move");
+                this.safeSelect(true);
+            }
+        });
+
+        this.addEventListener("dragover", e => {
+            e.preventDefault();
+            this.safeSelect(true);
+        });
+
         this.addGlobalListeners();
+    }
+
+    private safeSelect(ignoreLinked: boolean): void {
+        const isLinked = this.soundboard.linkedFolder !== null;
+        if (!this.isSelected && (!ignoreLinked || !isLinked))
+            this.select();
     }
 
     private addGlobalListeners(): void {

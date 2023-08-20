@@ -15,6 +15,7 @@ import SearchBox from "./elements/searchBox";
 import IconButton from "./elements/iconButton";
 import Seekbar from "./elements/seekbar";
 import MessageHost from "./elements/messageHost";
+import Draggable from "./elements/draggable";
 
 export {
     KeyRecorder,
@@ -34,6 +35,7 @@ export {
     IconButton,
     Seekbar,
     MessageHost,
+    Draggable,
 };
 
 const definitions: [string, CustomElementConstructor][] = [

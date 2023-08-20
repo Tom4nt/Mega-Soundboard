@@ -1,4 +1,4 @@
-import { SoundboardItem, SoundItem } from "../elements";
+import { SoundboardItem } from "../elements";
 import { Soundboard } from "../../shared/models";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
@@ -39,35 +39,14 @@ export default class SoundboardList extends HTMLElement {
         });
 
         document.addEventListener("mousemove", e => {
-            if (Draggable.currentElement) {
+            if (Draggable.currentElement instanceof SoundboardItem) {
                 const d = Draggable.currentElement;
-                if (d instanceof SoundboardItem) {
-                    if (!this.dragElement) {
-                        this.showDragDummy();
-                        this.dragElement = d;
-                        this.handleDragOver(e.clientY);
-                    } else {
-                        this.handleDragOver(e.clientY);
-                    }
+                if (!this.dragElement) {
+                    this.showDragDummy();
+                    this.dragElement = d;
                 }
-                else if (d instanceof SoundItem && d.sound.soundboardUuid) {
-                    const elem = this.getSoundboardElement(d.sound.soundboardUuid);
-                    // TODO: Temp
-                    const sbItem = this.getItemAtPosition(e.clientY, e.clientX);
-                    if (sbItem && elem)
-                        d.setSoundDragTag(Soundboard.equals(elem.soundboard, sbItem.soundboard) ?
-                            "" : sbItem.soundboard.name, "move"
-                        );
-                    // End todo
-                    if (elem?.soundboard.linkedFolder === null)
-                        this.selectMouseHoverItem(e, true);
-                }
+                this.handleDragOver(e.clientY);
             }
-        });
-
-        this.addEventListener("dragover", e => {
-            e.preventDefault();
-            this.selectMouseHoverItem(e, true);
         });
     }
 
@@ -104,14 +83,6 @@ export default class SoundboardList extends HTMLElement {
                 this.selectedItem = item;
             }
         }
-    }
-
-    private selectMouseHoverItem(e: MouseEvent, ignoreLinked: boolean): void {
-        const target = this.getItemAtPosition(e.clientY, e.clientX);
-        if (!target) return;
-        const isLinked = target.soundboard.linkedFolder !== null;
-        if (!target.isSelected && (!ignoreLinked || !isLinked))
-            target.select();
     }
 
     private unselectAll(): void {
@@ -158,18 +129,12 @@ export default class SoundboardList extends HTMLElement {
 
     private handleDragOver = (yPos: number): void => {
         const target = this.getItemAtPosition(yPos);
-        if (!target) return;
+        if (!target || !this.dragElement) return;
 
-        if (this.dragElement) {
-            if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
-                this.insertBefore(this.dragDummy, target);
-            } else {
-                this.insertBefore(this.dragDummy, target.nextElementSibling);
-            }
+        if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
+            this.insertBefore(this.dragDummy, target);
         } else {
-            const curr = this.getSelectedSoundboard();
-            if (!curr || !Soundboard.equals(target.soundboard, curr))
-                window.actions.setCurrentSoundboard(target.soundboard.uuid);
+            this.insertBefore(this.dragDummy, target.nextElementSibling);
         }
     };
 
