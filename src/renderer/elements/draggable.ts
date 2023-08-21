@@ -3,7 +3,7 @@ import { Point } from "../../shared/interfaces";
 
 const START_DIST = 5;
 
-type TagIcon = "move" | "add" | null;
+type HintIcon = "move" | "add" | null;
 
 export default abstract class Draggable extends HTMLElement {
     static get currentElement(): Draggable | null { return Draggable._currentElement; }
@@ -13,11 +13,14 @@ export default abstract class Draggable extends HTMLElement {
     lockHorizontal = false;
     allowDrag = true;
 
-    private tagText = "";
-    private tagIcon: TagIcon = null;
-
+    private hintText = "";
+    private hintIcon: HintIcon = null;
     private _onDragEnd = new Event<void>;
+    private _onDragStart = new Event<void>;
+
+    get onDragStart(): ExposedEvent<void> { return this._onDragStart.expose(); }
     get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
+    get isBeingDragged(): boolean { return this.isDragging; }
 
     /** CSS class to add to the Element while it's being dragged. */
     protected abstract get classDuringDrag(): string;
@@ -26,7 +29,7 @@ export default abstract class Draggable extends HTMLElement {
     private isDragging = false;
     private initialPos: Point = { x: 0, y: 0 };
     private offset: Point | null = null;
-    private currentDragTag: HTMLDivElement | null = null;
+    private currentDragHint: HTMLDivElement | null = null;
 
     constructor() {
         super();
@@ -46,7 +49,10 @@ export default abstract class Draggable extends HTMLElement {
                 return;
             }
             if (this.isMouseDownOnThis && Draggable._currentElement) {
-                if (!this.isDragging) this.sartDrag();
+                if (!this.isDragging) {
+                    this.sartDrag();
+                    this._onDragStart.raise();
+                }
                 if (this.offset) this.move(p, this.offset, this.offsetHeight);
             }
         });
@@ -60,48 +66,45 @@ export default abstract class Draggable extends HTMLElement {
         });
     }
 
-    setDragTag(text: string, icon: TagIcon): void {
-        this.tagText = text;
-        this.tagIcon = icon;
-        if (this.currentDragTag) this.populateDragTag(this.currentDragTag);
+    setDragHint(text?: string, icon?: HintIcon): void {
+        if (text !== undefined) this.hintText = text;
+        if (icon !== undefined) this.hintIcon = icon;
+        if (this.currentDragHint) this.populateDragHint(this.currentDragHint);
     }
 
-    private getDragTag(): HTMLDivElement {
+    private getDragHint(): HTMLDivElement {
         const elem = document.createElement("div");
-        elem.className = "drag-tag";
-        this.populateDragTag(elem);
+        elem.className = "drag-hint";
+        this.populateDragHint(elem);
         return elem;
     }
 
-    private populateDragTag(root: HTMLDivElement): void {
+    private populateDragHint(root: HTMLDivElement): void {
         root.innerHTML = ""; // Clear all children
-        let hasAny = false;
 
-        if (this.tagIcon) {
+        if (this.hintIcon) {
             const iconSpan = document.createElement("span");
             iconSpan.className = "icon";
-            iconSpan.innerText = this.tagIcon;
+            iconSpan.innerText = this.hintIcon;
             root.append(iconSpan);
-            hasAny = true;
         }
 
-        if (this.tagText) {
+        if (this.hintText) {
             const textSpan = document.createElement("span");
-            textSpan.innerText = this.tagText;
+            textSpan.innerText = this.hintText;
             root.append(textSpan);
-            hasAny = true;
         }
 
-        root.style.display = hasAny ? "" : "none";
+        root.style.display = this.hintText ? "" : "none";
     }
 
-    protected move(pos: Point, offset: Point, tagVerticalOffset: number): void {
+    protected move(pos: Point, offset: Point, hintVerticalOffset: number): void {
         if (!this.lockHorizontal) this.style.left = `${pos.x - offset.x}px`;
         if (!this.lockVertical) this.style.top = `${pos.y - offset.y}px`;
 
-        if (this.currentDragTag) {
-            this.currentDragTag.style.left = `${pos.x}px`;
-            this.currentDragTag.style.top = `${pos.y - offset.y + tagVerticalOffset}px`;
+        if (this.currentDragHint) {
+            this.currentDragHint.style.left = `${pos.x}px`;
+            this.currentDragHint.style.top = `${pos.y - offset.y + hintVerticalOffset}px`;
         }
     }
 
@@ -121,8 +124,8 @@ export default abstract class Draggable extends HTMLElement {
         this.style.pointerEvents = "none";
         this.style.zIndex = "1";
 
-        this.currentDragTag = this.getDragTag();
-        this.parentElement?.append(this.currentDragTag);
+        this.currentDragHint = this.getDragHint();
+        this.parentElement?.append(this.currentDragHint);
 
         this.classList.add(this.classDuringDrag);
     }
@@ -137,7 +140,7 @@ export default abstract class Draggable extends HTMLElement {
         this.style.top = "";
         this.style.left = "";
 
-        this.currentDragTag?.remove();
+        this.currentDragHint?.remove();
         this.classList.remove(this.classDuringDrag);
     }
 

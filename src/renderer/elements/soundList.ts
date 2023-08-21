@@ -59,10 +59,8 @@ export default class SoundList extends HTMLElement {
                 if (!this.dragElement) {
                     this.showDragDummy();
                     this.dragElement = Draggable.currentElement;
-                    this.handleDragOver(e);
-                } else {
-                    this.handleDragOver(e);
                 }
+                this.handleDragOver(e);
             }
         });
 

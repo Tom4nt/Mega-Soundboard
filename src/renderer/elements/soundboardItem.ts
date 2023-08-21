@@ -82,7 +82,7 @@ export default class SoundboardItem extends Draggable {
             if (Draggable.currentElement && !isLinked) {
                 const d = Draggable.currentElement;
                 if (!(d instanceof SoundItem)) return;
-                d.setSoundDragTag(this.soundboard.name, "move");
+                d.setHintSoundboard({ uuid: this.soundboard.uuid, name: this.soundboard.name });
                 this.safeSelect(true);
             }
         });

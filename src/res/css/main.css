@@ -114,7 +114,7 @@ kbd {
     font-size: 18px;
 }
 
-.drag-tag {
+.drag-hint {
     font-size: 12px;
     background-color: #1B5E20;
     color: white;
@@ -126,7 +126,7 @@ kbd {
     white-space: nowrap;
 }
 
-.drag-tag .icon {
+.drag-hint .icon {
     font-family: 'MSIcons';
     margin-right: 4px;
     font-size: 14px;

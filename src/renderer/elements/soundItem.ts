@@ -8,11 +8,17 @@ import Utils from "../util/utils";
 import Actions from "../util/actions";
 import { SoundChangedArgs } from "../../shared/interfaces";
 import GlobalEvents from "../util/globalEvents";
+import KeyStateListener from "../util/keyStateListener";
+
+type SimpleSoundboard = { uuid: string, name: string };
 
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
+    private currentHintSoundboard: SimpleSoundboard | null = null;
+    private currentHintMode: "move" | "add" = "move";
+    private currentKeyStateListener: KeyStateListener | null = null;
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
@@ -24,12 +30,12 @@ export default class SoundItem extends Draggable {
         this.init();
     }
 
-    updatePlayingState(): void {
+    public updatePlayingState(): void {
         const isPlaying = MSR.instance.audioManager.isSoundPlaying(this.sound.uuid);
         this.setPlayingState(isPlaying);
     }
 
-    setPlayingState(playingState: boolean): void {
+    public setPlayingState(playingState: boolean): void {
         if (playingState) {
             this.indicatorElement.style.top = "-11px";
             this.indicatorElement.style.right = "-11px";
@@ -39,19 +45,18 @@ export default class SoundItem extends Draggable {
         }
     }
 
-    public setSoundDragTag(soundboardName: string, mode: "move" | "copy"): void {
-        const icon = soundboardName ? (mode === "copy" ? "add" : "move") : null;
-        const prefix = soundboardName ? (mode === "copy" ? "Copy to " : "Move to ") : "";
-        super.setDragTag(prefix + soundboardName, icon);
+    public setHintSoundboard(soundboard: SimpleSoundboard): void {
+        this.currentHintSoundboard = soundboard;
+        this.updateDragHint();
     }
 
-    update(): void {
+    public update(): void {
         this.titleElement.innerHTML = this.sound.name;
         this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);
         this.updatePlayingState();
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.removeGlobalListeners();
         this.remove();
     }
@@ -99,6 +104,19 @@ export default class SoundItem extends Draggable {
             MSR.instance.audioManager.stopSound(this.sound.uuid);
         });
 
+        this.onDragStart.addHandler(() => {
+            this.currentKeyStateListener = new KeyStateListener();
+            this.currentKeyStateListener.onStateChanged.addHandler(s => {
+                this.currentHintMode = s.isCtrlPressed ? "add" : "move";
+                this.updateDragHint();
+            });
+        });
+
+        this.onDragEnd.addHandler(() => {
+            this.currentKeyStateListener?.finish();
+            this.currentKeyStateListener = null;
+        });
+
         this.addGlobalListeners();
     }
 
@@ -114,6 +132,16 @@ export default class SoundItem extends Draggable {
         MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
         GlobalEvents.removeHandler("onSoundChanged", this.handleSoundChanged);
         GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
+    }
+
+    private updateDragHint(): void {
+        const sb = this.currentHintSoundboard;
+        const isSameSB = sb?.uuid === this.sound.soundboardUuid;
+        const sbName = isSameSB ? "" : sb?.name ?? "";
+        const prefix = sbName ?
+            (this.currentHintMode === "add" ? "Copy to " : "Move to ") :
+            (this.currentHintMode === "add" ? "Copy" : "");
+        super.setDragHint(prefix + sbName, this.currentHintMode);
     }
 
     // Handlers
