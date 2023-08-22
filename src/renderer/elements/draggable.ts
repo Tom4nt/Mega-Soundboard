@@ -4,6 +4,7 @@ import { Point } from "../../shared/interfaces";
 const START_DIST = 5;
 
 type HintIcon = "move" | "add" | null;
+type Mode = "move" | "duplicate";
 
 export default abstract class Draggable extends HTMLElement {
     static get currentElement(): Draggable | null { return Draggable._currentElement; }
@@ -15,12 +16,24 @@ export default abstract class Draggable extends HTMLElement {
 
     private hintText = "";
     private hintIcon: HintIcon = null;
+    private dragClone: Draggable | null = null;
+    private _dragMode: Mode = "move";
     private _onDragEnd = new Event<void>;
     private _onDragStart = new Event<void>;
 
     get onDragStart(): ExposedEvent<void> { return this._onDragStart.expose(); }
     get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
     get isBeingDragged(): boolean { return this.isDragging; }
+
+    /** The visual mode of the draggable. Can be set while dragging.
+     * @move The element is invisible in the original parent. It visually moves out of it.
+     * @duplicate The element stays unchanged. A new element is created and behaves as "move".
+     */
+    set dragMode(val: Mode) {
+        if (val === this._dragMode) return;
+        this._dragMode = val;
+        this.switchMode();
+    }
 
     /** CSS class to add to the Element while it's being dragged. */
     protected abstract get classDuringDrag(): string;
@@ -99,8 +112,12 @@ export default abstract class Draggable extends HTMLElement {
     }
 
     protected move(pos: Point, offset: Point, hintVerticalOffset: number): void {
-        if (!this.lockHorizontal) this.style.left = `${pos.x - offset.x}px`;
-        if (!this.lockVertical) this.style.top = `${pos.y - offset.y}px`;
+        const targetMovable = this._dragMode === "move" ? this : this.dragClone;
+
+        if (targetMovable) {
+            if (!this.lockHorizontal) targetMovable.style.left = `${pos.x - offset.x}px`;
+            if (!this.lockVertical) targetMovable.style.top = `${pos.y - offset.y}px`;
+        }
 
         if (this.currentDragHint) {
             this.currentDragHint.style.left = `${pos.x}px`;
@@ -119,29 +136,58 @@ export default abstract class Draggable extends HTMLElement {
     private sartDrag(): void {
         this.isDragging = true;
 
-        this.style.width = `${this.offsetWidth}px`;
-        this.style.position = "fixed";
-        this.style.pointerEvents = "none";
-        this.style.zIndex = "1";
+        if (this._dragMode === "duplicate") {
+            const clone = this.cloneNode(true) as Draggable; // TODO: Does not work because it does not pass the sound to the constructor.
+            this.dragClone = clone;
+        }
+
+        this.addStyles(this._dragMode === "move" ? this : this.dragClone!);
 
         this.currentDragHint = this.getDragHint();
-        this.parentElement?.append(this.currentDragHint);
-
-        this.classList.add(this.classDuringDrag);
+        document.body.append(this.currentDragHint);
     }
 
     private endDrag(): void {
         this.isDragging = false;
 
-        this.style.position = "";
-        this.style.pointerEvents = "";
-        this.style.zIndex = "";
-        this.style.width = "";
-        this.style.top = "";
-        this.style.left = "";
+        if (this._dragMode === "move") {
+            this.resetStyles(this);
+            this.classList.remove(this.classDuringDrag);
+        } else {
+            this.dragClone?.remove();
+            this.dragClone = null;
+        }
 
         this.currentDragHint?.remove();
-        this.classList.remove(this.classDuringDrag);
+    }
+
+    private addStyles(element: HTMLElement): void {
+        element.classList.add(this.classDuringDrag);
+        element.style.width = `${element.offsetWidth}px`;
+        element.style.position = "fixed";
+        element.style.pointerEvents = "none";
+        element.style.zIndex = "1";
+    }
+
+    private resetStyles(element: HTMLElement): void {
+        element.classList.remove(this.classDuringDrag);
+        element.style.position = "";
+        element.style.pointerEvents = "";
+        element.style.zIndex = "";
+        element.style.width = "";
+        element.style.top = "";
+        element.style.left = "";
+    }
+
+    private switchMode(): void {
+        if (this._dragMode === "move") {
+            this.dragClone?.remove();
+            this.addStyles(this);
+        } else {
+            this.resetStyles(this);
+            this.dragClone = this.cloneNode(true) as Draggable;
+            this.addStyles(this.dragClone);
+        }
     }
 
     private static getDistance(p1: Point, p2: Point): number {

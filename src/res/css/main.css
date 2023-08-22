@@ -115,6 +115,7 @@ kbd {
 }
 
 .drag-hint {
+    font-family: 'Roboto';
     font-size: 12px;
     background-color: #1B5E20;
     color: white;
@@ -131,6 +132,22 @@ kbd {
     margin-right: 4px;
     font-size: 14px;
     vertical-align: bottom;
+}
+
+/* ooh, */
+.shiny {
+    position: relative;
+    overflow: hidden;
+}
+
+.shiny:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    transform: skewX(-30deg);
+    animation: shine 3s infinite;
 }
 
 #content {
@@ -445,6 +462,19 @@ kbd {
     100% {
         border-color: var(--color-darkL);
         box-shadow: none
+    }
+}
+
+@keyframes shine {
+    0% {
+        left: -125%;
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    20%,
+    100% {
+        left: 125%;
+        background: rgba(255, 255, 255, 0.1);
     }
 }
 

@@ -108,6 +108,7 @@ export default class SoundItem extends Draggable {
             this.currentKeyStateListener = new KeyStateListener();
             this.currentKeyStateListener.onStateChanged.addHandler(s => {
                 this.currentHintMode = s.isCtrlPressed ? "add" : "move";
+                this.dragMode = s.isCtrlPressed ? "duplicate" : "move";
                 this.updateDragHint();
             });
         });

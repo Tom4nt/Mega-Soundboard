@@ -77,7 +77,6 @@ export default class SoundboardItem extends Draggable {
         });
 
         this.addEventListener("mousemove", () => {
-            // TODO: Test
             const isLinked = this.soundboard.linkedFolder !== null;
             if (Draggable.currentElement && !isLinked) {
                 const d = Draggable.currentElement;

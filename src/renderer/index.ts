@@ -167,6 +167,16 @@ function addElementListeners(): void {
         <p>Try dragging it to <i>add_multiple</i></p>
         `;
 
+    // This prevents scrolling with the middle mouse button.
+    // This is necessary to allow clicking on sounds with the middle mouse button.
+    document.addEventListener("mousedown", e => {
+        if (e.button === 1) {
+            e.preventDefault();
+            return false;
+        }
+        return true;
+    });
+
     document.getElementById("btn-test")?.addEventListener("click", () => {
         MessageQueue.pushMessage(new Message(htmlMessage, 0));
     });
