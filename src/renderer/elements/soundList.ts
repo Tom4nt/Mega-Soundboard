@@ -209,12 +209,10 @@ export default class SoundList extends HTMLElement {
 
     private handleItemDrop = (): void => {
         if (!this.dragElement || !this.currentSoundboardId) return;
-
-        this.containerElement.insertBefore(this.dragElement, this.dragDummyElement.nextElementSibling);
         const newIndex = this.getDragDummyIndex();
-
-        window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
-
+        const copies = this.dragElement.dragMode === "duplicate";
+        // This will reload the list since it is listening to the onSoundboardChanged global event.
+        window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex, copies);
         this.hideDragDummy();
     };
 

@@ -40,21 +40,26 @@ export default class SoundboardsCache {
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    async moveSound(soundId: string, destinationSoundboardId: string, destinationIndex: number): Promise<void> {
-        const found = this.findSound(soundId);
-        const sound = found.soundboard.sounds[found.index];
+    async moveSound(
+        soundId: string, destinationSoundboardId: string, destinationIndex: number, copies: boolean
+    ): Promise<void> {
+        const currentSB = this.findSound(soundId);
+        const sound = currentSB.soundboard.sounds[currentSB.index];
         const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
-        const destSoundboard = this.soundboards[destSoundboardIndex];
-        if (found.soundboard.linkedFolder === null && destSoundboard.linkedFolder !== null)
+        const destinationSB = this.soundboards[destSoundboardIndex];
+        if (currentSB.soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
             throw Error("Cannot move a sound to a linked Soundboard.");
 
-        found.soundboard.sounds.splice(found.index, 1);
-        EventSender.send("onSoundRemoved", sound);
-        EventSender.send("onSoundboardChanged", found.soundboard);
-        destSoundboard.sounds.splice(destinationIndex, 0, sound);
+        if (!copies) {
+            currentSB.soundboard.sounds.splice(currentSB.index, 1);
+            EventSender.send("onSoundRemoved", sound);
+            if (!Soundboard.equals(currentSB.soundboard, destinationSB))
+                EventSender.send("onSoundboardChanged", currentSB.soundboard);
+        }
+        destinationSB.sounds.splice(destinationIndex, 0, sound);
         sound.soundboardUuid = destinationSoundboardId;
         EventSender.send("onSoundAdded", { sound: sound, index: destinationIndex });
-        EventSender.send("onSoundboardChanged", destSoundboard);
+        EventSender.send("onSoundboardChanged", destinationSB);
 
         await DataAccess.saveSoundboards(this.soundboards);
     }

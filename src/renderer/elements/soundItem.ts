@@ -61,6 +61,11 @@ export default class SoundItem extends Draggable {
         this.remove();
     }
 
+    public clone(): SoundItem {
+        const newItem = new SoundItem(this.sound);
+        return newItem;
+    }
+
     private init(): void {
         this.classList.add("item");
 

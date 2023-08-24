@@ -32,8 +32,9 @@ export default abstract class Draggable extends HTMLElement {
     set dragMode(val: Mode) {
         if (val === this._dragMode) return;
         this._dragMode = val;
-        this.switchMode();
+        // this.switchMode(); // TODO
     }
+    get dragMode(): Mode { return this._dragMode; }
 
     /** CSS class to add to the Element while it's being dragged. */
     protected abstract get classDuringDrag(): string;
@@ -125,6 +126,8 @@ export default abstract class Draggable extends HTMLElement {
         }
     }
 
+    protected abstract clone(): Draggable;
+
     private updateOffset(): void {
         const rect = this.getBoundingClientRect();
         this.offset = {
@@ -137,8 +140,9 @@ export default abstract class Draggable extends HTMLElement {
         this.isDragging = true;
 
         if (this._dragMode === "duplicate") {
-            const clone = this.cloneNode(true) as Draggable; // TODO: Does not work because it does not pass the sound to the constructor.
+            const clone = this.clone();
             this.dragClone = clone;
+            document.body.append(this.dragClone);
         }
 
         this.addStyles(this._dragMode === "move" ? this : this.dragClone!);
@@ -182,10 +186,12 @@ export default abstract class Draggable extends HTMLElement {
     private switchMode(): void {
         if (this._dragMode === "move") {
             this.dragClone?.remove();
+            this.dragClone = null;
             this.addStyles(this);
         } else {
             this.resetStyles(this);
-            this.dragClone = this.cloneNode(true) as Draggable;
+            this.dragClone = this.clone();
+            document.body.append(this.dragClone);
             this.addStyles(this.dragClone);
         }
     }

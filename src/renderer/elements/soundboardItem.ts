@@ -27,9 +27,14 @@ export default class SoundboardItem extends Draggable {
         this.init();
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.removeGlobalListeners();
         this.remove();
+    }
+
+    protected clone(): Draggable {
+        const newItem = new SoundboardItem(this.soundboard);
+        return newItem;
     }
 
     private init(): void {
