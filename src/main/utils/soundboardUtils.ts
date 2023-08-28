@@ -17,7 +17,7 @@ export default class SoundboardUtils {
 
         // Loop through files and add unexisting sounds
         for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+            const file = files[i]!;
             const soundPath = path.join(soundboard.linkedFolder, file);
             if (SoundUtils.isValidSoundFile(soundPath)) {
                 const soundWithPath = Soundboard.getSoundWithPath(soundboard, soundPath);
@@ -33,7 +33,7 @@ export default class SoundboardUtils {
         // Loop through existing sounds and remove those without a file
         if (soundboard.sounds.length > 0) {
             for (let i = soundboard.sounds.length - 1; i >= 0; i--) {
-                const sound = soundboard.sounds[i];
+                const sound = soundboard.sounds[i]!;
                 const contains = Utils.folderContains(soundboard.linkedFolder, files, sound.path);
                 if (!contains) soundboard.sounds.splice(i, 1);
             }

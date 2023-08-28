@@ -170,7 +170,7 @@ export default class AudioManager {
 
     private raiseSingleSoundCheckUpdate(): void {
         if (this.playingSounds.length == 1) {
-            this._onSingleSoundChanged.raise(this.playingSounds[0]);
+            this._onSingleSoundChanged.raise(this.playingSounds[0]!);
         } else {
             this._onSingleSoundChanged.raise(null);
         }

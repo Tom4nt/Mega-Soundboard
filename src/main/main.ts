@@ -25,8 +25,7 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
     app.exit(0);
 } else {
-    app.on("second-instance", (_e, args) => {
-        console.log(args[args.length - 1].toString());
+    app.on("second-instance", () => {
         windowManager?.mainWindow.show();
         windowManager?.mainWindow.focus();
     });
@@ -62,7 +61,7 @@ async function init(): Promise<void> {
     const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
 
     new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
-    await MS.instance.setCurrentSoundboard(soundboardsCache.soundboards[settingsCache.settings.selectedSoundboard]);
+    await selectInitialSoundboard(soundboardsCache, settingsCache.settings.selectedSoundboard);
 
     windowManager.loadingWindow.close();
     await windowManager.showMainWindow(() => new InitialContent(
@@ -70,6 +69,12 @@ async function init(): Promise<void> {
         soundboardsCache.soundboards,
         settingsCache.shouldShowChangelog()
     ));
+}
+
+async function selectInitialSoundboard(soundboardsCache: SoundboardsCache, selectedIndex: number): Promise<void> {
+    let soundboard = soundboardsCache.soundboards[selectedIndex];
+    if (!soundboard) soundboard = soundboardsCache.soundboards[0]!;
+    await MS.instance.setCurrentSoundboard(soundboard);
 }
 
 app.on("before-quit", () => {

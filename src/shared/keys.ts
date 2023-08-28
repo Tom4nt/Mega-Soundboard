@@ -152,17 +152,20 @@ const keycodes: KeyMap = {
 
 export default class Keys {
     static getKeyName(keyCode: number): string {
-        return keycodes[keyCode];
+        const keyName = keycodes[keyCode];
+        if (!keyName) return "?";
+        return keyName;
     }
 
     static toKeyString(keyarray: number[]): string {
         let keysstring = "";
         if (keyarray.length > 0) {
             for (let i = 0; i < keyarray.length; i++) {
+                const keyName = this.getKeyName(keyarray[i]!);
                 if (i < keyarray.length - 1) {
-                    keysstring = keysstring.concat(keycodes[keyarray[i]] + " + ");
+                    keysstring = keysstring.concat(keyName + " + ");
                 } else
-                    keysstring = keysstring.concat(keycodes[keyarray[i]]);
+                    keysstring = keysstring.concat(keyName);
             }
         } else {
             keysstring = "No Keybind";
@@ -173,8 +176,8 @@ export default class Keys {
     static toKeyStringArray(keyarray: number[]): string[] {
         const keyArray = [];
         for (let i = 0; i < keyarray.length; i++) {
-            const key = keyarray[i];
-            keyArray.push(keycodes[key]);
+            const key = this.getKeyName(keyarray[i]!);
+            keyArray.push(key);
         }
         return keyArray;
     }

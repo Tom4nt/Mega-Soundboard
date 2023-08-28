@@ -11,14 +11,14 @@ export default class Queue<T> {
     }
 
     dequeue(): T {
-        const item = this.elements[this.head];
+        const item = this.elements[this.head]!;
         delete this.elements[this.head];
         this.head++;
         return item;
     }
 
     peek(): T {
-        return this.elements[this.head];
+        return this.elements[this.head]!;
     }
 
     get length(): number {

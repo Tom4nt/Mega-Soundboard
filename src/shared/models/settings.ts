@@ -1,6 +1,6 @@
 import { Optional } from "../interfaces";
 import Keys from "../keys";
-import { ActionName, actions } from "../quickActions";
+import { ActionName } from "../quickActions";
 
 export type OptionalSettings = Optional<Settings>;
 
@@ -26,20 +26,12 @@ export default class Settings {
 
     /** Utility function to get the state of a specific action as stored in the Settings. */
     static getActionState(settings: Settings, name: ActionName): boolean {
-        if (Object.keys(settings.quickActionStates).includes(name)) {
-            return settings.quickActionStates[name];
-        } else {
-            return actions[name].default ?? false;
-        }
+        return settings.quickActionStates[name] ?? false;
     }
 
     /** Utility function to get the keybind of a specific action as stored in the Settings. */
     static getActionKeys(settings: Settings, name: ActionName): number[] {
-        if (Object.keys(settings.quickActionKeys).includes(name)) {
-            return settings.quickActionKeys[name];
-        } else {
-            return [];
-        }
+        return settings.quickActionKeys[name] ?? [];
     }
 }
 
@@ -70,8 +62,8 @@ function migrateQuickSettingsStates(data: { [key: string]: unknown }): { [name: 
     const actionNames: ActionName[] = ["toggleKeybinds", "toggleSoundOverlap"];
 
     for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const actionName = actionNames[i];
+        const key = keys[i]!;
+        const actionName = actionNames[i]!;
         if (typeof data[key] === "boolean")
             res[actionName] = data[key] as boolean;
     }
@@ -86,8 +78,8 @@ function migrateQuickSettingsKeys(data: { [key: string]: unknown }): { [name: st
     const actionNames: ActionName[] = ["toggleKeybinds", "stopSounds", "playRandomSound"];
 
     for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const actionName = actionNames[i];
+        const key = keys[i]!;
+        const actionName = actionNames[i]!;
         if (Keys.isKeys(data[key]))
             res[actionName] = data[key] as number[];
     }

@@ -115,6 +115,7 @@ const implementer: Actions = {
         void (async (): Promise<void> => {
             const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
             const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
+            if (!selected) throw new Error("Cannot move: Current selected soundboard index is out of bounds.");
             await MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
             await MS.instance.setCurrentSoundboard(selected);
         })();
@@ -123,11 +124,16 @@ const implementer: Actions = {
     deleteSoundboard(soundboardId) {
         void (async (): Promise<void> => {
             const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
-            const selectedUuid = MS.instance.soundboardsCache.soundboards[selectedIndex].uuid;
+            const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
+            if (!selected) throw new Error("Cannot delete: Current selected soundboard index is out of bounds.");
             await MS.instance.soundboardsCache.removeSoundboard(soundboardId);
-            if (soundboardId === selectedUuid)
-                await MS.instance.setCurrentSoundboard(MS.instance.soundboardsCache.soundboards[0]);
-        });
+            if (soundboardId === selected.uuid)
+                await MS.instance.setCurrentSoundboard(MS.instance.soundboardsCache.soundboards[0]!);
+            else { // Update the index because it might have changed after removing a soundboard.
+                const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
+                MS.instance.settingsCache.settings.selectedSoundboard = index;
+            }
+        })();
     },
 
     editSoundboard(soundboard) {
@@ -136,7 +142,7 @@ const implementer: Actions = {
 
     setCurrentSoundboard(id) {
         const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(id);
-        const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex];
+        const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex]!;
         void MS.instance.setCurrentSoundboard(soundboard);
     },
 

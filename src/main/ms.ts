@@ -45,7 +45,7 @@ export default class MS {
             if (keybindsEnabled) {
                 for (const k in s.quickActionKeys) {
                     const keybind = s.quickActionKeys[k];
-                    if (Keys.equals(kb, keybind) && isAction(k)) {
+                    if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
                         void actionBindings[k](k as never);
                     }
                 }
@@ -83,7 +83,8 @@ export default class MS {
 
         watcher.onSoundAdded.addHandler(p => {
             const sound = SoundUtils.getNewSoundsFromPaths([p])[0];
-            void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
+            if (sound)
+                void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
         });
 
         watcher.onSoundRemoved.addHandler(p => {

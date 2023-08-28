@@ -92,8 +92,10 @@ async function init(): Promise<void> {
     }
 
     const sb = soundboards[content.settings.selectedSoundboard];
-    soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
-    soundboardList.selectSoundboard(sb);
+    if (sb) {
+        soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
+        soundboardList.selectSoundboard(sb);
+    }
 
     MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
         seekbar.currentInstance = audioInst;

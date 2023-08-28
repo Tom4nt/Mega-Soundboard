@@ -28,7 +28,7 @@ export default class Dropdown extends HTMLElement {
 
     get selectedItem(): DropDownItem | null {
         if (!this.selectedIndex) return null;
-        return this.options[this.selectedIndex];
+        return this.options[this.selectedIndex] ?? null;
     }
 
     protected connectedCallback(): void {
@@ -68,8 +68,11 @@ export default class Dropdown extends HTMLElement {
             option.classList.remove("selected");
         });
         if (index === null) return;
-        this.options[index].classList.add("selected");
-        if (this.isConnected) this.textElement.innerHTML = this.options[index].innerHTML;
+        const opt = this.options[index];
+        if (opt) {
+            opt.classList.add("selected");
+            if (this.isConnected) this.textElement.innerHTML = opt.innerHTML;
+        }
     }
 
     findItem(predicate: (item: DropDownItem) => boolean): DropDownItem | undefined {
@@ -106,8 +109,10 @@ export default class Dropdown extends HTMLElement {
 
     removeItem(index: number): void {
         const element = this.containerElement.childNodes[index];
-        this.containerElement.removeChild(element);
-        this.options.slice(index, 1);
+        if (element) {
+            this.containerElement.removeChild(element);
+            this.options.slice(index, 1);
+        }
     }
 
     toggleOpen(): void {

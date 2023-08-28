@@ -8,7 +8,7 @@ export default class Actions {
         const newSounds = await window.actions.getNewSoundsFromPaths(paths);
 
         if (paths.length == 1) {
-            const modal = new SoundModal(newSounds[0], true);
+            const modal = new SoundModal(newSounds[0]!, true);
             modal.open();
             modal.onSave.addHandler(e => {
                 window.actions.addSounds([e.sound], soundboardId, e.moveRequested, index);

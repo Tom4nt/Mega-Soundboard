@@ -60,18 +60,21 @@ export default class AudioInstance {
             isFirst = false;
         }
 
+        const firstAudioElement = audioElements[0];
+        if (!firstAudioElement) throw new Error("No audio elements added.");
+
         // Wait for metadata to load only if it's not ready. (otherwise loadedmetadata would never fire)
-        if (audioElements[0].readyState <= 0) {
+        if (firstAudioElement.readyState <= 0) {
             await new Promise<void>((resolve) => {
-                audioElements[0].addEventListener("loadedmetadata", () => {
+                firstAudioElement.addEventListener("loadedmetadata", () => {
                     resolve();
                 });
             });
         }
 
-        audioElements[0].addEventListener("pause", () => pauseEvent.raise());
-        audioElements[0].addEventListener("play", () => playEvent.raise());
-        audioElements[0].addEventListener("timeupdate", () => timeUpdateEvent.raise());
+        firstAudioElement.addEventListener("pause", () => pauseEvent.raise());
+        firstAudioElement.addEventListener("play", () => playEvent.raise());
+        firstAudioElement.addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
         return new AudioInstance(
             sound, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
@@ -87,7 +90,7 @@ export default class AudioInstance {
         private readonly playEvent: Event<void>,
         private readonly timeUpdateEvent: Event<void>,
     ) {
-        this.duration = audioElements.length > 0 ? audioElements[0].duration : 0;
+        this.duration = audioElements.length > 0 ? audioElements[0]!.duration : 0;
     }
 
     pause(): void {
@@ -110,6 +113,6 @@ export default class AudioInstance {
 
     // Audio elements are always synced so we can get info from any of them.
     private getAny(): HTMLAudioElement | null {
-        return this.audioElements.length > 0 ? this.audioElements[0] : null;
+        return this.audioElements.length > 0 ? this.audioElements[0]! : null;
     }
 }

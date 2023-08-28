@@ -50,7 +50,7 @@ export default class FileSelector extends HTMLElement {
         if (this.type == "sound") {
             const paths = await window.actions.browseSounds();
             if (paths.length > 0) {
-                this.value = paths[0];
+                this.value = paths[0]!;
             }
         }
         else {

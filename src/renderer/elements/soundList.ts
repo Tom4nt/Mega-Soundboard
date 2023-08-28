@@ -119,7 +119,9 @@ export default class SoundList extends HTMLElement {
             this.containerElement.append(item);
         }
         else {
-            this.containerElement.insertBefore(item, this.containerElement.childNodes[index]);
+            const child = this.containerElement.childNodes[index];
+            if (child) this.containerElement.insertBefore(item, child);
+            else this.containerElement.append(item);
         }
 
         this.updateMessage();

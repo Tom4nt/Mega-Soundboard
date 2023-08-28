@@ -34,27 +34,27 @@ export default class SoundboardsCache {
     }
 
     async editSound(sound: Sound): Promise<void> {
-        const existing = this.findSound(sound.uuid);
-        existing.soundboard.sounds[existing.index] = sound;
-        EventSender.send("onSoundChanged", { sound: sound, soundboard: existing.soundboard });
+        const [soundboard, index] = this.findSound(sound.uuid);
+        soundboard.sounds[index] = sound;
+        EventSender.send("onSoundChanged", { sound: sound, soundboard: soundboard });
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
     async moveSound(
         soundId: string, destinationSoundboardId: string, destinationIndex: number, copies: boolean
     ): Promise<void> {
-        const currentSB = this.findSound(soundId);
-        const sound = currentSB.soundboard.sounds[currentSB.index];
+        const [soundboard, index] = this.findSound(soundId);
+        const sound = soundboard.sounds[index]!;
         const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
-        const destinationSB = this.soundboards[destSoundboardIndex];
-        if (currentSB.soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
+        const destinationSB = this.soundboards[destSoundboardIndex]!;
+        if (soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
             throw Error("Cannot move a sound to a linked Soundboard.");
 
         if (!copies) {
-            currentSB.soundboard.sounds.splice(currentSB.index, 1);
+            soundboard.sounds.splice(index, 1);
             EventSender.send("onSoundRemoved", sound);
-            if (!Soundboard.equals(currentSB.soundboard, destinationSB))
-                EventSender.send("onSoundboardChanged", currentSB.soundboard);
+            if (!Soundboard.equals(soundboard, destinationSB))
+                EventSender.send("onSoundboardChanged", soundboard);
         }
         destinationSB.sounds.splice(destinationIndex, 0, sound);
         sound.soundboardUuid = destinationSoundboardId;
@@ -65,11 +65,11 @@ export default class SoundboardsCache {
     }
 
     async removeSound(uuid: string): Promise<void> {
-        const existing = this.findSound(uuid);
-        const sound = existing.soundboard.sounds[existing.index];
-        existing.soundboard.sounds.splice(existing.index, 1);
+        const [soundboard, index] = this.findSound(uuid);
+        const sound = soundboard.sounds[index]!;
+        soundboard.sounds.splice(index, 1);
         EventSender.send("onSoundRemoved", sound);
-        EventSender.send("onSoundboardChanged", existing.soundboard);
+        EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -89,7 +89,7 @@ export default class SoundboardsCache {
 
     async moveSoundboard(id: string, destinationIndex: number): Promise<void> {
         const sbIndex = this.findSoundboardIndex(id);
-        const soundboard = this.soundboards[sbIndex];
+        const soundboard = this.soundboards[sbIndex]!;
         this.soundboards.splice(sbIndex, 1);
         EventSender.send("onSoundboardRemoved", soundboard);
         this.soundboards.splice(destinationIndex, 0, soundboard);
@@ -107,18 +107,16 @@ export default class SoundboardsCache {
 
     async sortSoundboard(uuid: string): Promise<void> {
         const index = this.findSoundboardIndex(uuid);
-        const soundboard = this.soundboards[index];
+        const soundboard = this.soundboards[index]!;
         soundboard.sounds = soundboard.sounds.sort((a, b) => Sound.compare(a, b));
         EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    findSound(uuid: string): { soundboard: Soundboard, index: number } {
+    findSound(uuid: string): [Soundboard, number] {
         for (const soundboard of this.soundboards) {
             const soundIndex = soundboard.sounds.findIndex((s) => s.uuid === uuid);
-            if (soundIndex >= 0) return {
-                soundboard: soundboard, index: soundIndex
-            };
+            if (soundIndex >= 0) return [soundboard, soundIndex];
         }
         throw new Error(`Sound with runtime UUID ${uuid} could not be found.`);
     }

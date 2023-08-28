@@ -62,7 +62,7 @@ export default class TrayManager {
         for (const k in quickActionStates) {
             if (!isAction(k)) return;
             const keysItem = this.trayMenu.getMenuItemById(k);
-            if (keysItem) keysItem.checked = quickActionStates[k];
+            if (keysItem) keysItem.checked = quickActionStates[k]!;
 
             if (k === "toggleKeybinds") { // Specific for this action.
                 this.tray.setImage(quickActionStates[k] ? iconWhitePath : iconPausedPath);

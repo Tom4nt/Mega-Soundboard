@@ -75,7 +75,7 @@ export default class SettingsModal extends Modal {
         for (key in actions) {
             const recorder = this.quickActionRecorders.get(key);
             if (recorder && Object.keys(actionKeys).includes(key))
-                recorder.keys = actionKeys[key];
+                recorder.keys = actionKeys[key]!;
         }
     }
 
