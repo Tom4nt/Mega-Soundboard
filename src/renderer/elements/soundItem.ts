@@ -10,15 +10,21 @@ import { SoundChangedArgs } from "../../shared/interfaces";
 import GlobalEvents from "../util/globalEvents";
 import KeyStateListener from "../util/keyStateListener";
 
-type SimpleSoundboard = { uuid: string, name: string };
+type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 
 export default class SoundItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
-    private currentHintSoundboard: SimpleSoundboard | null = null;
-    private currentHintMode: "move" | "add" = "move";
     private currentKeyStateListener: KeyStateListener | null = null;
+    private _draggingToNewSoundboard = false;
+    private currentHintSoundboard: SimpleSoundboard | null = null;
+
+    public get draggingToNewSoundboard(): boolean { return this._draggingToNewSoundboard; }
+    public set draggingToNewSoundboard(v: boolean) {
+        this._draggingToNewSoundboard = v;
+        void this.updateHint(undefined);
+    }
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
@@ -45,9 +51,18 @@ export default class SoundItem extends Draggable {
         }
     }
 
-    public setHintSoundboard(soundboard: SimpleSoundboard): void {
-        this.currentHintSoundboard = soundboard;
-        this.updateDragHint();
+    public async updateHint(soundboard?: SimpleSoundboard): Promise<void> {
+        if (soundboard) this.currentHintSoundboard = soundboard;
+        const sb = this.currentHintSoundboard;
+        const isSameSB = sb?.uuid === this.sound.soundboardUuid;
+        let sbName = isSameSB ? "" : sb?.name ?? "";
+        if (this.draggingToNewSoundboard) sbName = "new soundboard";
+        const copies = await this.getHintMode(
+            this.currentKeyStateListener?.isCtrlPressed ?? false, isSameSB);
+        const prefix = sbName ?
+            (copies ? "Copy to " : "Move to ") :
+            (copies ? "Copy" : "");
+        super.setDragHint(prefix + sbName, copies ? "copy" : "move");
     }
 
     public update(): void {
@@ -111,10 +126,8 @@ export default class SoundItem extends Draggable {
 
         this.onDragStart.addHandler(() => {
             this.currentKeyStateListener = new KeyStateListener();
-            this.currentKeyStateListener.onStateChanged.addHandler(s => {
-                this.currentHintMode = s.isCtrlPressed ? "add" : "move";
-                this.dragMode = s.isCtrlPressed ? "duplicate" : "move";
-                this.updateDragHint();
+            this.currentKeyStateListener.onStateChanged.addHandler(async () => {
+                await this.updateHint(undefined);
             });
         });
 
@@ -140,14 +153,13 @@ export default class SoundItem extends Draggable {
         GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
-    private updateDragHint(): void {
-        const sb = this.currentHintSoundboard;
-        const isSameSB = sb?.uuid === this.sound.soundboardUuid;
-        const sbName = isSameSB ? "" : sb?.name ?? "";
-        const prefix = sbName ?
-            (this.currentHintMode === "add" ? "Copy to " : "Move to ") :
-            (this.currentHintMode === "add" ? "Copy" : "");
-        super.setDragHint(prefix + sbName, this.currentHintMode);
+    private async getHintMode(wantsCopy: boolean, sameSoundboard: boolean): Promise<boolean> {
+        if (!this.sound.soundboardUuid) return false;
+        let copies = wantsCopy;
+        const sb = await window.actions.getSoundboard(this.sound.soundboardUuid);
+        if (sb.linkedFolder !== null) copies = !sameSoundboard;
+        this.dragMode = copies ? "copy" : "move";
+        return copies;
     }
 
     // Handlers

@@ -1,3 +1,4 @@
+import { Event, ExposedEvent } from "../../shared/events";
 import { Sound } from "../../shared/models";
 import { SoundItem } from "../elements";
 import MSR from "../msr";
@@ -18,6 +19,9 @@ export default class SoundList extends HTMLElement {
     private dragDummyElement!: HTMLDivElement;
     private dragDepth = 0;
     private allowImport = true;
+
+    private _onSoundDragStart = new Event<Sound>();
+    public get onSoundDragStart(): ExposedEvent<Sound> { return this._onSoundDragStart.expose(); }
 
     protected connectedCallback(): void {
         const infoSpan = document.createElement("span");
@@ -109,6 +113,16 @@ export default class SoundList extends HTMLElement {
 
     private addSound(sound: Sound, index?: number): void {
         const item = new SoundItem(sound);
+
+        item.onDragStart.addHandler(async e => {
+            if (this.currentSoundboardId) {
+                const sb = await window.actions.getSoundboard(this.currentSoundboardId);
+                await item.updateHint({ name: sb.name, uuid: sb.uuid, isLinked: sb.linkedFolder !== null });
+                this._onSoundDragStart.raise(sound);
+            } else {
+                e.cancel = true;
+            }
+        });
 
         item.onDragEnd.addHandler(() => {
             this.handleItemDrop();
@@ -212,9 +226,14 @@ export default class SoundList extends HTMLElement {
     private handleItemDrop = (): void => {
         if (!this.dragElement || !this.currentSoundboardId) return;
         const newIndex = this.getDragDummyIndex();
-        const copies = this.dragElement.dragMode === "duplicate";
+
         // This will reload the list since it is listening to the onSoundboardChanged global event.
-        window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex, copies);
+        if (this.dragElement.dragMode === "copy") {
+            window.actions.copySound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
+        } else {
+            window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
+        }
+
         this.hideDragDummy();
     };
 

@@ -33,6 +33,7 @@ export default class Tooltip extends HTMLElement {
     }
 
     public domRectGetter: (() => DOMRect) | null = null;
+    public isAutomatic = true;
 
     constructor() {
         super();
@@ -58,15 +59,16 @@ export default class Tooltip extends HTMLElement {
         this.host?.removeEventListener("mouseleave", this.hostMouseLeave);
     }
 
-    show(rect: DOMRect): void {
+    show(): void {
         if (!this.isEnabled) return;
 
         this.isShown = true;
         const layer = document.getElementById("tooltip-layer") as HTMLDivElement;
         layer.append(this);
 
-        this.lastRect = rect;
-        this.updatePosition(rect);
+        const r = this.getPreferedDOMRect();
+        this.lastRect = r;
+        this.updatePosition(r);
 
         this.style.opacity = "";
         this.style.transform = "";
@@ -112,11 +114,11 @@ export default class Tooltip extends HTMLElement {
     // --- Handlers ---
 
     hostMouseEnter = (): void => {
-        if (this.host) this.show(this.getPreferedDOMRect());
+        if (this.host && this.isAutomatic) this.show();
     };
 
     hostMouseLeave = (): void => {
-        this.hide();
+        if (this.isAutomatic) this.hide();
     };
 
     removeHandler = (): void => {

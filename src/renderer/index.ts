@@ -1,5 +1,5 @@
 import Actions from "./util/actions";
-import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost } from "./elements";
+import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, SoundItem } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
@@ -162,15 +162,8 @@ function getElementReferences(): void {
 }
 
 function addElementListeners(): void {
-    // TODO: Remove
-    const htmlMessage = `
-        <p>Hold <kbd>CTRL</kbd> to copy.</p>
-        <p>Hold <kbd>Shift</kbd> to group.</p>
-        <p>Try dragging it to <i>add_multiple</i></p>
-        `;
-
     // This prevents scrolling with the middle mouse button.
-    // This is necessary to allow clicking on sounds with the middle mouse button.
+    // It is necessary to allow clicking on sounds with the middle mouse button.
     document.addEventListener("mousedown", e => {
         if (e.button === 1) {
             e.preventDefault();
@@ -178,11 +171,6 @@ function addElementListeners(): void {
         }
         return true;
     });
-
-    document.getElementById("btn-test")?.addEventListener("click", () => {
-        MessageQueue.pushMessage(new Message(htmlMessage, 0));
-    });
-    // End todo
 
     addEventListener("keyup", (ev) => {
         if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);
@@ -196,6 +184,18 @@ function addElementListeners(): void {
 
     addSoundboardButton.addEventListener("click", () => {
         void Actions.addSoundboard();
+    });
+
+    addSoundboardButton.addEventListener("mouseenter", () => {
+        if (Draggable.currentElement instanceof SoundItem) {
+            Draggable.currentElement.draggingToNewSoundboard = true;
+        }
+    });
+
+    addSoundboardButton.addEventListener("mouseleave", () => {
+        if (Draggable.currentElement instanceof SoundItem) {
+            Draggable.currentElement.draggingToNewSoundboard = false;
+        }
     });
 
     updateButton.addEventListener("click", () => {
@@ -218,6 +218,14 @@ function addElementListeners(): void {
 
     searchBox.onButtonClick.addHandler(() => {
         soundList.filter("");
+    });
+
+    soundList.onSoundDragStart.addHandler(async () => {
+        const s = await window.actions.getSettings();
+        if (s.showSoundDragTutorial) {
+            showSoundDragTutorial();
+            window.actions.saveSettings({ showSoundDragTutorial: false });
+        }
     });
 
     //#region Action Panel
@@ -307,6 +315,27 @@ async function browseAndAddSounds(): Promise<void> {
         } else
             DefaultModals.errSoundboardIsLinked(sb.linkedFolder).open();
     }
+}
+
+function showSoundDragTutorial(): void {
+    const htmlMessage = `
+        <p>Hold <kbd>CTRL</kbd> to copy.</p>
+        <p>Hold <kbd>Shift</kbd> to group.</p>
+    `;
+    MessageQueue.pushMessage(new Message(htmlMessage));
+
+    const tt = new Tooltip();
+    tt.tooltipText = "Try dragging here!";
+    tt.side = "left";
+    tt.isAutomatic = false;
+    tt.attach(addSoundboardButton);
+    tt.show();
+
+    addSoundboardButton.classList.add("shiny");
+    addSoundboardButton.addEventListener("mouseover", () => {
+        addSoundboardButton.classList.remove("shiny");
+        tt.hide();
+    });
 }
 
 //#endregion

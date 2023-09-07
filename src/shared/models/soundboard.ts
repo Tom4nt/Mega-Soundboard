@@ -1,6 +1,5 @@
 import Keys from "../keys";
 import { Sound } from "../models";
-import { objectToMap } from "../sharedUtils";
 import { convertSound } from "./sound";
 
 // All functions must be static so instances can be passed between processes.
@@ -28,7 +27,7 @@ export default class Soundboard {
         return from.uuid === to.uuid;
     }
 
-    static toJSON(soundboard: Soundboard): object {
+    static toJSON(soundboard: Soundboard): { [key: string]: unknown } {
         return {
             name: soundboard.name,
             keys: soundboard.keys,
@@ -60,20 +59,20 @@ export function convertSoundboard(data: { [key: string]: unknown }, generateUuid
 
     let sounds: Sound[] = [];
     if (Array.isArray(data["sounds"])) {
-        sounds = convertSounds(data["sounds"], sbUuid, generateUuid);
+        sounds = convertSounds(data["sounds"] as { [key: string]: unknown }[], sbUuid, generateUuid);
     }
 
     return new Soundboard(sbUuid, name, keys, volume, linkedFolder, sounds);
 }
 
-export function convertSounds(data: unknown[], connectedSoundboardUuid: string, generateUuid: () => string): Sound[] {
+export function convertSounds(
+    data: { [key: string]: unknown }[], connectedSoundboardUuid: string, generateUuid: () => string
+): Sound[] {
     const sounds: Sound[] = [];
     data.forEach(item => {
-        if (item && typeof item === "object") {
-            const s = convertSound(objectToMap(item), generateUuid());
-            s.soundboardUuid = connectedSoundboardUuid;
-            sounds.push(s);
-        }
+        const s = convertSound(item, generateUuid());
+        s.soundboardUuid = connectedSoundboardUuid;
+        sounds.push(s);
     });
     return sounds;
 }

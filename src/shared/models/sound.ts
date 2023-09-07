@@ -23,7 +23,7 @@ export default class Sound {
         return from.uuid == to.uuid;
     }
 
-    static toJSON(sound: Sound): object {
+    static toJSON(sound: Sound): { [key: string]: unknown } {
         return {
             name: sound.name,
             path: sound.path,
@@ -31,24 +31,28 @@ export default class Sound {
             keys: sound.keys
         };
     }
+
+    static copy(sound: Sound, uuid: string): Sound {
+        return convertSound(this.toJSON(sound), uuid);
+    }
 }
 
-export function convertSound(data: Map<string, unknown>, uuid: string): Sound {
+export function convertSound(data: { [key: string]: unknown }, uuid: string): Sound {
     // Defaults
     let name = "¯\\_(ツ)_/¯";
     let path = "¯\\_(ツ)_/¯";
     let volume = 100;
     let keys: number[] = [];
 
-    if (typeof data.get("name") === "string") name = data.get("name") as string;
+    if (typeof data["name"] === "string") name = data["name"];
 
     const pathRes = tryGetValue(data, ["path", "url"], v => typeof v === "string");
     if (pathRes) path = pathRes as string;
 
-    if (typeof data.get("volume") === "number") volume = data.get("volume") as number;
+    if (typeof data["volume"] === "number") volume = data["volume"];
 
     const keysRes = tryGetValue(data, ["keys", "shortcut"], v => Keys.isKeys(v));
-    if (keysRes) keys = data.get("keys") as number[];
+    if (keysRes) keys = data["keys"] as number[];
 
     return new Sound(uuid, name, path, volume, keys);
 }

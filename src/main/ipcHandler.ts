@@ -78,8 +78,12 @@ const implementer: Actions = {
         void MS.instance.soundboardsCache.editSound(sound);
     },
 
-    moveSound(soundId, destinationSoundboardId, destinationIndex, copies) {
-        void MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, copies);
+    moveSound(soundId, destinationSoundboardId, destinationIndex) {
+        void MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex);
+    },
+
+    copySound(soundId, destinationSoundboardId, destinationIndex) {
+        void MS.instance.soundboardsCache.copySound(soundId, destinationSoundboardId, destinationIndex);
     },
 
     deleteSound(soundId) {

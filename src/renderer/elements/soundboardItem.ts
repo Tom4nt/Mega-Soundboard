@@ -81,12 +81,16 @@ export default class SoundboardItem extends Draggable {
             if (!this.isSelected) this.select();
         });
 
-        this.addEventListener("mousemove", () => {
+        this.addEventListener("mousemove", async () => {
             const isLinked = this.soundboard.linkedFolder !== null;
             if (Draggable.currentElement && !isLinked) {
                 const d = Draggable.currentElement;
                 if (!(d instanceof SoundItem)) return;
-                d.setHintSoundboard({ uuid: this.soundboard.uuid, name: this.soundboard.name });
+                await d.updateHint({
+                    uuid: this.soundboard.uuid,
+                    name: this.soundboard.name,
+                    isLinked: this.soundboard.linkedFolder !== null,
+                });
                 this.safeSelect(true);
             }
         });

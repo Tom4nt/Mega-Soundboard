@@ -5,6 +5,7 @@ import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
 import SoundboardUtils from "../utils/soundboardUtils";
+import { randomUUID } from "crypto";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -41,24 +42,44 @@ export default class SoundboardsCache {
     }
 
     async moveSound(
-        soundId: string, destinationSoundboardId: string, destinationIndex: number, copies: boolean
+        soundId: string, destinationSoundboardId: string, destinationIndex: number
     ): Promise<void> {
         const [soundboard, index] = this.findSound(soundId);
         const sound = soundboard.sounds[index]!;
         const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
         const destinationSB = this.soundboards[destSoundboardIndex]!;
+
         if (soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
             throw Error("Cannot move a sound to a linked Soundboard.");
 
-        if (!copies) {
-            soundboard.sounds.splice(index, 1);
-            EventSender.send("onSoundRemoved", sound);
-            if (!Soundboard.equals(soundboard, destinationSB))
-                EventSender.send("onSoundboardChanged", soundboard);
-        }
+        soundboard.sounds.splice(index, 1);
+        EventSender.send("onSoundRemoved", sound);
+        if (!Soundboard.equals(soundboard, destinationSB))
+            EventSender.send("onSoundboardChanged", soundboard);
+
         destinationSB.sounds.splice(destinationIndex, 0, sound);
         sound.soundboardUuid = destinationSoundboardId;
         EventSender.send("onSoundAdded", { sound: sound, index: destinationIndex });
+        EventSender.send("onSoundboardChanged", destinationSB);
+
+        await DataAccess.saveSoundboards(this.soundboards);
+    }
+
+    async copySound(
+        soundId: string, destinationSoundboardId: string, destinationIndex: number
+    ): Promise<void> {
+        const [soundboard, index] = this.findSound(soundId);
+        const sound = soundboard.sounds[index]!;
+        const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
+        const destinationSB = this.soundboards[destSoundboardIndex]!;
+        const soundCopy = Sound.copy(sound, randomUUID());
+
+        if (soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
+            throw Error("Cannot copy a sound to a linked Soundboard.");
+
+        destinationSB.sounds.splice(destinationIndex, 0, soundCopy);
+        soundCopy.soundboardUuid = destinationSoundboardId;
+        EventSender.send("onSoundAdded", { sound: soundCopy, index: destSoundboardIndex });
         EventSender.send("onSoundboardChanged", destinationSB);
 
         await DataAccess.saveSoundboards(this.soundboards);

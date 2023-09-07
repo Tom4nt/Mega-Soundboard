@@ -14,6 +14,7 @@ export default class Settings {
         public secondaryDeviceVolume = 100,
         public selectedSoundboard = 0,
         public latestLogViewed = 0,
+        public showSoundDragTutorial = true,
         public soundsLocation = "",
         public pttKeys: number[] = [],
         public processKeysOnRelease = false,

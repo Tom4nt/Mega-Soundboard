@@ -9,7 +9,7 @@ export default class Message {
 
     public constructor(
         public content: string,
-        public delay = 5000,
+        public delay = 0,
     ) { }
 
     public fireClose(): void {
