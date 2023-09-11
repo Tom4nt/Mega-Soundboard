@@ -20,6 +20,7 @@ class ConcreteEvents {
     onSoundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
     onSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onSoundboardRemoved: ExposedEvent<Soundboard> | null = null;
+    onSoundboardSoundsSorted: ExposedEvent<Soundboard> | null = null;
     onWindowStateChanged: ExposedEvent<WindowState> | null = null;
     onWindowFocusChanged: ExposedEvent<boolean> | null = null;
     onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;

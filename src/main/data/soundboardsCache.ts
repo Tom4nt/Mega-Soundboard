@@ -42,20 +42,23 @@ export default class SoundboardsCache {
     }
 
     async moveSound(
-        soundId: string, destinationSoundboardId: string, destinationIndex: number
-    ): Promise<void> {
-        const [soundboard, index] = this.findSound(soundId);
-        const sound = soundboard.sounds[index]!;
-        const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
-        const destinationSB = this.soundboards[destSoundboardIndex]!;
+        soundId: string, destinationSoundboardId: string | null, destinationIndex: number, copy: boolean
+    ): Promise<Soundboard> {
+        const [sourceSB, index] = this.findSound(soundId);
+        let sound = sourceSB.sounds[index]!;
+        const destinationSB = await this.getSoundboard(destinationSoundboardId);
+        destinationSoundboardId = destinationSB.uuid;
 
-        if (soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
-            throw Error("Cannot move a sound to a linked Soundboard.");
+        if (sourceSB.linkedFolder === null && destinationSB.linkedFolder !== null)
+            throw Error(`Cannot ${copy ? "copy" : "move"} a sound to a linked Soundboard.`);
 
-        soundboard.sounds.splice(index, 1);
-        EventSender.send("onSoundRemoved", sound);
-        if (!Soundboard.equals(soundboard, destinationSB))
-            EventSender.send("onSoundboardChanged", soundboard);
+        if (copy) {
+            sound = Sound.copy(sound, randomUUID());
+        } else {
+            sourceSB.sounds.splice(index, 1);
+            EventSender.send("onSoundRemoved", sound);
+            EventSender.send("onSoundboardChanged", sourceSB);
+        }
 
         destinationSB.sounds.splice(destinationIndex, 0, sound);
         sound.soundboardUuid = destinationSoundboardId;
@@ -63,26 +66,7 @@ export default class SoundboardsCache {
         EventSender.send("onSoundboardChanged", destinationSB);
 
         await DataAccess.saveSoundboards(this.soundboards);
-    }
-
-    async copySound(
-        soundId: string, destinationSoundboardId: string, destinationIndex: number
-    ): Promise<void> {
-        const [soundboard, index] = this.findSound(soundId);
-        const sound = soundboard.sounds[index]!;
-        const destSoundboardIndex = this.findSoundboardIndex(destinationSoundboardId);
-        const destinationSB = this.soundboards[destSoundboardIndex]!;
-        const soundCopy = Sound.copy(sound, randomUUID());
-
-        if (soundboard.linkedFolder === null && destinationSB.linkedFolder !== null)
-            throw Error("Cannot copy a sound to a linked Soundboard.");
-
-        destinationSB.sounds.splice(destinationIndex, 0, soundCopy);
-        soundCopy.soundboardUuid = destinationSoundboardId;
-        EventSender.send("onSoundAdded", { sound: soundCopy, index: destSoundboardIndex });
-        EventSender.send("onSoundboardChanged", destinationSB);
-
-        await DataAccess.saveSoundboards(this.soundboards);
+        return destinationSB;
     }
 
     async removeSound(uuid: string): Promise<void> {
@@ -95,9 +79,16 @@ export default class SoundboardsCache {
     }
 
     async addSoundboard(soundboard: Soundboard): Promise<void> {
-        this.soundboards.push(soundboard);
-        EventSender.send("onSoundboardAdded", { soundboard });
+        this.soundboards.splice(0, 0, soundboard);
+        EventSender.send("onSoundboardAdded", { soundboard, index: 0 });
         await DataAccess.saveSoundboards(this.soundboards);
+    }
+
+    async addQuickSoundboard(): Promise<Soundboard> {
+        const sb = new Soundboard(randomUUID());
+        sb.name = "Quick Sounds";
+        await this.addSoundboard(sb);
+        return sb;
     }
 
     async editSoundboard(soundboard: Soundboard): Promise<void> {
@@ -130,11 +121,18 @@ export default class SoundboardsCache {
         const index = this.findSoundboardIndex(uuid);
         const soundboard = this.soundboards[index]!;
         soundboard.sounds = soundboard.sounds.sort((a, b) => Sound.compare(a, b));
+        EventSender.send("onSoundboardSoundsSorted", soundboard);
         EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    findSound(uuid: string): [Soundboard, number] {
+    findSoundboardIndex(uuid: string): number {
+        const soundboardIndex = this.soundboards.findIndex(x => x.uuid === uuid);
+        if (soundboardIndex < 0) throw new Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
+        return soundboardIndex;
+    }
+
+    private findSound(uuid: string): [Soundboard, number] {
         for (const soundboard of this.soundboards) {
             const soundIndex = soundboard.sounds.findIndex((s) => s.uuid === uuid);
             if (soundIndex >= 0) return [soundboard, soundIndex];
@@ -142,9 +140,12 @@ export default class SoundboardsCache {
         throw new Error(`Sound with runtime UUID ${uuid} could not be found.`);
     }
 
-    findSoundboardIndex(uuid: string): number {
-        const soundboardIndex = this.soundboards.findIndex(x => x.uuid === uuid);
-        if (soundboardIndex < 0) throw new Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
-        return soundboardIndex;
+    private async getSoundboard(uuid: string | null): Promise<Soundboard> {
+        if (uuid) {
+            const destSoundboardIndex = this.findSoundboardIndex(uuid);
+            return this.soundboards[destSoundboardIndex]!;
+        } else {
+            return await MS.instance.soundboardsCache.addQuickSoundboard();
+        }
     }
 }

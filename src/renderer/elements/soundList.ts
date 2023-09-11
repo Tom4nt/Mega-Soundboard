@@ -42,7 +42,8 @@ export default class SoundList extends HTMLElement {
         this.append(infoSpan, itemsContainer);
 
         GlobalEvents.addHandler("onSoundAdded", e => {
-            this.addSound(e.sound, e.index);
+            if (e.sound.soundboardUuid === this.currentSoundboardId)
+                this.addSound(e.sound, e.index);
         });
 
         GlobalEvents.addHandler("onSoundRemoved", s => {
@@ -53,7 +54,7 @@ export default class SoundList extends HTMLElement {
             this.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
         });
 
-        GlobalEvents.addHandler("onSoundboardChanged", sb => {
+        GlobalEvents.addHandler("onSoundboardSoundsSorted", sb => {
             if (this.currentSoundboardId === sb.uuid)
                 this.loadSounds(sb.sounds, sb.uuid, true);
         });
@@ -72,8 +73,8 @@ export default class SoundList extends HTMLElement {
         this.addEventListener("dragover", e => {
             e.preventDefault();
         });
-        this.addEventListener("dragleave", this.handleFileDrop);
-        this.addEventListener("drop", this.handleFileDrop);
+        this.addEventListener("dragleave", this.handleFileLeaveOrDrop);
+        this.addEventListener("drop", this.handleFileLeaveOrDrop);
     }
 
     loadSounds(sounds: Sound[], soundboardUuid: string, allowImport: boolean): void {
@@ -91,11 +92,9 @@ export default class SoundList extends HTMLElement {
         this.dragDummyElement.style.display = "inline-block";
     }
 
-    /** Returns the index of the element being dragged over the list. */
-    hideDragDummy(): number {
+    hideDragDummy(): void {
         this.removeEventListener("mousemove", this.handleDragOver);
         this.dragDummyElement.style.display = "";
-        return this.getDragDummyIndex();
     }
 
     filter(filter: string): void {
@@ -125,8 +124,9 @@ export default class SoundList extends HTMLElement {
         });
 
         item.onDragEnd.addHandler(() => {
-            this.handleItemDrop();
+            const elem = this.dragElement;
             this.dragElement = null;
+            if (elem) this.handleItemDrop(elem);
         });
 
         if (index === undefined) {
@@ -166,8 +166,8 @@ export default class SoundList extends HTMLElement {
         this.updateMessage();
     }
 
-    private getDragDummyIndex(): number {
-        return Utils.getElementIndex(this.dragDummyElement);
+    private getDragDummyIndex(dragElement: SoundItem | null): number {
+        return Utils.getElementIndex(this.dragDummyElement, (e) => e != dragElement);
     }
 
     private updateMessage(): void {
@@ -205,7 +205,7 @@ export default class SoundList extends HTMLElement {
         if (validPaths.length <= 0) return;
 
         if (this.currentSoundboardId)
-            await Actions.addSounds(validPaths, this.currentSoundboardId, this.getDragDummyIndex());
+            await Actions.addSounds(validPaths, this.currentSoundboardId, this.getDragDummyIndex(null));
     }
 
     // Handlers
@@ -223,18 +223,18 @@ export default class SoundList extends HTMLElement {
         }
     };
 
-    private handleItemDrop = (): void => {
-        if (!this.dragElement || !this.currentSoundboardId) return;
-        const newIndex = this.getDragDummyIndex();
+    private handleItemDrop = (dragElement: SoundItem): void => {
+        if (!this.currentSoundboardId) return;
+        const newIndex = this.getDragDummyIndex(dragElement);
+        this.hideDragDummy();
 
         // This will reload the list since it is listening to the onSoundboardChanged global event.
-        if (this.dragElement.dragMode === "copy") {
-            window.actions.copySound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
+        const destinationUUID = dragElement.draggingToNewSoundboard ? null : this.currentSoundboardId;
+        if (dragElement.dragMode === "copy") {
+            void window.actions.copySound(dragElement.sound.uuid, destinationUUID, newIndex);
         } else {
-            window.actions.moveSound(this.dragElement.sound.uuid, this.currentSoundboardId, newIndex);
+            void window.actions.moveSound(dragElement.sound.uuid, destinationUUID, newIndex);
         }
-
-        this.hideDragDummy();
     };
 
     private handleDragEnter = (e: DragEvent): void => {
@@ -245,7 +245,7 @@ export default class SoundList extends HTMLElement {
         this.handleDragOver(e);
     };
 
-    private handleFileDrop = (e: DragEvent): void => {
+    private handleFileLeaveOrDrop = (e: DragEvent): void => {
         e.preventDefault();
         if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
         this.dragDepth--;

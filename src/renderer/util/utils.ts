@@ -5,10 +5,11 @@ export default class Utils {
         }
     }
 
-    static getElementIndex(element: Element): number {
+    static getElementIndex(element: Element, filter?: (element: Element) => boolean): number {
         let i = 0;
         while (element.previousElementSibling != null) {
             element = element.previousElementSibling;
+            if (filter && !filter(element)) continue;
             ++i;
         }
         return i;

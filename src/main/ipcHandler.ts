@@ -70,20 +70,22 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
-    addSounds(sounds, soundboardId, move, startIndex) {
-        void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, move, startIndex);
+    addSounds(sounds, soundboardId, moveFile, startIndex) {
+        void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, moveFile, startIndex);
     },
 
     editSound(sound) {
         void MS.instance.soundboardsCache.editSound(sound);
     },
 
-    moveSound(soundId, destinationSoundboardId, destinationIndex) {
-        void MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex);
+    async moveSound(soundId, destinationSoundboardId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, false);
+        await MS.instance.setCurrentSoundboard(sb);
     },
 
-    copySound(soundId, destinationSoundboardId, destinationIndex) {
-        void MS.instance.soundboardsCache.copySound(soundId, destinationSoundboardId, destinationIndex);
+    async copySound(soundId, destinationSoundboardId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, true);
+        await MS.instance.setCurrentSoundboard(sb);
     },
 
     deleteSound(soundId) {

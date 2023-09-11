@@ -73,10 +73,11 @@ export default abstract class Draggable extends HTMLElement {
 
         document.addEventListener("mouseup", () => {
             this.isMouseDownOnThis = false;
+            if (!this.isDragging) return;
             this.isDragging = false;
             Draggable._currentElement = null;
-            this._onDragEnd.raise();
             this.endDrag();
+            this._onDragEnd.raise();
         });
     }
 
