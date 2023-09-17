@@ -14,9 +14,7 @@ export default class Sound {
     }
 
     static compare(a: Sound, b: Sound): number {
-        if (a.name > b.name) return 1;
-        if (a.name < b.name) return -1;
-        return 0;
+        return a.name.localeCompare(b.name);
     }
 
     static equals(from: Sound, to: Sound): boolean {

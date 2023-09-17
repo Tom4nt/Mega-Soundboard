@@ -59,4 +59,14 @@ export default class Utils {
         if (seconds < 3600) return iso.slice(14, 19);
         else return iso.slice(11, 19);
     }
+
+    static async getValidSoundPaths(e: DragEvent): Promise<string[] | null> {
+        if (!e.dataTransfer || e.dataTransfer.items.length < 1) return null;
+
+        const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
+        const validPaths = await window.actions.getValidSoundPaths(paths);
+
+        if (validPaths.length <= 0) return null;
+        return validPaths;
+    }
 }

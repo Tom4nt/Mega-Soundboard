@@ -54,7 +54,7 @@ export default class SoundItem extends Draggable {
     public async updateHint(soundboard?: SimpleSoundboard): Promise<void> {
         if (soundboard) this.currentHintSoundboard = soundboard;
         const sb = this.currentHintSoundboard;
-        const isSameSB = sb?.uuid === this.sound.soundboardUuid;
+        const isSameSB = sb?.uuid === this.sound.soundboardUuid && !this.draggingToNewSoundboard;
         let sbName = isSameSB ? "" : sb?.name ?? "";
         if (this.draggingToNewSoundboard) sbName = "new soundboard";
         const copies = await this.getHintMode(

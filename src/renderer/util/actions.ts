@@ -3,7 +3,7 @@ import { MultiSoundModal, SoundboardModal, SoundModal } from "../modals";
 
 export default class Actions {
 
-    static async addSounds(paths: string[], soundboardId: string, index?: number): Promise<void> {
+    static async addSounds(paths: string[], soundboardId: string | null, index?: number): Promise<void> {
         if (paths.length <= 0) return;
         const newSounds = await window.actions.getNewSoundsFromPaths(paths);
 
@@ -11,13 +11,13 @@ export default class Actions {
             const modal = new SoundModal(newSounds[0]!, true);
             modal.open();
             modal.onSave.addHandler(e => {
-                window.actions.addSounds([e.sound], soundboardId, e.moveRequested, index);
+                void window.actions.addSounds([e.sound], soundboardId, e.moveRequested, index);
             });
 
         } else {
             const multiSoundModal = new MultiSoundModal(newSounds.length);
             multiSoundModal.onConfirmed.addHandler(e => {
-                window.actions.addSounds(newSounds, soundboardId, e.moveRequested, index);
+                void window.actions.addSounds(newSounds, soundboardId, e.moveRequested, index);
             });
             multiSoundModal.open();
         }

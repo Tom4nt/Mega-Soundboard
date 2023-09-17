@@ -3,6 +3,7 @@ import * as path from "path";
 import Utils from "../utils/utils";
 import { isAction, actions } from "../../shared/quickActions";
 import { actionBindings } from "../quickActionBindings";
+import MS from "../ms";
 
 const iconWhitePath = path.join(Utils.resourcesPath, "icon_white.ico");
 const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
@@ -38,7 +39,7 @@ export default class TrayManager {
             {
                 label: "Show",
                 click: (): void => {
-                    win.show();
+                    this.showWindow(win);
                 }
             },
             {
@@ -51,7 +52,7 @@ export default class TrayManager {
 
         instance.tray.setContextMenu(instance.trayMenu);
         instance.tray.on("click", () => {
-            win.show();
+            this.showWindow(win);
         });
 
         instance.update(quickActionStates);
@@ -68,6 +69,13 @@ export default class TrayManager {
                 this.tray.setImage(quickActionStates[k] ? iconWhitePath : iconPausedPath);
                 this.tray.setToolTip(quickActionStates[k] ? "Mega Soundboard" : "Mega Soundboard (Keybinds disabled)");
             }
+        }
+    }
+
+    private static showWindow(window: BrowserWindow): void {
+        window.show();
+        if (MS.instance.windowManager.isMainWindowMaximized) {
+            window.maximize();
         }
     }
 }

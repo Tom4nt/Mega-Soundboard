@@ -14,6 +14,10 @@ ms-iconbutton {
     background-position: center;
 }
 
+ms-iconbutton.hover {
+    background-color: var(--color-greenL);
+}
+
 ms-iconbutton:hover {
     background-color: var(--color-light);
 }

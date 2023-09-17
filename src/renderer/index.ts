@@ -1,5 +1,5 @@
 import Actions from "./util/actions";
-import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, SoundItem } from "./elements";
+import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, SoundItem, FileDropArea } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
@@ -7,6 +7,7 @@ import { Message, Settings } from "../shared/models";
 import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
+import Utils from "./util/utils";
 
 //#region Elements
 
@@ -17,6 +18,7 @@ let msbutton!: HTMLButtonElement;
 let soundboardList!: SoundboardList;
 let updateButton!: HTMLButtonElement;
 let addSoundboardButton!: HTMLButtonElement;
+let addSoundboardDropArea !: FileDropArea;
 //#endregion
 
 //#region Right
@@ -136,6 +138,7 @@ function getElementReferences(): void {
     soundboardList = document.getElementById("soundboardlist") as SoundboardList;
     updateButton = document.getElementById("update-button") as HTMLButtonElement;
     addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
+    addSoundboardDropArea = document.getElementById("droparea-addSoundboard") as FileDropArea;
 
     searchBox = document.getElementById("searchbox") as SearchBox;
     soundList = document.getElementById("soundlist") as SoundList;
@@ -196,6 +199,15 @@ function addElementListeners(): void {
         if (Draggable.currentElement instanceof SoundItem) {
             Draggable.currentElement.draggingToNewSoundboard = false;
         }
+    });
+
+    addSoundboardDropArea.onEnter.addHandler(() => addSoundboardButton.classList.add("hover"));
+    addSoundboardDropArea.onLeave.addHandler(() => addSoundboardButton.classList.remove("hover"));
+
+    addSoundboardDropArea.onDrop.addHandler(async e => {
+        addSoundboardButton.classList.remove("hover");
+        const paths = await Utils.getValidSoundPaths(e);
+        if (paths) await Actions.addSounds(paths, null);
     });
 
     updateButton.addEventListener("click", () => {

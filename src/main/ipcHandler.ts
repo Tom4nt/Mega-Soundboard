@@ -70,8 +70,9 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
-    addSounds(sounds, soundboardId, moveFile, startIndex) {
-        void MS.instance.soundboardsCache.addSounds(sounds, soundboardId, moveFile, startIndex);
+    async addSounds(sounds, soundboardId, moveFile, startIndex) {
+        const sb = await MS.instance.soundboardsCache.addSounds(sounds, soundboardId, moveFile, startIndex);
+        await MS.instance.setCurrentSoundboard(sb);
     },
 
     editSound(sound) {

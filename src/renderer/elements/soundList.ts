@@ -1,7 +1,6 @@
 import { Event, ExposedEvent } from "../../shared/events";
 import { Sound } from "../../shared/models";
-import { SoundItem } from "../elements";
-import MSR from "../msr";
+import { FileDropArea, SoundItem } from "../elements";
 import Actions from "../util/actions";
 import GlobalEvents from "../util/globalEvents";
 import Utils from "../util/utils";
@@ -17,13 +16,14 @@ export default class SoundList extends HTMLElement {
     private infoElement!: HTMLSpanElement;
     private containerElement!: HTMLDivElement;
     private dragDummyElement!: HTMLDivElement;
-    private dragDepth = 0;
     private allowImport = true;
 
     private _onSoundDragStart = new Event<Sound>();
     public get onSoundDragStart(): ExposedEvent<Sound> { return this._onSoundDragStart.expose(); }
 
     protected connectedCallback(): void {
+        const dropArea = new FileDropArea(() => this.allowImport);
+
         const infoSpan = document.createElement("span");
         infoSpan.classList.add("info");
         this.infoElement = infoSpan;
@@ -39,7 +39,8 @@ export default class SoundList extends HTMLElement {
 
         itemsContainer.append(dragDummy);
 
-        this.append(infoSpan, itemsContainer);
+        dropArea.append(infoSpan, itemsContainer);
+        this.append(dropArea);
 
         GlobalEvents.addHandler("onSoundAdded", e => {
             if (e.sound.soundboardUuid === this.currentSoundboardId)
@@ -69,12 +70,16 @@ export default class SoundList extends HTMLElement {
             }
         });
 
-        this.addEventListener("dragenter", this.handleDragEnter);
-        this.addEventListener("dragover", e => {
-            e.preventDefault();
+        dropArea.onOver.addHandler(e => {
+            this.showDragDummy();
+            this.handleDragOver(e);
         });
-        this.addEventListener("dragleave", this.handleFileLeaveOrDrop);
-        this.addEventListener("drop", this.handleFileLeaveOrDrop);
+        dropArea.onLeave.addHandler(() => {
+            this.hideDragDummy();
+        });
+        dropArea.onDrop.addHandler(e => {
+            void this.onFileDrop(e);
+        });
     }
 
     loadSounds(sounds: Sound[], soundboardUuid: string, allowImport: boolean): void {
@@ -196,16 +201,9 @@ export default class SoundList extends HTMLElement {
 
     private async onFileDrop(e: DragEvent): Promise<void> {
         this.hideDragDummy();
-
-        if (!e.dataTransfer || e.dataTransfer.items.length < 1) return;
-
-        const paths = Utils.getDataTransferFilePaths(e.dataTransfer);
-        const validPaths = await window.actions.getValidSoundPaths(paths);
-
-        if (validPaths.length <= 0) return;
-
-        if (this.currentSoundboardId)
-            await Actions.addSounds(validPaths, this.currentSoundboardId, this.getDragDummyIndex(null));
+        const paths = await Utils.getValidSoundPaths(e);
+        if (paths && this.currentSoundboardId)
+            await Actions.addSounds(paths, this.currentSoundboardId, this.getDragDummyIndex(null));
     }
 
     // Handlers
@@ -235,21 +233,5 @@ export default class SoundList extends HTMLElement {
         } else {
             void window.actions.moveSound(dragElement.sound.uuid, destinationUUID, newIndex);
         }
-    };
-
-    private handleDragEnter = (e: DragEvent): void => {
-        e.preventDefault();
-        if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
-        this.dragDepth++;
-        this.showDragDummy();
-        this.handleDragOver(e);
-    };
-
-    private handleFileLeaveOrDrop = (e: DragEvent): void => {
-        e.preventDefault();
-        if (MSR.instance.modalManager.hasOpenModal || !this.allowImport) return;
-        this.dragDepth--;
-        if (this.dragDepth === 0)
-            void this.onFileDrop(e);
     };
 }

@@ -10,15 +10,13 @@ import { randomUUID } from "crypto";
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(sounds: Sound[], soundboardId: string, move: boolean, startIndex?: number): Promise<void> {
-        const soundboard = this.soundboards.find((s) => s.uuid == soundboardId);
-        if (!soundboard) throw new Error(`Soundboard with runtime UUID ${soundboardId} could not be found.`);
-
+    async addSounds(sounds: Sound[], soundboardId: string | null, move: boolean, startIndex?: number): Promise<Soundboard> {
+        const soundboard = await this.getSoundboard(soundboardId);
         const soundsDestination = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
         let index = startIndex ?? soundboard.sounds.length + 1;
         for (const sound of sounds) {
-            sound.soundboardUuid = soundboardId;
+            sound.soundboardUuid = soundboard.uuid;
             soundboard.sounds.splice(index, 0, sound);
             if (move && soundsDestination) {
                 const basename = path.basename(sound.path);
@@ -32,6 +30,7 @@ export default class SoundboardsCache {
 
         EventSender.send("onSoundboardChanged", soundboard);
         await Promise.all([...moveTasks, DataAccess.saveSoundboards(this.soundboards)]);
+        return soundboard;
     }
 
     async editSound(sound: Sound): Promise<void> {

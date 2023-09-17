@@ -16,6 +16,7 @@ import IconButton from "./elements/iconButton";
 import Seekbar from "./elements/seekbar";
 import MessageHost from "./elements/messageHost";
 import Draggable from "./elements/draggable";
+import FileDropArea from "./elements/fileDropArea";
 
 export {
     KeyRecorder,
@@ -36,6 +37,7 @@ export {
     Seekbar,
     MessageHost,
     Draggable,
+    FileDropArea,
 };
 
 const definitions: [string, CustomElementConstructor][] = [
@@ -56,6 +58,7 @@ const definitions: [string, CustomElementConstructor][] = [
     ["ms-tooltip", Tooltip],
     ["ms-seekbar", Seekbar],
     ["ms-message-host", MessageHost],
+    ["ms-filedroparea", FileDropArea],
 ];
 
 for (const d of definitions) {

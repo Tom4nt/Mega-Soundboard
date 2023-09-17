@@ -10,9 +10,13 @@ export default class WindowManager {
     private _loadingWindow: BrowserWindow;
     private _initialMaximize: boolean;
     private windowContentRequested?: () => InitialContent;
+    private _isMainWindowMaximized = false;
 
     get mainWindow(): BrowserWindow { return this._mainWindow; }
     get loadingWindow(): BrowserWindow { return this._loadingWindow; }
+
+    // This is needed because, when the window is hidden, it loses its maximized state
+    get isMainWindowMaximized(): boolean { return this._isMainWindowMaximized; }
 
     constructor(initialWindowSize: number[], initialPosition: number[], windowIsMaximized: boolean) {
         ipcMain.on("load", (e) => {
@@ -20,7 +24,7 @@ export default class WindowManager {
             e.returnValue = content;
         });
         this._loadingWindow = WindowManager.createLoadingWindow();
-        this._mainWindow = WindowManager.createMainWindow(initialWindowSize, initialPosition, windowIsMaximized);
+        this._mainWindow = this.createMainWindow(initialWindowSize, initialPosition, windowIsMaximized);
         this._initialMaximize = windowIsMaximized;
     }
 
@@ -53,9 +57,9 @@ export default class WindowManager {
         return lWin;
     }
 
-    private static createMainWindow(size: number[], position: number[], isMaximized: boolean): BrowserWindow {
+    private createMainWindow(size: number[], position: number[], isMaximized: boolean): BrowserWindow {
         const isValidPos = position.length === 2 &&
-            (isMaximized || this.checkWindowPosition(position as [number, number]));
+            (isMaximized || WindowManager.checkWindowPosition(position as [number, number]));
 
         const wWin = new BrowserWindow({
             show: false,
@@ -79,19 +83,21 @@ export default class WindowManager {
             void shell.openExternal(url);
         });
 
-        wWin.on("minimize", function () {
+        wWin.on("minimize", () => {
             if (MS.instance.settingsCache.settings.minToTray) {
                 wWin.hide();
             }
             EventSender.send("onWindowStateChanged", "minimized");
         });
 
-        wWin.on("maximize", function () {
+        wWin.on("maximize", () => {
+            this._isMainWindowMaximized = true;
             EventSender.send("onWindowStateChanged", "maximized");
             MS.instance.settingsCache.settings.windowIsMaximized = true;
         });
 
-        wWin.on("unmaximize", function () {
+        wWin.on("unmaximize", () => {
+            this._isMainWindowMaximized = false;
             EventSender.send("onWindowStateChanged", "restored");
             MS.instance.settingsCache.settings.windowIsMaximized = false;
         });
