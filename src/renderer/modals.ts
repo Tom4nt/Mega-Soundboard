@@ -18,19 +18,6 @@ export {
     SettingsModal,
 };
 
-export class DefaultModals {
-    static errSoundboardIsLinked(path: string): MessageModal {
-        const a = document.createElement("a");
-        a.textContent = "folder";
-        a.href = path;
-        const folder = a.outerHTML;
-        const modal = new MessageModal("Linked Soundboard",
-            `This soundboard is linked to a ${folder}. Add sounds to the folder and they will appear here automatically.`,
-            false);
-        return modal;
-    }
-}
-
 customElements.define("ms-msmodal", MSModal);
 customElements.define("ms-newsmodal", NewsModal);
 customElements.define("ms-soundmodal", SoundModal);

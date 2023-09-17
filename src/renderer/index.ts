@@ -1,9 +1,9 @@
 import Actions from "./util/actions";
 import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, SoundItem, FileDropArea } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
-import { DefaultModals, MSModal, NewsModal, SettingsModal } from "./modals";
+import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
-import { Message, Settings } from "../shared/models";
+import { Message, Settings, Soundboard } from "../shared/models";
 import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
@@ -25,6 +25,7 @@ let addSoundboardDropArea !: FileDropArea;
 let searchBox!: SearchBox;
 let soundList!: SoundList;
 let addSoundButton!: HTMLButtonElement;
+let openFolderButton!: HTMLButtonElement;
 let sortButton!: HTMLButtonElement;
 
 //#region Action Panel
@@ -85,6 +86,7 @@ async function init(): Promise<void> {
     GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
     GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
     GlobalEvents.addHandler("onLoopSoundsChanged", state => loopSoundsToggler.isOn = state);
+    GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => updateSoundListButtons(sb));
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -97,11 +99,18 @@ async function init(): Promise<void> {
     if (sb) {
         soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
         soundboardList.selectSoundboard(sb);
+        updateSoundListButtons(sb);
     }
 
     MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
         seekbar.currentInstance = audioInst;
     });
+}
+
+function updateSoundListButtons(soundboard: Soundboard): void {
+    const isLinked = soundboard.linkedFolder !== null;
+    addSoundButton.style.display = isLinked ? "none" : "";
+    openFolderButton.style.display = isLinked ? "" : "none";
 }
 
 function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {
@@ -143,6 +152,7 @@ function getElementReferences(): void {
     searchBox = document.getElementById("searchbox") as SearchBox;
     soundList = document.getElementById("soundlist") as SoundList;
     addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
+    openFolderButton = document.getElementById("open-folder-button") as HTMLButtonElement;
     sortButton = document.getElementById("sort-button") as HTMLButtonElement;
 
     deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
@@ -216,6 +226,12 @@ function addElementListeners(): void {
 
     addSoundButton.addEventListener("click", () => {
         void browseAndAddSounds();
+    });
+
+    openFolderButton.addEventListener("click", () => {
+        const currentSoundboard = soundboardList.getSelectedSoundboard();
+        if (currentSoundboard?.linkedFolder)
+            window.location.href = currentSoundboard.linkedFolder;
     });
 
     sortButton.addEventListener("click", () => {
@@ -320,12 +336,9 @@ function closeActionPanelContainers(e: MouseEvent): void {
 
 async function browseAndAddSounds(): Promise<void> {
     const sb = soundboardList.getSelectedSoundboard();
-    if (sb) {
-        if (sb.linkedFolder === null) {
-            const paths = await window.actions.browseSounds();
-            await Actions.addSounds(paths, sb.uuid);
-        } else
-            DefaultModals.errSoundboardIsLinked(sb.linkedFolder).open();
+    if (sb && sb.linkedFolder === null) {
+        const paths = await window.actions.browseSounds();
+        await Actions.addSounds(paths, sb.uuid);
     }
 }
 
