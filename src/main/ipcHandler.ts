@@ -207,8 +207,8 @@ const implementer: Actions = {
         void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard");
     },
 
-    openBugReport() {
-        void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=&labels=bug&template=bug_report.md");
+    openFeedback() {
+        void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard/issues/new/choose");
     },
 
     async browseSounds() {

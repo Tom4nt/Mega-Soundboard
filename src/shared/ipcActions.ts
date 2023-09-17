@@ -43,7 +43,7 @@ class ConcreteActions {
     executeQuickAction: ((name: ActionName) => Promise<void>) | null = null;
 
     openRepo: (() => void) | null = null;
-    openBugReport: (() => void) | null = null;
+    openFeedback: (() => void) | null = null;
 
     browseSounds: (() => Promise<string[]>) | null = null;
     browseFolder: (() => Promise<string | undefined>) | null = null;

@@ -35,12 +35,12 @@ export default class MSModal extends Modal {
         btnGitHub.onclick = (): void => void window.actions.openRepo();
 
         const btnReport = document.createElement("button");
-        btnReport.innerHTML = "<span>Report a Bug</span><span class=\"icon\">open_browser</span>";
+        btnReport.innerHTML = "<span>Feedback</span><span class=\"icon\">open_browser</span>";
         btnReport.style.marginRight = "8px";
-        btnReport.onclick = (): void => void window.actions.openBugReport();
+        btnReport.onclick = (): void => void window.actions.openFeedback();
 
         const btnChanges = document.createElement("button");
-        btnChanges.innerHTML = "<span>Changelog</span>";
+        btnChanges.innerHTML = "<span>What's New</span>";
         btnChanges.onclick = async (): Promise<void> => {
             this.close();
             if (!this.parentElement) return;

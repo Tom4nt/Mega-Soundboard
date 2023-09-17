@@ -345,7 +345,6 @@ async function browseAndAddSounds(): Promise<void> {
 function showSoundDragTutorial(): void {
     const htmlMessage = `
         <p>Hold <kbd>CTRL</kbd> to copy.</p>
-        <p>Hold <kbd>Shift</kbd> to group.</p>
     `;
     MessageQueue.pushMessage(new Message(htmlMessage));
 
