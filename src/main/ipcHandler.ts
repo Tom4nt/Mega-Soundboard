@@ -12,6 +12,7 @@ import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
+import Updater from "./updater";
 
 export default class IPCHandler {
     public static register(): void {
@@ -175,6 +176,10 @@ const implementer: Actions = {
 
     installUpdate() {
         autoUpdater.quitAndInstall();
+    },
+
+    async checkUpdate() {
+        return await Updater.instance.check();
     },
 
     setMainDevice(id, volume) {

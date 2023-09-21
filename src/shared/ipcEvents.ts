@@ -27,8 +27,6 @@ class ConcreteEvents {
     onKeybindPressed: ExposedEvent<number[]> | null = null;
     onCurrentSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onMinToTrayChanged: ExposedEvent<boolean> | null = null;
-    onUpdateAvailable: ExposedEvent<void> | null = null;
-    onUpdateProgress: ExposedEvent<number> | null = null;
     onUpdateReady: ExposedEvent<void> | null = null;
     onSoundPlayRequested: ExposedEvent<Sound> | null = null;
     onStopAllSounds: ExposedEvent<void> | null = null;

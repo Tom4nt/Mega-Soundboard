@@ -1,9 +1,7 @@
 import { app, dialog } from "electron";
-import { autoUpdater } from "electron-updater";
 import MS from "./ms";
 import WindowManager from "./managers/windowManager";
 import TrayManager from "./managers/trayManager";
-import EventSender from "./eventSender";
 import SoundboardsCache from "./data/soundboardsCache";
 import SettingsCache from "./data/settingsCache";
 import DataAccess from "./data/dataAccess";
@@ -11,6 +9,7 @@ import InitialContent from "../shared/models/initialContent";
 import KeybindManager from "./managers/keybindManager";
 import { Settings } from "../shared/models";
 import IPCHandler from "./ipcHandler";
+import Updater from "./updater";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -31,14 +30,7 @@ if (!gotLock) {
     });
 }
 
-void autoUpdater.checkForUpdates();
-autoUpdater.on("update-available", () => EventSender.send("onUpdateAvailable"));
-autoUpdater.on("download-progress", progress => EventSender.send("onUpdateProgress", progress.percent));
-autoUpdater.on("update-downloaded", () => EventSender.send("onUpdateReady"));
-setInterval(() => {
-    void autoUpdater.checkForUpdates();
-}, 5 * 60 * 1000);
-
+void Updater.instance.check();
 IPCHandler.register();
 
 app.on("ready", function () {

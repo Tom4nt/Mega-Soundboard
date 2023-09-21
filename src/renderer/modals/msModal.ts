@@ -1,7 +1,13 @@
 import { Modal, NewsModal } from "../modals";
+import GlobalEvents from "../util/globalEvents";
 
 export default class MSModal extends Modal {
     versionElement!: HTMLHeadingElement;
+    updateButton!: HTMLButtonElement;
+    updateInfoElement!: HTMLParagraphElement;
+
+    isUpdateReady = false;
+    isListeningToUpdateReady = false;
 
     constructor() {
         super(false);
@@ -11,6 +17,12 @@ export default class MSModal extends Modal {
     // eslint-disable-next-line class-methods-use-this
     protected canCloseWithKey(): boolean {
         return true;
+    }
+
+    protected override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        if (this.isListeningToUpdateReady)
+            GlobalEvents.removeHandler("onUpdateReady", this.handleUpdateReady);
     }
 
     getContent(): HTMLElement[] {
@@ -27,16 +39,17 @@ export default class MSModal extends Modal {
         this.versionElement = ver;
 
         const buttons = document.createElement("div");
-        buttons.style.textAlign = "center";
+        buttons.style.display = "grid";
+        buttons.style.gap = "8px";
+        buttons.style.gridTemplateColumns = "repeat(2, 130px)";
+        buttons.style.justifyContent = "center";
 
         const btnGitHub = document.createElement("button");
         btnGitHub.innerHTML = "<span>GitHub</span><span class=\"icon\">open_browser</span>";
-        btnGitHub.style.marginRight = "8px";
         btnGitHub.onclick = (): void => void window.actions.openRepo();
 
         const btnReport = document.createElement("button");
         btnReport.innerHTML = "<span>Feedback</span><span class=\"icon\">open_browser</span>";
-        btnReport.style.marginRight = "8px";
         btnReport.onclick = (): void => void window.actions.openFeedback();
 
         const btnChanges = document.createElement("button");
@@ -48,11 +61,25 @@ export default class MSModal extends Modal {
             newsModal.open();
         };
 
-        buttons.append(btnGitHub, btnReport, btnChanges);
+        this.updateInfoElement = document.createElement("p");
+        this.updateInfoElement.style.display = "none";
+        this.updateInfoElement.style.textAlign = "center";
 
+        const btnCheckUpdates = document.createElement("button");
+        btnCheckUpdates.innerHTML = "<span>Check for updates</span>";
+        btnCheckUpdates.onclick = async (): Promise<void> => {
+            if (this.isUpdateReady) {
+                window.actions.installUpdate();
+            } else {
+                await this.checkUpdate();
+            }
+        };
+        this.updateButton = btnCheckUpdates;
+
+        buttons.append(btnGitHub, btnReport, btnChanges, btnCheckUpdates);
         void this.setVersionNumber();
 
-        return [icon, ver, buttons];
+        return [icon, ver, buttons, this.updateInfoElement];
     }
 
     getFooterButtons(): HTMLButtonElement[] {
@@ -62,8 +89,37 @@ export default class MSModal extends Modal {
         return buttons;
     }
 
+    private async checkUpdate(): Promise<void> {
+        const state = await window.actions.checkUpdate();
+        this.updateInfoElement.style.display = "";
+        switch (state) {
+            case "downloading":
+                this.updateInfoElement.innerText = "The update is being downloaded...";
+                if (!this.isListeningToUpdateReady)
+                    GlobalEvents.addHandler("onUpdateReady", this.handleUpdateReady);
+                this.isListeningToUpdateReady = true;
+                break;
+            case "downloaded":
+                this.showUpdateReady();
+                break;
+            case "upToDate":
+                this.updateInfoElement.innerHTML = "You're up to date!";
+                break;
+        }
+    }
+
     private async setVersionNumber(): Promise<void> {
         const version = await window.actions.getVersion();
         this.versionElement.innerHTML = `Version ${version}`;
     }
+
+    private showUpdateReady(): void {
+        this.updateInfoElement.innerHTML = "Restart to update.";
+        this.updateButton.innerHTML = "<span>Restart</span>";
+    }
+
+    private handleUpdateReady = (): void => {
+        this.isUpdateReady = true;
+        this.showUpdateReady();
+    };
 }

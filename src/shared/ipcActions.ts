@@ -1,4 +1,4 @@
-import { NonOptional } from "./interfaces";
+import { NonOptional, UpdaterState } from "./interfaces";
 import { OptionalSettings, Settings, Sound, Soundboard } from "./models";
 import { ActionName } from "./quickActions";
 
@@ -33,6 +33,7 @@ class ConcreteActions {
 
     flagChangelogViewed: (() => void) | null = null;
     installUpdate: (() => void) | null = null;
+    checkUpdate: (() => Promise<UpdaterState>) | null = null;
 
     setMainDevice: ((id?: string, volume?: number) => void) | null = null;
     setSecondaryDevice: ((id?: string | null, volume?: number) => void) | null = null;

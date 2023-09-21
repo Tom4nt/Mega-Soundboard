@@ -1,6 +1,7 @@
 import { Sound, Soundboard } from "./models";
 
 export type WindowState = "minimized" | "restored" | "maximized";
+export type UpdaterState = "unknown" | "downloaded" | "downloading" | "upToDate";
 export type Point = { x: number, y: number }
 
 export type NonOptional<T> = {
