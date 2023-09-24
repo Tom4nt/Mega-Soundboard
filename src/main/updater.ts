@@ -16,7 +16,17 @@ export default class Updater {
 
         autoUpdater.on("update-downloaded", () => {
             this._state = "downloaded";
-            EventSender.send("onUpdateReady");
+            EventSender.send("onUpdateStateChanged", "downloaded");
+        });
+
+        autoUpdater.on("update-available", () => {
+            this._state = "downloading";
+            EventSender.send("onUpdateStateChanged", "downloading");
+        });
+
+        autoUpdater.on("update-not-available", () => {
+            this._state = "upToDate";
+            EventSender.send("onUpdateStateChanged", "upToDate");
         });
 
         const hour = 60 * 60 * 1000;
@@ -29,12 +39,8 @@ export default class Updater {
         if (this._state === "downloading" || this._state === "downloaded") {
             return this.state;
         }
-        const result = await autoUpdater.checkForUpdates();
-        if (result) {
-            this._state = "downloading";
-        } else {
-            this._state = "upToDate";
-        }
-        return this.state;
+        await autoUpdater.checkForUpdates();
+        // FWIK, there is no way to get if the update is available or not from the return value.
+        return this.state; // The state is updated on the event handlers instead.
     }
 }

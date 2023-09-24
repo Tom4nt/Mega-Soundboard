@@ -8,6 +8,7 @@ import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
+import { UpdaterState } from "../shared/interfaces";
 
 //#region Elements
 
@@ -366,9 +367,11 @@ function showSoundDragTutorial(): void {
 
 //#region Main Events
 
-GlobalEvents.addHandler("onUpdateReady", () => {
-    updateButton.style.display = "inherit";
-    console.log("READY TO UPDATE");
+GlobalEvents.addHandler("onUpdateStateChanged", (state: UpdaterState) => {
+    if (state == "downloaded") {
+        updateButton.style.display = "inherit";
+        console.log("READY TO UPDATE");
+    }
 });
 
 GlobalEvents.addHandler("onWindowFocusChanged", s => {

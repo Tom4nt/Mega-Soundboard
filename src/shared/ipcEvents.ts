@@ -5,6 +5,7 @@ import {
     SoundAddedArgs,
     SoundboardAddedArgs,
     SoundChangedArgs,
+    UpdaterState,
     WindowState
 } from "./interfaces";
 import { Settings, Sound, Soundboard } from "./models";
@@ -27,7 +28,7 @@ class ConcreteEvents {
     onKeybindPressed: ExposedEvent<number[]> | null = null;
     onCurrentSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onMinToTrayChanged: ExposedEvent<boolean> | null = null;
-    onUpdateReady: ExposedEvent<void> | null = null;
+    onUpdateStateChanged: ExposedEvent<UpdaterState> | null = null;
     onSoundPlayRequested: ExposedEvent<Sound> | null = null;
     onStopAllSounds: ExposedEvent<void> | null = null;
     onZoomFactorChanged: ExposedEvent<number> | null = null;

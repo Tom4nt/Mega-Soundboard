@@ -1,3 +1,4 @@
+import { UpdaterState } from "../../shared/interfaces";
 import { Modal, NewsModal } from "../modals";
 import GlobalEvents from "../util/globalEvents";
 
@@ -22,7 +23,7 @@ export default class MSModal extends Modal {
     protected override disconnectedCallback(): void {
         super.disconnectedCallback();
         if (this.isListeningToUpdateReady)
-            GlobalEvents.removeHandler("onUpdateReady", this.handleUpdateReady);
+            GlobalEvents.removeHandler("onUpdateStateChanged", this.handleUpdateStateChanged);
     }
 
     getContent(): HTMLElement[] {
@@ -90,13 +91,14 @@ export default class MSModal extends Modal {
     }
 
     private async checkUpdate(): Promise<void> {
-        const state = await window.actions.checkUpdate();
+        this.updateInfoElement.innerText = "Checking...";
         this.updateInfoElement.style.display = "";
+        const state = await window.actions.checkUpdate();
         switch (state) {
             case "downloading":
                 this.updateInfoElement.innerText = "The update is being downloaded...";
                 if (!this.isListeningToUpdateReady)
-                    GlobalEvents.addHandler("onUpdateReady", this.handleUpdateReady);
+                    GlobalEvents.addHandler("onUpdateStateChanged", this.handleUpdateStateChanged);
                 this.isListeningToUpdateReady = true;
                 break;
             case "downloaded":
@@ -118,8 +120,10 @@ export default class MSModal extends Modal {
         this.updateButton.innerHTML = "<span>Restart</span>";
     }
 
-    private handleUpdateReady = (): void => {
-        this.isUpdateReady = true;
-        this.showUpdateReady();
+    private handleUpdateStateChanged = (state: UpdaterState): void => {
+        if (state == "downloaded") {
+            this.isUpdateReady = true;
+            this.showUpdateReady();
+        }
     };
 }
