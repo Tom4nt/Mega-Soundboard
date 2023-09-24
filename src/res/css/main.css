@@ -76,10 +76,25 @@ a {
 }
 
 i {
-    font-family: 'MSIcons';
-    vertical-align: bottom;
+    font-family: 'MaterialIcons';
+    font-weight: normal;
     font-style: normal;
-    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
 }
 
 kbd {
@@ -109,11 +124,6 @@ kbd {
     display: inline-block;
 }
 
-.icon {
-    font-family: 'MSIcons';
-    font-size: 18px;
-}
-
 .drag-hint {
     font-family: 'Roboto';
     font-size: 12px;
@@ -128,7 +138,7 @@ kbd {
 }
 
 .drag-hint .icon {
-    font-family: 'MSIcons';
+    font-family: 'MaterialIcons';
     margin-right: 4px;
     font-size: 14px;
     vertical-align: bottom;
@@ -264,7 +274,7 @@ kbd {
 }
 
 .icon-text-button .icon {
-    font-family: 'MSIcons';
+    font-family: 'MaterialIcons';
     font-size: 18px;
     margin-right: 3px;
     display: inline-block;

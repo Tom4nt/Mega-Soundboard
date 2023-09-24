@@ -51,10 +51,9 @@ export default class SoundboardItem extends Draggable {
         desc.classList.add("desc");
         this.descriptionElement = desc;
 
-        const icon = document.createElement("span");
+        const icon = document.createElement("i");
         this.iconElement = icon;
         if (this.soundboard.linkedFolder) icon.innerHTML = "link";
-        icon.classList.add("icon");
 
         const tt = new Tooltip();
         tt.tooltipText = "This soundboard is linked to a folder";

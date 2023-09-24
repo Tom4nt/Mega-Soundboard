@@ -36,7 +36,7 @@ export default class Seekbar extends HTMLElement {
 	protected connectedCallback(): void {
 		if (this.didConnect) return;
 
-		this.buttonElement.innerHTML = "play";
+		this.buttonElement.setAttribute("icon", "play_arrow");
 		this.buttonElement.addEventListener("click", this.handlePlayPauseClick);
 
 		this.timeElement.innerHTML = "00:00";
@@ -78,9 +78,10 @@ export default class Seekbar extends HTMLElement {
 
 	private update(): void {
 		if (!this.currentInstance) return;
-		this.buttonElement.innerHTML = this.currentInstance.isPaused
-			? "play"
-			: "pause";
+		this.buttonElement.setIcon(this.currentInstance.isPaused
+			? "play_arrow"
+			: "pause"
+		);
 		this.updateTime();
 	}
 
@@ -124,10 +125,10 @@ export default class Seekbar extends HTMLElement {
 	};
 
 	private handlePlay = (): void => {
-		this.buttonElement.innerHTML = "pause";
+		this.buttonElement.setIcon("pause");
 	};
 
 	private handlePause = (): void => {
-		this.buttonElement.innerHTML = "play";
+		this.buttonElement.setIcon("play_arrow");
 	};
 }

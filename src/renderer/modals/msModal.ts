@@ -46,11 +46,11 @@ export default class MSModal extends Modal {
         buttons.style.justifyContent = "center";
 
         const btnGitHub = document.createElement("button");
-        btnGitHub.innerHTML = "<span>GitHub</span><span class=\"icon\">open_browser</span>";
+        btnGitHub.innerHTML = "<span>GitHub<i>open_in_browser</i></span>";
         btnGitHub.onclick = (): void => void window.actions.openRepo();
 
         const btnReport = document.createElement("button");
-        btnReport.innerHTML = "<span>Feedback</span><span class=\"icon\">open_browser</span>";
+        btnReport.innerHTML = "<span>Feedback<i>open_in_browser</i></span>";
         btnReport.onclick = (): void => void window.actions.openFeedback();
 
         const btnChanges = document.createElement("button");

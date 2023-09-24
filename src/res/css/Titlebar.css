@@ -26,9 +26,9 @@ ms-titlebar button {
     height: 30px;
     -webkit-app-region: no-drag;
     float: right;
-    font-family: 'MSIcons';
-    font-size: 16px;
-    padding: 0 8px 0 8px;
+    font-family: 'MaterialIcons';
+    font-size: 20px;
+    padding: 0 6px 0 6px;
     transition: all 0.1s;
     border-radius: 0;
 }

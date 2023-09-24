@@ -327,10 +327,17 @@ function loadDevices(devices: MediaDeviceInfo[]): void {
 }
 
 function closeActionPanelContainers(e: MouseEvent): void {
-    if (!e.composedPath().includes(deviceSettings) && e.target != deviceSettingsButton && !deviceSettings.classList.contains("closed")) {
+    if (!e.composedPath().includes(deviceSettings) &&
+        !e.composedPath().includes(deviceSettingsButton) &&
+        !deviceSettings.classList.contains("closed")
+    ) {
         deviceSettings.classList.add("closed");
     }
-    if (!e.composedPath().includes(quickSettings) && e.target != quickSettingsButton && !quickSettings.classList.contains("closed")) {
+
+    if (!e.composedPath().includes(quickSettings) &&
+        !e.composedPath().includes(quickSettingsButton) &&
+        !quickSettings.classList.contains("closed")
+    ) {
         quickSettings.classList.add("closed");
     }
 }
