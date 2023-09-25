@@ -20,10 +20,9 @@ ms-soundlist .itemcontainer {
 }
 
 ms-soundlist .itemcontainer .item {
-    display: list-item;
+    display: flex;
     list-style: none;
     flex-grow: 1;
-    padding: 8px;
     border-radius: 4px;
     background-color: var(--color-normalL);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -36,8 +35,15 @@ ms-soundlist .itemcontainer .item {
     overflow: hidden;
 }
 
-ms-soundlist .itemcontainer .item:hover:not(.dragdummy) {
+ms-soundlist .itemcontainer .item>div:hover {
     background-color: var(--color-light);
+}
+
+ms-soundlist .itemcontainer .item ms-iconbutton:hover {
+    background-color: var(--color-lightL);
+}
+
+ms-soundlist .itemcontainer .item:hover:not(.dragdummy) {
     box-shadow: 0 10px 16px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
 }
 

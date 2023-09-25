@@ -44,7 +44,7 @@ export default class Titlebar extends HTMLElement {
         this.sizeButton = btnSize;
 
         btnMin.tabIndex = -1;
-        btnMin.innerHTML = "minimize";
+        btnMin.innerHTML = "horizontal_rule";
         btnMin.onclick = (): void => {
             window.actions.minimize();
         };

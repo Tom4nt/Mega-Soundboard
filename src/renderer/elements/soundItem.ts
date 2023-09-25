@@ -84,6 +84,14 @@ export default class SoundItem extends Draggable {
     private init(): void {
         this.classList.add("item");
 
+        const left = document.createElement("div");
+        left.style.padding = "8px";
+        left.style.flexGrow = "1";
+
+        const right = document.createElement("div");
+        right.style.padding = "14px";
+        right.style.alignSelf = "stretch";
+
         this.titleElement = document.createElement("span");
         this.titleElement.style.pointerEvents = "none";
 
@@ -91,15 +99,20 @@ export default class SoundItem extends Draggable {
         this.detailsElement.classList.add("desc");
         this.detailsElement.style.pointerEvents = "none";
 
-        const playingIndicator = document.createElement("div");
-        playingIndicator.classList.add("indicator");
-        this.indicatorElement = playingIndicator;
+        this.indicatorElement = document.createElement("div");
+        this.indicatorElement.classList.add("indicator");
+
+        const expandIcon = document.createElement("i");
+        expandIcon.style.fontSize = "24px";
+        expandIcon.innerText = "view_list";
 
         this.update();
-        this.append(this.titleElement, this.detailsElement, playingIndicator);
+        left.append(this.titleElement, this.detailsElement);
+        right.append(expandIcon);
+        this.append(left, right, this.indicatorElement);
 
         const handleSoundClick = async (e: MouseEvent): Promise<void> => {
-            if (e.target === playingIndicator) return;
+            if (e.target === this.indicatorElement) return;
             try {
                 await MSR.instance.audioManager.playSound(this.sound);
             } catch (error) {
@@ -120,7 +133,7 @@ export default class SoundItem extends Draggable {
             Actions.editSound(this.sound);
         });
 
-        playingIndicator.addEventListener("click", () => {
+        this.indicatorElement.addEventListener("click", () => {
             MSR.instance.audioManager.stopSound(this.sound.uuid);
         });
 
