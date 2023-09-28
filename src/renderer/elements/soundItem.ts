@@ -9,6 +9,7 @@ import Actions from "../util/actions";
 import { SoundChangedArgs } from "../../shared/interfaces";
 import GlobalEvents from "../util/globalEvents";
 import KeyStateListener from "../util/keyStateListener";
+import { Event, ExposedEvent } from "../../shared/events";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 
@@ -25,6 +26,9 @@ export default class SoundItem extends Draggable {
         this._draggingToNewSoundboard = v;
         void this.updateHint(undefined);
     }
+
+    private _expandRequested = new Event<SoundItem>();
+    public get onExpandRequested(): ExposedEvent<SoundItem> { return this._expandRequested.expose(); }
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
@@ -85,6 +89,7 @@ export default class SoundItem extends Draggable {
         this.classList.add("item");
 
         const left = document.createElement("div");
+        left.style.minWidth = "0";
         left.style.padding = "8px";
         left.style.flexGrow = "1";
 
@@ -121,7 +126,8 @@ export default class SoundItem extends Draggable {
             }
         };
 
-        this.addEventListener("click", e => void handleSoundClick(e));
+        left.addEventListener("click", e => void handleSoundClick(e));
+        right.addEventListener("click", () => this._expandRequested.raise(this));
 
         this.addEventListener("auxclick", e => {
             if (e.button === 1) {

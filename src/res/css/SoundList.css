@@ -17,6 +17,7 @@ ms-soundlist {
 ms-soundlist .itemcontainer {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-auto-flow: dense;
 }
 
 ms-soundlist .itemcontainer .item {
@@ -55,6 +56,12 @@ ms-soundlist .itemcontainer .item:active:not(.dragdummy):not(.drag) {
 ms-soundlist .itemcontainer .item.drag {
     transform: rotate(4deg) scale(1.1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 12px 10px rgba(0, 0, 0, 0.23);
+}
+
+ms-soundlist .itemcontainer .group {
+    grid-column: 1 / -1;
+    transition: height 1s;
+    overflow: hidden;
 }
 
 ms-soundlist .info {

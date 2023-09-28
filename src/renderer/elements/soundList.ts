@@ -78,7 +78,7 @@ export default class SoundList extends HTMLElement {
             this.hideDragDummy();
         });
         dropArea.onDrop.addHandler(e => {
-            void this.onFileDrop(e);
+            void this.finishFileDrag(e);
         });
     }
 
@@ -117,6 +117,10 @@ export default class SoundList extends HTMLElement {
 
     private addSound(sound: Sound, index?: number): void {
         const item = new SoundItem(sound);
+
+        item.onExpandRequested.addHandler(() => {
+            SoundList.showGroup(item);
+        });
 
         item.onDragStart.addHandler(async e => {
             if (this.currentSoundboardId) {
@@ -199,11 +203,26 @@ export default class SoundList extends HTMLElement {
         }
     }
 
-    private async onFileDrop(e: DragEvent): Promise<void> {
+    private async finishFileDrag(e: DragEvent): Promise<void> {
         this.hideDragDummy();
         const paths = await Utils.getValidSoundPaths(e);
         if (paths && this.currentSoundboardId)
             await Actions.addSounds(paths, this.currentSoundboardId, this.getDragDummyIndex(null));
+    }
+
+    private static showGroup(under: SoundItem): void {
+        const root = document.createElement("div");
+        root.classList.add("group");
+        root.style.height = "0";
+        const container = document.createElement("div");
+        container.style.fontSize = "18px";
+        container.append("test");
+        root.append(container);
+        under.after(root);
+        const h = container.clientHeight;
+
+        void root.offsetWidth; // Trigger reflow
+        root.style.height = `${h}px`;
     }
 
     // Handlers
