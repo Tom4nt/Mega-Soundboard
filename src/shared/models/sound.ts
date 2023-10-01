@@ -5,6 +5,7 @@ import { tryGetValue } from "../sharedUtils";
 export default class Sound {
     soundboardUuid: string | null = null;
 
+    // TODO: SubSounds
     constructor(
         public uuid: string,
         public name: string,

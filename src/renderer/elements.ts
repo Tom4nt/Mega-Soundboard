@@ -17,6 +17,7 @@ import Seekbar from "./elements/seekbar";
 import MessageHost from "./elements/messageHost";
 import Draggable from "./elements/draggable";
 import FileDropArea from "./elements/fileDropArea";
+import SoundContainer from "./elements/soundContainer";
 
 export {
     KeyRecorder,
@@ -38,6 +39,7 @@ export {
     MessageHost,
     Draggable,
     FileDropArea,
+    SoundContainer,
 };
 
 const definitions: [string, CustomElementConstructor][] = [
@@ -59,6 +61,7 @@ const definitions: [string, CustomElementConstructor][] = [
     ["ms-seekbar", Seekbar],
     ["ms-message-host", MessageHost],
     ["ms-filedroparea", FileDropArea],
+    ["ms-soundcontainer", SoundContainer],
 ];
 
 for (const d of definitions) {

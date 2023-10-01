@@ -13,4 +13,8 @@ declare global {
         addListener: <T extends keyof Events>(name: T, f: (param: unknown) => void) => void;
         getInitialContent: () => InitialContent,
     }
+
+    interface String {
+        contains(other: string): boolean;
+    }
 }
