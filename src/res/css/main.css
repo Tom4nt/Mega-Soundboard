@@ -19,6 +19,7 @@
 @import 'InfoBalloon.css';
 @import 'seekbar.css';
 @import 'messageHost.css';
+@import 'soundContainer.css';
 
 body,
 html {
