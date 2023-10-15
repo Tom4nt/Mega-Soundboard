@@ -4,10 +4,12 @@ import { Point } from "../../shared/interfaces";
 const START_DIST = 5;
 
 type Mode = "move" | "copy";
+type DraggableEvent = { event: MouseEvent, draggable: Draggable }
 
 export default abstract class Draggable extends HTMLElement {
     static get currentElement(): Draggable | null { return Draggable._currentElement; }
     private static _currentElement: Draggable | null = null;
+    private static _onDrag = new Event<DraggableEvent>();
 
     lockVertical = false;
     lockHorizontal = false;
@@ -20,6 +22,7 @@ export default abstract class Draggable extends HTMLElement {
     private _onDragEnd = new Event<void>;
     private _onDragStart = new Event<{ cancel: boolean }>;
 
+    static get onDrag(): ExposedEvent<DraggableEvent> { return Draggable._onDrag.expose(); }
     get onDragStart(): ExposedEvent<{ cancel: boolean }> { return this._onDragStart.expose(); }
     get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
     get isBeingDragged(): boolean { return this.isDragging; }
@@ -59,15 +62,20 @@ export default abstract class Draggable extends HTMLElement {
             if (!Draggable.currentElement && this.isMouseDownOnThis && validDistance) {
                 Draggable._currentElement = this;
                 this.updateOffset();
-                return;
             }
             if (this.isMouseDownOnThis && Draggable._currentElement) {
                 if (!this.isDragging) {
                     const c = { cancel: false };
                     this._onDragStart.raise(c);
-                    if (!c.cancel) this.sartDrag();
+                    if (!c.cancel) {
+                        this.sartDrag();
+                        Draggable._onDrag.raise({ draggable: this, event: e });
+                    }
                 }
-                if (this.offset) this.move(p, this.offset, this.offsetHeight);
+                if (this.offset) {
+                    this.move(p, this.offset, this.offsetHeight);
+                    Draggable._onDrag.raise({ draggable: this, event: e });
+                }
             }
         });
 

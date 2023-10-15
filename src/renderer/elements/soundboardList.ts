@@ -38,14 +38,13 @@ export default class SoundboardList extends HTMLElement {
             this.addSoundboard(args.soundboard, args.index);
         });
 
-        document.addEventListener("mousemove", e => {
-            if (Draggable.currentElement instanceof SoundboardItem) {
-                const d = Draggable.currentElement;
+        Draggable.onDrag.addHandler(e => {
+            if (e.draggable instanceof SoundboardItem) {
                 if (!this.dragElement) {
                     this.showDragDummy();
-                    this.dragElement = d;
+                    this.dragElement = e.draggable;
                 }
-                this.handleDragOver(e.clientY);
+                this.handleDragOver(e.event.clientY);
             }
         });
     }

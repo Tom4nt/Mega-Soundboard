@@ -60,13 +60,13 @@ export default class SoundList extends HTMLElement {
                 this.loadSounds(sb.sounds, sb.uuid, true);
         });
 
-        document.addEventListener("mousemove", e => {
-            if (Draggable.currentElement && Draggable.currentElement instanceof SoundItem) {
+        Draggable.onDrag.addHandler(e => {
+            if (e.draggable instanceof SoundItem) {
                 if (!this.dragElement) {
                     this.showDragDummy();
-                    this.dragElement = Draggable.currentElement;
+                    this.dragElement = e.draggable;
                 }
-                this.handleDragOver(e);
+                this.handleDragOver(e.event);
             }
         });
 
