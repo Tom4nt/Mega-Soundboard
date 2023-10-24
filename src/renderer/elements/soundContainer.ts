@@ -40,7 +40,8 @@ export default class SoundContainer extends HTMLElement {
     public get onSoundDropped(): ExposedEvent<SoundDroppedEventArgs> { return this._onSoundDropped.expose(); }
 
     public constructor(
-        public readonly emptyMessageRequested: () => string
+        public readonly emptyMessageRequested: () => string,
+        public readonly parentSoundId?: string,
     ) {
         super();
     }
@@ -113,14 +114,19 @@ export default class SoundContainer extends HTMLElement {
             isValid = isValid && isCurrentDragElement;
             soundItem.style.display = isValid ? "" : "none";
         }
+        this.updateCurrentSoundContainer();
         this.updateMessage();
     }
 
-    public addSound(sound: Sound, index?: number): void {
+    addSound(sound: Sound, index?: number): void {
         const item = new SoundItem(sound);
 
         item.onExpandRequested.addHandler(() => {
-            this.openSubContainer(item);
+            if (this._currSubContainer?.parentSoundId === sound.uuid) {
+                this.closeCurrentSubContainer();
+            } else {
+                this.openSubContainer(item);
+            }
         });
 
         item.onDragStart.addHandler(() => {
@@ -148,11 +154,10 @@ export default class SoundContainer extends HTMLElement {
                 this._loadedSounds.push(item);
             }
         }
-
         this.updateMessage();
     }
 
-    public removeSound(sound: Sound): void {
+    removeSound(sound: Sound): void {
         let i = 0;
         for (const item of this._loadedSounds) {
             if (Sound.equals(item.sound, sound)) {
@@ -163,17 +168,22 @@ export default class SoundContainer extends HTMLElement {
             }
             i++;
         }
+        this.updateCurrentSoundContainer();
     }
 
-    public clear(): void {
+    getHeight(): number {
+        return this._containerDiv.offsetHeight;
+    }
+
+    // --- // ---
+
+    private clear(): void {
         for (const item of this._loadedSounds) {
             item.destroy();
         }
         this._loadedSounds = [];
         this.updateMessage();
     }
-
-    // --- // ---
 
     private hasVisibleSounds(): boolean {
         return this._loadedSounds.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
@@ -205,16 +215,14 @@ export default class SoundContainer extends HTMLElement {
 
     private openSubContainer(under: SoundItem): void {
         this.closeCurrentSubContainer();
-        const root = new SoundContainer(() => "No sounds in this group");
+        const root = new SoundContainer(() => "No sounds in this group", under.sound.uuid);
         this._currSubContainer = root;
         root.classList.add("group");
         root.style.height = "0";
-        const container = document.createElement("div");
-        container.style.fontSize = "18px";
-        container.append("test");
-        root.append(container);
         under.after(root);
-        const h = container.clientHeight;
+
+        if (Array.isArray(under.sound.source)) root.loadSounds(under.sound.source);
+        const h = root.getHeight();
 
         void root.offsetWidth; // Trigger reflow
         root.style.height = `${h}px`;
@@ -222,8 +230,28 @@ export default class SoundContainer extends HTMLElement {
 
     private closeCurrentSubContainer(): void {
         if (!this._currSubContainer) return;
-        // TODO: Close animation. Remove event listeners (destroy function).
+        // TODO: Close animation. Remove event listeners (destroy() function).
         this._currSubContainer.remove();
+        this._currSubContainer = null;
+    }
+
+    // Checks if the container needs to be moved or closed.
+    private updateCurrentSoundContainer(): void {
+        if (!this._currSubContainer) return;
+        const soundId = this._currSubContainer.parentSoundId;
+        if (!soundId) return;
+        const soundItem = this.findSoundItem(soundId);
+        if (soundItem) {
+            soundItem.after(this._currSubContainer);
+            const isVisible = soundItem.style.display != "none";
+            this._currSubContainer.style.display = isVisible ? "" : "none";
+        } else {
+            this.closeCurrentSubContainer();
+        }
+    }
+
+    private findSoundItem(id: string): SoundItem | undefined {
+        return this._loadedSounds.find(x => x.sound.uuid === id);
     }
 
     // Handlers

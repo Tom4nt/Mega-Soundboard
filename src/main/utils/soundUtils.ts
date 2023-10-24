@@ -6,16 +6,17 @@ import { validSoundExts } from "../../shared/sharedUtils";
 
 export default class SoundUtils {
 
-    static getNewSoundsFromPaths(paths: string[]): Sound[] {
-        return Array.from(this.iterateSoundsFromPaths(paths));
+    static getNewSoundsFromPaths(paths: string[], soundboardUuid: string): Sound[] {
+        return Array.from(this.iterateSoundsFromPaths(paths, soundboardUuid));
     }
 
-    static *iterateSoundsFromPaths(paths: string[]): Generator<Sound> {
+    static *iterateSoundsFromPaths(paths: string[], soundboardUuid: string): Generator<Sound> {
         for (const path of paths) {
             yield new Sound(
                 randomUUID(),
                 Utils.getNameFromFile(path),
                 path, 100, [],
+                soundboardUuid,
             );
         }
     }

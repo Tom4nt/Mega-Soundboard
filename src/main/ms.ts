@@ -66,6 +66,11 @@ export default class MS {
         EventSender.send("onStopAllSounds");
     }
 
+    getCurrentSoundboard(): Soundboard | undefined {
+        const index = this.settingsCache.settings.selectedSoundboard;
+        return this.soundboardsCache.soundboards[index];
+    }
+
     async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
         const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
         this.settingsCache.settings.selectedSoundboard = index;
@@ -82,7 +87,7 @@ export default class MS {
         this.currentSoundboardWatcher = watcher;
 
         watcher.onSoundAdded.addHandler(p => {
-            const sound = SoundUtils.getNewSoundsFromPaths([p])[0];
+            const sound = SoundUtils.getNewSoundsFromPaths([p], soundboard.uuid)[0];
             if (sound)
                 void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
         });

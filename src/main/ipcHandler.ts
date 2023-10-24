@@ -95,7 +95,9 @@ const implementer: Actions = {
     },
 
     getNewSoundsFromPaths(paths) {
-        const sounds = SoundUtils.getNewSoundsFromPaths(paths);
+        const currentSoundboard = MS.instance.getCurrentSoundboard();
+        if (!currentSoundboard) throw new Error("Cannot find current soundboard.");
+        const sounds = SoundUtils.getNewSoundsFromPaths(paths, currentSoundboard.uuid);
         return Promise.resolve(sounds);
     },
 

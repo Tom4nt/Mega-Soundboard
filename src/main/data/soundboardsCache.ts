@@ -10,19 +10,20 @@ import { randomUUID } from "crypto";
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(sounds: Sound[], soundboardId: string | null, move: boolean, startIndex?: number): Promise<Soundboard> {
+    async addSounds(paths: Sound[], soundboardId: string | null, move: boolean, startIndex?: number): Promise<Soundboard> {
         const soundboard = await this.getSoundboard(soundboardId);
         const soundsDestination = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
         let index = startIndex ?? soundboard.sounds.length + 1;
-        for (const sound of sounds) {
+        for (const sound of paths) {
             sound.soundboardUuid = soundboard.uuid;
             soundboard.sounds.splice(index, 0, sound);
             if (move && soundsDestination) {
-                const basename = path.basename(sound.path);
+                if (typeof sound.source !== "string") continue;
+                const basename = path.basename(sound.source);
                 const soundDestination = path.join(soundsDestination, basename);
-                moveTasks.push(fs.rename(sound.path, soundDestination));
-                sound.path = soundDestination;
+                moveTasks.push(fs.rename(sound.source, soundDestination));
+                sound.source = soundDestination;
             }
             EventSender.send("onSoundAdded", { sound: sound, index });
             index += 1;
@@ -52,7 +53,7 @@ export default class SoundboardsCache {
             throw Error(`Cannot ${copy ? "copy" : "move"} a sound to a linked Soundboard.`);
 
         if (copy) {
-            sound = Sound.copy(sound, randomUUID());
+            sound = Sound.copy(sound, () => randomUUID());
         } else {
             sourceSB.sounds.splice(index, 1);
             EventSender.send("onSoundRemoved", sound);
@@ -68,6 +69,7 @@ export default class SoundboardsCache {
         return destinationSB;
     }
 
+    // TODO: Remove from groups.
     async removeSound(uuid: string): Promise<void> {
         const [soundboard, index] = this.findSound(uuid);
         const sound = soundboard.sounds[index]!;

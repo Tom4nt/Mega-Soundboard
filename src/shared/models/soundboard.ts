@@ -38,7 +38,13 @@ export default class Soundboard {
     }
 
     static getSoundWithPath(soundboard: Soundboard, path: string): Sound | undefined {
-        return soundboard.sounds.find(x => x.path === path);
+        const inSoundboard = soundboard.sounds.find(x => x.source === path);
+        if (inSoundboard) return inSoundboard;
+        for (const sound of soundboard.sounds) {
+            const subSound = Sound.getSoundWithPath(sound, path);
+            if (subSound) return subSound;
+        }
+        return undefined;
     }
 }
 
@@ -70,8 +76,7 @@ export function convertSounds(
 ): Sound[] {
     const sounds: Sound[] = [];
     data.forEach(item => {
-        const s = convertSound(item, generateUuid());
-        s.soundboardUuid = connectedSoundboardUuid;
+        const s = convertSound(item, generateUuid, connectedSoundboardUuid);
         sounds.push(s);
     });
     return sounds;

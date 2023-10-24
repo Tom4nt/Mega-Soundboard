@@ -114,7 +114,12 @@ export default class SoundItem extends Draggable {
         this.update();
         left.append(this.titleElement, this.detailsElement);
         right.append(expandIcon);
-        this.append(left, right, this.indicatorElement);
+
+        const isGroup = Array.isArray(this.sound.source);
+        const items: Node[] = [
+            left, ...isGroup ? [right] : [], this.indicatorElement
+        ];
+        this.append(...items);
 
         const handleSoundClick = async (e: MouseEvent): Promise<void> => {
             if (e.target === this.indicatorElement) return;

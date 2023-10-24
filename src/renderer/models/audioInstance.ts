@@ -1,6 +1,5 @@
 import { Event, ExposedEvent } from "../../shared/events";
 import { IDevice } from "../../shared/interfaces";
-import { Sound } from "../../shared/models";
 
 /** Represents a single sound playing on multiple devices. */
 export default class AudioInstance {
@@ -20,7 +19,7 @@ export default class AudioInstance {
     public readonly duration: number;
 
     public static async create(
-        sound: Sound,
+        sound: { uuid: string, volume: number, path: string },
         devices: IDevice[],
         volumeMult: number,
         loop: boolean,
@@ -77,12 +76,12 @@ export default class AudioInstance {
         firstAudioElement.addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
         return new AudioInstance(
-            sound, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
+            sound.uuid, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
         );
     }
 
     private constructor(
-        public readonly sound: Sound,
+        public readonly soundUuid: string,
         public readonly audioElements: HTMLAudioElement[],
         public readonly volumeMult: number,
         private readonly stopEvent: Event<void>,

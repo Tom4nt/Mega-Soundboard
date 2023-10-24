@@ -78,17 +78,18 @@ export default class SoundModal extends Modal {
 
     private async update(): Promise<void> {
         this.nameElement.value = this.loadedSound.name;
-        this.pathElement.value = this.loadedSound.path;
+        if (typeof this.loadedSound.source === "string") this.pathElement.value = this.loadedSound.source;
         this.volumeElement.value = this.loadedSound.volume;
         this.keysElement.keys = this.loadedSound.keys;
 
+        const isGroup = Array.isArray(this.loadedSound.source);
         let isLinked = false;
         if (this.loadedSound.soundboardUuid) {
             const soundboard = await window.actions.getSoundboard(this.loadedSound.soundboardUuid);
             isLinked = soundboard.linkedFolder !== null;
         }
-        this.moveElement.style.display = this.isNew ? "" : "none"; // Can only move when it's a new sound
-        this.pathElement.style.display = !isLinked ? "" : "none"; // Can only set the path for sounds in unlinked soundboards
+        this.moveElement.style.display = this.isNew ? "" : "none";
+        this.pathElement.style.display = !isLinked && !isGroup ? "" : "none";
         this.removeButton.style.display = this.isNew || isLinked ? "none" : "";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
@@ -111,10 +112,10 @@ export default class SoundModal extends Modal {
 
     private async save(): Promise<void> {
         const path = await window.actions.parsePath(this.pathElement.value);
-        if (!await this.validate(path) || !path) return;
+        if (!await this.validate(path) || !path) return; // TODO: How does it save linked sounds?
 
         this.loadedSound.name = this.nameElement.value;
-        this.loadedSound.path = path;
+        this.loadedSound.source = path;
         this.loadedSound.volume = this.volumeElement.value;
         this.loadedSound.keys = this.keysElement.keys;
 

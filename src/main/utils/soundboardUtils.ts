@@ -23,7 +23,9 @@ export default class SoundboardUtils {
                 const soundWithPath = Soundboard.getSoundWithPath(soundboard, soundPath);
                 const stat = await fs.stat(soundPath);
                 if (!soundWithPath && stat.isFile()) {
-                    const s = new Sound(randomUUID(), Utils.getNameFromFile(soundPath), soundPath, 100, []);
+                    const s = new Sound(
+                        randomUUID(), Utils.getNameFromFile(soundPath), soundPath, 100, [], soundboard.uuid
+                    );
                     s.soundboardUuid = soundboard.uuid;
                     soundboard.sounds.push(s);
                 }
@@ -34,8 +36,11 @@ export default class SoundboardUtils {
         if (soundboard.sounds.length > 0) {
             for (let i = soundboard.sounds.length - 1; i >= 0; i--) {
                 const sound = soundboard.sounds[i]!;
-                const contains = Utils.folderContains(soundboard.linkedFolder, files, sound.path);
-                if (!contains) soundboard.sounds.splice(i, 1);
+                Sound.removeSubSounds(sound, soundboard.linkedFolder, files);
+                if (typeof sound.source === "string") {
+                    const contains = Utils.folderContains(soundboard.linkedFolder, files, sound.source);
+                    if (!contains) soundboard.sounds.splice(i, 1);
+                }
             }
         }
     }

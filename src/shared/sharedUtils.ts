@@ -11,6 +11,13 @@ export function tryGetValue(data: { [key: string]: unknown }, keysToTry: string[
     return res;
 }
 
+export function normalizeString(str: string): string {
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
+
 String.prototype.contains = function (other: string): boolean {
-    return this.split("").some(char => char.localeCompare(other, undefined, { sensitivity: "base" }) === 0);
+    return normalizeString(this as string).includes(normalizeString(other));
 };

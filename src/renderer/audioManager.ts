@@ -101,7 +101,13 @@ export default class AudioManager {
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-        const instance = await AudioInstance.create(sound, devices, sb.volume / 100, this.loopSounds);
+        // TODO: Decide which sound on the group to play.
+        if (typeof sound.source !== "string") return;
+
+        const instance = await AudioInstance.create(
+            { uuid: sound.uuid, volume: sound.volume, path: sound.source },
+            devices, sb.volume / 100, this.loopSounds
+        );
         instance.onEnd.addHandler(() => {
             console.log(`Instance of ${sound.name} finished playing.`);
             this.playingSounds.splice(this.playingSounds.indexOf(instance), 1);
@@ -143,7 +149,7 @@ export default class AudioManager {
     }
 
     isSoundPlaying(uuid: string): boolean {
-        const instance = this.playingSounds.find(x => x.sound.uuid == uuid);
+        const instance = this.playingSounds.find(x => x.soundUuid == uuid);
         return instance !== undefined;
     }
 
@@ -179,13 +185,13 @@ export default class AudioManager {
     private stopAllSoundsInternal(raiseUpdates: boolean): void {
         const playingSoundsCopy = [...this.playingSounds];
         for (const playingSound of playingSoundsCopy) {
-            const id = playingSound.sound.uuid;
+            const id = playingSound.soundUuid;
             this.stopSoundInternal(id, raiseUpdates);
         }
     }
 
     private stopSoundInternal(uuid: string, raiseUpdates: boolean): void {
-        const instances = this.playingSounds.filter(x => x.sound.uuid == uuid);
+        const instances = this.playingSounds.filter(x => x.soundUuid == uuid);
         if (instances.length <= 0) return;
         const instancesCopy = [...instances];
 

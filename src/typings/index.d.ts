@@ -15,6 +15,7 @@ declare global {
     }
 
     interface String {
+        /** Checks if the string contains the other. Implemented in sharedUtils. */
         contains(other: string): boolean;
     }
 }
