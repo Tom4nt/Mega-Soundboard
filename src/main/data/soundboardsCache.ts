@@ -1,11 +1,12 @@
 import { promises as fs } from "fs";
-import { Sound, Soundboard } from "../../shared/models";
+import { Soundboard } from "../../shared/models";
 import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
 import SoundboardUtils from "../utils/soundboardUtils";
 import { randomUUID } from "crypto";
+import { Sound } from "../../shared/models/sound";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -19,11 +20,10 @@ export default class SoundboardsCache {
             sound.soundboardUuid = soundboard.uuid;
             soundboard.sounds.splice(index, 0, sound);
             if (move && soundsDestination) {
-                if (typeof sound.source !== "string") continue;
-                const basename = path.basename(sound.source);
+                const basename = path.basename(sound.path);
                 const soundDestination = path.join(soundsDestination, basename);
-                moveTasks.push(fs.rename(sound.source, soundDestination));
-                sound.source = soundDestination;
+                moveTasks.push(fs.rename(sound.path, soundDestination));
+                sound.path = soundDestination;
             }
             EventSender.send("onSoundAdded", { sound: sound, index });
             index += 1;

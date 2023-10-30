@@ -1,5 +1,5 @@
 import Keys from "../keys";
-import { Sound } from "../models";
+import { Playable } from "./playable";
 import { convertSound } from "./sound";
 
 // All functions must be static so instances can be passed between processes.
@@ -11,7 +11,7 @@ export default class Soundboard {
         keys: number[],
         volume: number,
         linkedFolder: string | null,
-        sounds: Sound[],
+        playables: Playable[],
     );
 
     constructor(
@@ -20,7 +20,7 @@ export default class Soundboard {
         public keys: number[] = [],
         public volume: number = 100,
         public linkedFolder: string | null = null,
-        public sounds: Sound[] = [],
+        public playables: Playable[] = [],
     ) { }
 
     static equals(from: Soundboard, to: Soundboard): boolean {
@@ -63,6 +63,7 @@ export function convertSoundboard(data: { [key: string]: unknown }, generateUuid
 
     const sbUuid = generateUuid();
 
+    // TODO: Change name to playables
     let sounds: Sound[] = [];
     if (Array.isArray(data["sounds"])) {
         sounds = convertSounds(data["sounds"] as { [key: string]: unknown }[], sbUuid, generateUuid);
