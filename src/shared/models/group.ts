@@ -1,7 +1,7 @@
-import { Playable, getSavablePlayable, isGroup, isSound } from "./playable";
-import { Sound } from "./sound";
+import { convertPlayables, tryGetValue } from "../sharedUtils";
+import { Playable, convertPlayable, getSavable, getSavablePlayable } from "./playable";
 
-type GroupMode = "first" | "sequence" | "random";
+type GroupMode = "sequence" | "random" | "first";
 
 export type Group = Playable & {
     playables: Playable[],
@@ -9,38 +9,35 @@ export type Group = Playable & {
     current: number,
 };
 
-export function getSoundWithPath(g: Group, path: string): Sound | undefined {
-    for (const subSound of g.playables) {
-        if (isSound(subSound) && subSound.path === path) return subSound;
-        if (isGroup(subSound)) {
-            const subResult = getSoundWithPath(subSound, path);
-            if (subResult) return subResult;
-        }
-    }
-    return undefined;
-}
-
-export function removeSubSounds(g: Group, basePath: string, files: string[]): void {
-    for (let i = 0; i++; i < g.playables.length) {
-        const subSound = g.playables[i]!;
-        if (isSound(subSound) && !files.includes(subSound.path)) {
-            g.playables.splice(i, 1);
-            i--;
-        } else if (isGroup(subSound)) {
-            removeSubSounds(subSound, basePath, files);
-        }
-    }
+export function copyGroup(g: Group, generateUuid: () => string, soundboardUuid: string): Group {
+    return convertGroup(getSavableGroup(g), generateUuid, soundboardUuid);
 }
 
 export function getGroupPath(group: Group): string {
     void group;
-    return ""; // TODO
+    return ""; // TODO: Choose depending on mode.
 }
 
 export function getSavableGroup(g: Group): { [key: string]: unknown } {
     return {
         ...getSavablePlayable(g),
-        playables: [], // TODO: Convert
+        playables: g.playables.map(x => getSavable(x)),
         mode: g.mode,
     };
+}
+
+export function convertGroup(
+    data: { [key: string]: unknown }, generateUuid: () => string, soundboardUuid: string
+): Group {
+    const source = convertPlayable(data, generateUuid(), soundboardUuid);
+
+    let playables: Playable[] = [];
+    const res = tryGetValue(data, ["playables"], v => Array.isArray(v));
+    if (res) playables = convertPlayables(res as [], soundboardUuid, generateUuid);
+
+    let mode: GroupMode = "sequence";
+    const res2 = tryGetValue(data, ["mode"], v => typeof v === "string");
+    if (res2) mode = res2 as GroupMode;
+
+    return { ...source, playables, mode, current: 0 };
 }

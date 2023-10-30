@@ -1,51 +1,40 @@
 import Keys from "../keys";
-import { Playable } from "./playable";
-import { convertSound } from "./sound";
+import { convertPlayables } from "../sharedUtils";
+import { Playable, getSavablePlayable } from "./playable";
 
 // All functions must be static so instances can be passed between processes.
-export default class Soundboard {
-    constructor(uuid: string);
-    constructor(
-        uuid: string,
-        name: string,
-        keys: number[],
-        volume: number,
-        linkedFolder: string | null,
-        playables: Playable[],
-    );
+export type Soundboard = {
+    uuid: string,
+    name: string,
+    keys: number[],
+    volume: number,
+    linkedFolder: string | null,
+    playables: Playable[],
+}
 
-    constructor(
-        public uuid: string,
-        public name: string = "Default",
-        public keys: number[] = [],
-        public volume: number = 100,
-        public linkedFolder: string | null = null,
-        public playables: Playable[] = [],
-    ) { }
+export function equals(from: Soundboard, to: Soundboard): boolean {
+    return from.uuid === to.uuid;
+}
 
-    static equals(from: Soundboard, to: Soundboard): boolean {
-        return from.uuid === to.uuid;
-    }
+export function getQuickSoundboard(uuid: string): Soundboard {
+    return {
+        uuid: uuid,
+        name: "Quick Sounds",
+        keys: [],
+        linkedFolder: null,
+        playables: [],
+        volume: 100,
+    };
+}
 
-    static toJSON(soundboard: Soundboard): { [key: string]: unknown } {
-        return {
-            name: soundboard.name,
-            keys: soundboard.keys,
-            volume: soundboard.volume,
-            linkedFolder: soundboard.linkedFolder,
-            sounds: soundboard.sounds.map(x => Sound.toJSON(x)),
-        };
-    }
-
-    static getSoundWithPath(soundboard: Soundboard, path: string): Sound | undefined {
-        const inSoundboard = soundboard.sounds.find(x => x.source === path);
-        if (inSoundboard) return inSoundboard;
-        for (const sound of soundboard.sounds) {
-            const subSound = Sound.getSoundWithPath(sound, path);
-            if (subSound) return subSound;
-        }
-        return undefined;
-    }
+export function getSavableSoundboard(soundboard: Soundboard): { [key: string]: unknown } {
+    return {
+        name: soundboard.name,
+        keys: soundboard.keys,
+        volume: soundboard.volume,
+        linkedFolder: soundboard.linkedFolder,
+        playables: soundboard.playables.map(x => getSavablePlayable(x)),
+    };
 }
 
 export function convertSoundboard(data: { [key: string]: unknown }, generateUuid: () => string): Soundboard {
@@ -61,24 +50,12 @@ export function convertSoundboard(data: { [key: string]: unknown }, generateUuid
     let linkedFolder: string | null = null;
     if (typeof data["linkedFolder"] === "string") linkedFolder = data["linkedFolder"];
 
-    const sbUuid = generateUuid();
+    const uuid = generateUuid();
 
-    // TODO: Change name to playables
-    let sounds: Sound[] = [];
+    let playables: Playable[] = [];
     if (Array.isArray(data["sounds"])) {
-        sounds = convertSounds(data["sounds"] as { [key: string]: unknown }[], sbUuid, generateUuid);
+        playables = convertPlayables(data["sounds"] as [], uuid, generateUuid);
     }
 
-    return new Soundboard(sbUuid, name, keys, volume, linkedFolder, sounds);
-}
-
-export function convertSounds(
-    data: { [key: string]: unknown }[], connectedSoundboardUuid: string, generateUuid: () => string
-): Sound[] {
-    const sounds: Sound[] = [];
-    data.forEach(item => {
-        const s = convertSound(item, generateUuid, connectedSoundboardUuid);
-        sounds.push(s);
-    });
-    return sounds;
+    return { uuid, name, keys, volume, linkedFolder, playables, };
 }
