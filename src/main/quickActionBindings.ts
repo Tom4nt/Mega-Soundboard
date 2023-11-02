@@ -16,10 +16,10 @@ export const actionBindings: QuickActionBindings = {
         const ms = MS.instance;
         const sb = ms.soundboardsCache.soundboards[ms.settingsCache.settings.selectedSoundboard];
         if (!sb) throw new Error("Could not find the current soundboard.");
-        const items = sb.sounds;
+        const items = sb.playables;
         if (items.length <= 0) return;
         const index = Math.floor(Math.random() * items.length);
-        EventSender.send("onSoundPlayRequested", items[index]);
+        EventSender.send("onPlayRequested", items[index]);
     },
 
     async toggleKeybinds(key) {

@@ -1,19 +1,20 @@
 import Keys from "../../shared/keys";
 import { UISoundPath } from "../models";
-import { Sound } from "../../shared/models";
 import { MessageModal } from "../modals";
 import MSR from "../msr";
 import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import { SoundChangedArgs } from "../../shared/interfaces";
+import { PlayableChangedArgs } from "../../shared/interfaces";
 import GlobalEvents from "../util/globalEvents";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
+import { Playable, equals, isGroup, isSound } from "../../shared/models/playable";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 
-export default class SoundItem extends Draggable {
+// TODO: Change to PlayableItem
+export default class PlayableItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
     private indicatorElement!: HTMLDivElement;
@@ -27,21 +28,21 @@ export default class SoundItem extends Draggable {
         void this.updateHint(undefined);
     }
 
-    private _expandRequested = new Event<SoundItem>();
-    public get onExpandRequested(): ExposedEvent<SoundItem> { return this._expandRequested.expose(); }
+    private _expandRequested = new Event<PlayableItem>();
+    public get onExpandRequested(): ExposedEvent<PlayableItem> { return this._expandRequested.expose(); }
 
     // eslint-disable-next-line class-methods-use-this
     protected get classDuringDrag(): string {
         return "drag";
     }
 
-    constructor(public sound: Sound) {
+    constructor(public playable: Playable) {
         super();
         this.init();
     }
 
     public updatePlayingState(): void {
-        const isPlaying = MSR.instance.audioManager.isSoundPlaying(this.sound.uuid);
+        const isPlaying = MSR.instance.audioManager.isPlaying(this.playable.uuid);
         this.setPlayingState(isPlaying);
     }
 
@@ -58,7 +59,7 @@ export default class SoundItem extends Draggable {
     public async updateHint(soundboard?: SimpleSoundboard): Promise<void> {
         if (soundboard) this.currentHintSoundboard = soundboard;
         const sb = this.currentHintSoundboard;
-        const isSameSB = sb?.uuid === this.sound.soundboardUuid && !this.draggingToNewSoundboard;
+        const isSameSB = sb?.uuid === this.playable.soundboardUuid && !this.draggingToNewSoundboard;
         let sbName = isSameSB ? "" : sb?.name ?? "";
         if (this.draggingToNewSoundboard) sbName = "new soundboard";
         const copies = await this.getHintMode(
@@ -70,8 +71,8 @@ export default class SoundItem extends Draggable {
     }
 
     public update(): void {
-        this.titleElement.innerHTML = this.sound.name;
-        this.detailsElement.innerHTML = Keys.toKeyString(this.sound.keys);
+        this.titleElement.innerHTML = this.playable.name;
+        this.detailsElement.innerHTML = Keys.toKeyString(this.playable.keys);
         this.updatePlayingState();
     }
 
@@ -80,8 +81,8 @@ export default class SoundItem extends Draggable {
         this.remove();
     }
 
-    public clone(): SoundItem {
-        const newItem = new SoundItem(this.sound);
+    public clone(): PlayableItem {
+        const newItem = new PlayableItem(this.playable);
         return newItem;
     }
 
@@ -115,37 +116,36 @@ export default class SoundItem extends Draggable {
         left.append(this.titleElement, this.detailsElement);
         right.append(expandIcon);
 
-        const isGroup = Array.isArray(this.sound.source);
         const items: Node[] = [
-            left, ...isGroup ? [right] : [], this.indicatorElement
+            left, ...isGroup(this.playable) ? [right] : [], this.indicatorElement
         ];
         this.append(...items);
 
-        const handleSoundClick = async (e: MouseEvent): Promise<void> => {
+        const handleClick = async (e: MouseEvent): Promise<void> => {
             if (e.target === this.indicatorElement) return;
             try {
-                await MSR.instance.audioManager.playSound(this.sound);
+                await MSR.instance.audioManager.play(this.playable);
             } catch (error) {
                 new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
                 await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
             }
         };
 
-        left.addEventListener("click", e => void handleSoundClick(e));
+        left.addEventListener("click", e => void handleClick(e));
         right.addEventListener("click", () => this._expandRequested.raise(this));
 
         this.addEventListener("auxclick", e => {
             if (e.button === 1) {
-                MSR.instance.audioManager.stopSound(this.sound.uuid);
+                MSR.instance.audioManager.stop(this.playable.uuid);
             }
         });
 
         this.addEventListener("contextmenu", () => {
-            Actions.editSound(this.sound);
+            Actions.editPlayable(this.playable);
         });
 
         this.indicatorElement.addEventListener("click", () => {
-            MSR.instance.audioManager.stopSound(this.sound.uuid);
+            MSR.instance.audioManager.stop(this.playable.uuid);
         });
 
         this.onDragStart.addHandler(() => {
@@ -164,23 +164,23 @@ export default class SoundItem extends Draggable {
     }
 
     private addGlobalListeners(): void {
-        MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
-        MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
-        GlobalEvents.addHandler("onSoundChanged", this.handleSoundChanged);
+        MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
+        MSR.instance.audioManager.onStop.addHandler(this.handleStop);
+        GlobalEvents.addHandler("onPlayableChanged", this.handlePlayableChanged);
         GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
     private removeGlobalListeners(): void {
-        MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
-        MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
-        GlobalEvents.removeHandler("onSoundChanged", this.handleSoundChanged);
+        MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
+        MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
+        GlobalEvents.removeHandler("onPlayableChanged", this.handlePlayableChanged);
         GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
     private async getHintMode(wantsCopy: boolean, sameSoundboard: boolean): Promise<boolean> {
-        if (!this.sound.soundboardUuid) return false;
+        if (!this.playable.soundboardUuid) return false;
         let copies = wantsCopy;
-        const sb = await window.actions.getSoundboard(this.sound.soundboardUuid);
+        const sb = await window.actions.getSoundboard(this.playable.soundboardUuid);
         if (sb.linkedFolder !== null) copies = !sameSoundboard;
         this.dragMode = copies ? "copy" : "move";
         return copies;
@@ -188,27 +188,27 @@ export default class SoundItem extends Draggable {
 
     // Handlers
 
-    private handlePlaySound = (sound: Sound): void => {
-        if (Sound.equals(sound, this.sound))
+    private handlePlay = (playable: Playable): void => {
+        if (equals(playable, this.playable))
             this.updatePlayingState();
     };
 
-    private handleStopSound = (soundUuid: string): void => {
-        if (soundUuid == this.sound.uuid)
+    private handleStop = (id: string): void => {
+        if (id == this.playable.uuid)
             this.updatePlayingState();
     };
 
-    private handleSoundChanged = (e: SoundChangedArgs): void => {
-        if (Sound.equals(e.sound, this.sound)) {
-            this.sound = e.sound;
+    private handlePlayableChanged = (e: PlayableChangedArgs): void => {
+        if (equals(e.playable, this.playable) && isSound(e.playable)) {
+            this.playable = e.playable;
             this.update();
         }
     };
 
     private handleKeybindPressed = async (keys: number[]): Promise<void> => {
-        if (Keys.equals(keys, this.sound.keys)) {
+        if (Keys.equals(keys, this.playable.keys)) {
             try {
-                await MSR.instance.audioManager.playSound(this.sound);
+                await MSR.instance.audioManager.play(this.playable);
             } catch (error) {
                 await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
             }

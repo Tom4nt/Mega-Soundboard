@@ -1,14 +1,15 @@
 import Actions from "./util/actions";
-import { Toggler, SoundList, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, SoundItem, FileDropArea } from "./elements";
+import { Toggler, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, FileDropArea, PlayableList, PlayableItem, } from "./elements";
 import { DropdownDeviceItem } from "./elements/dropdown";
 import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
-import { Message, Settings, Soundboard } from "../shared/models";
+import { Message, Settings } from "../shared/models";
 import AudioManager from "./audioManager";
 import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
 import { UpdaterState } from "../shared/interfaces";
+import { Soundboard } from "../shared/models/soundboard";
 
 //#region Elements
 
@@ -24,7 +25,7 @@ let addSoundboardDropArea !: FileDropArea;
 
 //#region Right
 let searchBox!: SearchBox;
-let soundList!: SoundList;
+let playableList!: PlayableList;
 let addSoundButton!: HTMLButtonElement;
 let openFolderButton!: HTMLButtonElement;
 let sortButton!: HTMLButtonElement;
@@ -87,7 +88,7 @@ async function init(): Promise<void> {
     GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
     GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
     GlobalEvents.addHandler("onLoopSoundsChanged", state => loopSoundsToggler.isOn = state);
-    GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => updateSoundListButtons(sb));
+    GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => updatePlayableListButtons(sb));
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -98,9 +99,9 @@ async function init(): Promise<void> {
 
     const sb = soundboards[content.settings.selectedSoundboard];
     if (sb) {
-        soundList.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
+        playableList.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
         soundboardList.selectSoundboard(sb);
-        updateSoundListButtons(sb);
+        updatePlayableListButtons(sb);
     }
 
     MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
@@ -108,7 +109,7 @@ async function init(): Promise<void> {
     });
 }
 
-function updateSoundListButtons(soundboard: Soundboard): void {
+function updatePlayableListButtons(soundboard: Soundboard): void {
     const isLinked = soundboard.linkedFolder !== null;
     addSoundButton.style.display = isLinked ? "none" : "";
     openFolderButton.style.display = isLinked ? "" : "none";
@@ -151,7 +152,7 @@ function getElementReferences(): void {
     addSoundboardDropArea = document.getElementById("droparea-addSoundboard") as FileDropArea;
 
     searchBox = document.getElementById("searchbox") as SearchBox;
-    soundList = document.getElementById("soundlist") as SoundList;
+    playableList = document.getElementById("soundlist") as PlayableList;
     addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
     openFolderButton = document.getElementById("open-folder-button") as HTMLButtonElement;
     sortButton = document.getElementById("sort-button") as HTMLButtonElement;
@@ -177,7 +178,7 @@ function getElementReferences(): void {
 
 function addElementListeners(): void {
     // This prevents scrolling with the middle mouse button.
-    // It is necessary to allow clicking on sounds with the middle mouse button.
+    // It is necessary to allow clicking on playables with the middle mouse button.
     document.addEventListener("mousedown", e => {
         if (e.button === 1) {
             e.preventDefault();
@@ -201,13 +202,13 @@ function addElementListeners(): void {
     });
 
     addSoundboardButton.addEventListener("mouseenter", () => {
-        if (Draggable.currentElement instanceof SoundItem) {
+        if (Draggable.currentElement instanceof PlayableItem) {
             Draggable.currentElement.draggingToNewSoundboard = true;
         }
     });
 
     addSoundboardButton.addEventListener("mouseleave", () => {
-        if (Draggable.currentElement instanceof SoundItem) {
+        if (Draggable.currentElement instanceof PlayableItem) {
             Draggable.currentElement.draggingToNewSoundboard = false;
         }
     });
@@ -242,17 +243,17 @@ function addElementListeners(): void {
     });
 
     searchBox.onInput.addHandler(v => {
-        soundList.filter(v);
+        playableList.filter(v);
     });
 
     searchBox.onButtonClick.addHandler(() => {
-        soundList.filter("");
+        playableList.filter("");
     });
 
-    soundList.onSoundDragStart.addHandler(async () => {
+    playableList.onItemDragStart.addHandler(async () => {
         const s = await window.actions.getSettings();
         if (s.showSoundDragTutorial) {
-            showSoundDragTutorial();
+            showPlayableDragTutorial();
             window.actions.saveSettings({ showSoundDragTutorial: false });
         }
     });
@@ -264,7 +265,7 @@ function addElementListeners(): void {
     });
 
     stopAllButton.addEventListener("click", () => {
-        MSR.instance.audioManager.stopAllSounds();
+        MSR.instance.audioManager.stopAll();
     });
 
     deviceSettingsButton.addEventListener("click", () => {
@@ -350,7 +351,7 @@ async function browseAndAddSounds(): Promise<void> {
     }
 }
 
-function showSoundDragTutorial(): void {
+function showPlayableDragTutorial(): void {
     const htmlMessage = `
         <p>Hold <kbd>CTRL</kbd> to copy.</p>
     `;

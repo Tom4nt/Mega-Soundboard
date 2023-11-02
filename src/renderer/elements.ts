@@ -1,7 +1,5 @@
 import KeyRecorder from "./elements/keyRecorder";
 import Slider from "./elements/slider";
-import SoundItem from "./elements/soundItem";
-import SoundList from "./elements/soundList";
 import Titlebar from "./elements/titlebar";
 import Toggler from "./elements/toggler";
 import TextField from "./elements/textField";
@@ -17,15 +15,15 @@ import Seekbar from "./elements/seekbar";
 import MessageHost from "./elements/messageHost";
 import Draggable from "./elements/draggable";
 import FileDropArea from "./elements/fileDropArea";
-import SoundContainer from "./elements/soundContainer";
+import PlayableContainer from "./elements/playableContainer";
+import PlayableItem from "./elements/playableItem";
+import PlayableList from "./elements/playableList";
 
 export {
     KeyRecorder,
     Slider,
-    SoundItem,
     Toggler,
     Titlebar,
-    SoundList,
     TextField,
     InfoBalloon,
     FileSelector,
@@ -39,7 +37,9 @@ export {
     MessageHost,
     Draggable,
     FileDropArea,
-    SoundContainer,
+    PlayableContainer,
+    PlayableItem,
+    PlayableList,
 };
 
 const definitions: [string, CustomElementConstructor][] = [
@@ -52,8 +52,8 @@ const definitions: [string, CustomElementConstructor][] = [
     ["ms-slider", Slider],
     ["ms-soundboard", SoundboardItem],
     ["ms-soundboardlist", SoundboardList],
-    ["ms-sound", SoundItem],
-    ["ms-soundlist", SoundList],
+    ["ms-sound", PlayableItem],
+    ["ms-soundlist", PlayableList],
     ["ms-textfield", TextField],
     ["ms-titlebar", Titlebar],
     ["ms-toggler", Toggler],
@@ -61,7 +61,7 @@ const definitions: [string, CustomElementConstructor][] = [
     ["ms-seekbar", Seekbar],
     ["ms-message-host", MessageHost],
     ["ms-filedroparea", FileDropArea],
-    ["ms-soundcontainer", SoundContainer],
+    ["ms-soundcontainer", PlayableContainer],
 ];
 
 for (const d of definitions) {

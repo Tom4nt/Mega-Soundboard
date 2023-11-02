@@ -1,7 +1,6 @@
 import { app, dialog, ipcMain, shell } from "electron";
 import { promises as fs } from "fs";
 import { autoUpdater } from "electron-updater";
-import { Soundboard } from "../shared/models";
 import { Actions, actionsKeys } from "../shared/ipcActions";
 import MS from "./ms";
 import path = require("path");
@@ -13,6 +12,7 @@ import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
+import { Soundboard, getDefault } from "../shared/models/soundboard";
 
 export default class IPCHandler {
     public static register(): void {
@@ -71,27 +71,27 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
-    async addSounds(sounds, soundboardId, moveFile, startIndex) {
-        const sb = await MS.instance.soundboardsCache.addSounds(sounds, soundboardId, moveFile, startIndex);
+    async addSounds(playables, soundboardId, moveFile, startIndex) {
+        const sb = await MS.instance.soundboardsCache.addSounds(playables, soundboardId, moveFile, startIndex);
         await MS.instance.setCurrentSoundboard(sb);
     },
 
-    editSound(sound) {
-        void MS.instance.soundboardsCache.editSound(sound);
+    editPlayable(playable) {
+        void MS.instance.soundboardsCache.editPlayable(playable);
     },
 
-    async moveSound(soundId, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, false);
+    async movePlayable(id, destinationSoundboardId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, false);
         await MS.instance.setCurrentSoundboard(sb);
     },
 
-    async copySound(soundId, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, true);
+    async copyPlayable(id, destinationSoundboardId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, true);
         await MS.instance.setCurrentSoundboard(sb);
     },
 
-    deleteSound(soundId) {
-        void MS.instance.soundboardsCache.removeSound(soundId);
+    deletePlayable(id) {
+        void MS.instance.soundboardsCache.removePlayable(id);
     },
 
     getNewSoundsFromPaths(paths) {
@@ -113,7 +113,7 @@ const implementer: Actions = {
     },
 
     async getNewSoundboard() {
-        const sb = new Soundboard(randomUUID(), "", [], 100, null, []);
+        const sb: Soundboard = getDefault(randomUUID(), "");
         return await Promise.resolve(sb);
     },
 

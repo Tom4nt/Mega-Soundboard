@@ -6,7 +6,7 @@ import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
 import SoundUtils from "./utils/soundUtils";
-import { Settings, Soundboard } from "../shared/models";
+import { Settings } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
 import Keys from "../shared/keys";
 import { app } from "electron";
@@ -14,6 +14,8 @@ import path = require("path");
 import SoundboardUtils from "./utils/soundboardUtils";
 import { actionBindings } from "./quickActionBindings";
 import { isAction } from "../shared/quickActions";
+import { Soundboard } from "../shared/models/soundboard";
+import { getSoundWithPath } from "../shared/sharedUtils";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -93,8 +95,8 @@ export default class MS {
         });
 
         watcher.onSoundRemoved.addHandler(p => {
-            const sound = Soundboard.getSoundWithPath(soundboard, p);
-            if (sound) void MS.instance.soundboardsCache.removeSound(sound.uuid);
+            const sound = getSoundWithPath(soundboard.playables, p);
+            if (sound) void MS.instance.soundboardsCache.removePlayable(sound.uuid);
         });
 
         try {

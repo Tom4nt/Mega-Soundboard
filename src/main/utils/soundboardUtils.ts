@@ -1,9 +1,12 @@
-import { Sound, Soundboard } from "../../shared/models";
 import Utils from "./utils";
 import { promises as fs } from "fs";
 import path = require("path");
 import SoundUtils from "./soundUtils";
 import { randomUUID } from "crypto";
+import { Soundboard } from "../../shared/models/soundboard";
+import { getSoundWithPath, removeSubSounds } from "../../shared/sharedUtils";
+import { Sound } from "../../shared/models/sound";
+import { isGroup, isSound } from "../../shared/models/playable";
 
 export default class SoundboardUtils {
 
@@ -20,26 +23,32 @@ export default class SoundboardUtils {
             const file = files[i]!;
             const soundPath = path.join(soundboard.linkedFolder, file);
             if (SoundUtils.isValidSoundFile(soundPath)) {
-                const soundWithPath = Soundboard.getSoundWithPath(soundboard, soundPath);
+                const soundWithPath = getSoundWithPath(soundboard.playables, soundPath);
                 const stat = await fs.stat(soundPath);
                 if (!soundWithPath && stat.isFile()) {
-                    const s = new Sound(
-                        randomUUID(), Utils.getNameFromFile(soundPath), soundPath, 100, [], soundboard.uuid
-                    );
+                    const s: Sound = {
+                        uuid: randomUUID(),
+                        name: Utils.getNameFromFile(soundPath),
+                        path: soundPath,
+                        volume: 100,
+                        keys: [],
+                        soundboardUuid: soundboard.uuid,
+                    };
                     s.soundboardUuid = soundboard.uuid;
-                    soundboard.sounds.push(s);
+                    soundboard.playables.push(s);
                 }
             }
         }
 
         // Loop through existing sounds and remove those without a file
-        if (soundboard.sounds.length > 0) {
-            for (let i = soundboard.sounds.length - 1; i >= 0; i--) {
-                const sound = soundboard.sounds[i]!;
-                Sound.removeSubSounds(sound, soundboard.linkedFolder, files);
-                if (typeof sound.source === "string") {
-                    const contains = Utils.folderContains(soundboard.linkedFolder, files, sound.source);
-                    if (!contains) soundboard.sounds.splice(i, 1);
+        if (soundboard.playables.length > 0) {
+            for (let i = soundboard.playables.length - 1; i >= 0; i--) {
+                const playable = soundboard.playables[i]!;
+                if (isGroup(playable)) {
+                    removeSubSounds(playable.playables, soundboard.linkedFolder, files);
+                } else if (isSound(playable)) {
+                    const contains = Utils.folderContains(soundboard.linkedFolder, files, playable.path);
+                    if (!contains) soundboard.playables.splice(i, 1);
                 }
             }
         }

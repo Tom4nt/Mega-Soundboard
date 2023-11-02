@@ -1,6 +1,7 @@
 import Keys from "../../shared/keys";
-import { Sound, Soundboard } from "../../shared/models";
-import { SoundItem, Tooltip } from "../elements";
+import { Playable } from "../../shared/models/playable";
+import { Soundboard, equals } from "../../shared/models/soundboard";
+import { PlayableItem, Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
 import GlobalEvents from "../util/globalEvents";
@@ -68,7 +69,7 @@ export default class SoundboardItem extends Draggable {
     private addListeners(): void {
         this.addEventListener("auxclick", (e) => {
             if (e.button === 1) {
-                MSR.instance.audioManager.stopSounds(this.soundboard.sounds.map(x => x.uuid));
+                MSR.instance.audioManager.stopMultiple(this.soundboard.playables.map(x => x.uuid));
             }
         });
 
@@ -84,7 +85,7 @@ export default class SoundboardItem extends Draggable {
             const isLinked = this.soundboard.linkedFolder !== null;
             if (Draggable.currentElement && !isLinked) {
                 const d = Draggable.currentElement;
-                if (!(d instanceof SoundItem)) return;
+                if (!(d instanceof PlayableItem)) return;
                 await d.updateHint({
                     uuid: this.soundboard.uuid,
                     name: this.soundboard.name,
@@ -111,15 +112,15 @@ export default class SoundboardItem extends Draggable {
     private addGlobalListeners(): void {
         GlobalEvents.addHandler("onSoundboardChanged", this.handleSoundboardChanged);
         GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
-        MSR.instance.audioManager.onPlaySound.addHandler(this.handlePlaySound);
-        MSR.instance.audioManager.onStopSound.addHandler(this.handleStopSound);
+        MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
+        MSR.instance.audioManager.onStop.addHandler(this.handleStop);
     }
 
     private removeGlobalListeners(): void {
         GlobalEvents.removeHandler("onSoundboardChanged", this.handleSoundboardChanged);
         GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
-        MSR.instance.audioManager.onPlaySound.removeHandler(this.handlePlaySound);
-        MSR.instance.audioManager.onStopSound.removeHandler(this.handleStopSound);
+        MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
+        MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
     }
 
     // eslint-disable-next-line class-methods-use-this
@@ -159,21 +160,21 @@ export default class SoundboardItem extends Draggable {
     // Handlers
 
     private handleSoundboardChanged = (sb: Soundboard): void => {
-        if (Soundboard.equals(sb, this.soundboard)) {
+        if (equals(sb, this.soundboard)) {
             this.soundboard = sb;
             this.updateElements();
         }
     };
 
-    private handlePlaySound = (s: Sound): void => {
-        if (!s.soundboardUuid) return;
-        if (this.soundboard.uuid === s.soundboardUuid) {
+    private handlePlay = (p: Playable): void => {
+        if (!p.soundboardUuid) return;
+        if (this.soundboard.uuid === p.soundboardUuid) {
             this.updatePlayingIndicator(1);
         }
     };
 
-    private handleStopSound = (uuid: string): void => {
-        const sound = this.soundboard.sounds.find(x => x.uuid == uuid);
+    private handleStop = (uuid: string): void => {
+        const sound = this.soundboard.playables.find(x => x.uuid == uuid);
         if (!sound) return;
         this.updatePlayingIndicator(-1);
     };

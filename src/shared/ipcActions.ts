@@ -1,5 +1,8 @@
 import { NonOptional, UpdaterState } from "./interfaces";
-import { OptionalSettings, Settings, Sound, Soundboard } from "./models";
+import { OptionalSettings, Settings } from "./models";
+import { Playable } from "./models/playable";
+import { Sound } from "./models/sound";
+import { Soundboard } from "./models/soundboard";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {
@@ -13,23 +16,23 @@ class ConcreteActions {
     zoomReset: (() => void) | null = null;
 
     addSounds: ((sounds: Sound[], soundboardId: string | null, moveFile: boolean, startIndex?: number) => Promise<void>) | null = null;
-    editSound: ((sound: Sound) => void) | null = null;
-    moveSound: ((soundId: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
-    copySound: ((soundId: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
-    deleteSound: ((soundId: string) => void) | null = null;
+    editPlayable: ((playable: Playable) => void) | null = null;
+    movePlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
+    copyPlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
+    deletePlayable: ((id: string) => void) | null = null;
     getNewSoundsFromPaths: ((paths: string[]) => Promise<Sound[]>) | null = null;
     getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
 
     getSoundboard: ((uuid: string) => Promise<Soundboard>) | null = null;
     getNewSoundboard: (() => Promise<Soundboard>) | null = null;
     addSoundboard: ((soundboard: Soundboard) => void) | null = null;
-    moveSoundboard: ((soundboardId: string, destinationIndex: number) => void) | null = null;
-    deleteSoundboard: ((soundboardId: string) => void) | null = null;
+    moveSoundboard: ((id: string, destinationIndex: number) => void) | null = null;
+    deleteSoundboard: ((id: string) => void) | null = null;
     editSoundboard: ((soundboard: Soundboard) => void) | null = null;
     setCurrentSoundboard: ((id: string) => void) | null = null;
     getSoundboards: (() => Promise<Soundboard[]>) | null = null;
     getInitialSoundboardIndex: (() => Promise<number>) | null = null;
-    sortSoundboard: ((soundboardId: string) => Promise<void>) | null = null;
+    sortSoundboard: ((id: string) => Promise<void>) | null = null;
 
     flagChangelogViewed: (() => void) | null = null;
     installUpdate: (() => void) | null = null;

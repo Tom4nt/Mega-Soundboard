@@ -1,23 +1,23 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import { Sound } from "../../shared/models";
-import { SoundContainer } from "../elements";
+import { Playable } from "../../shared/models/playable";
 import Actions from "../util/actions";
 import GlobalEvents from "../util/globalEvents";
 import Utils from "../util/utils";
-import { SoundDroppedEventArgs } from "./soundContainer";
+import PlayableContainer, { DroppedEventArgs } from "./playableContainer";
 
 const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
 
-export default class SoundList extends HTMLElement {
+// TODO: Change to playable list
+export default class PlayableList extends HTMLElement {
     private currentSoundboardId?: string;
-    private containerElement!: SoundContainer;
+    private containerElement!: PlayableContainer;
 
-    private _onSoundDragStart = new Event<Sound>();
-    public get onSoundDragStart(): ExposedEvent<Sound> { return this._onSoundDragStart.expose(); }
+    private _onItemDragStart = new Event<Playable>();
+    public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
 
     protected connectedCallback(): void {
-        const container = new SoundContainer(() => this.getEmptyMessage());
+        const container = new PlayableContainer(() => this.getEmptyMessage());
         this.containerElement = container;
         this.append(container);
 
@@ -25,32 +25,32 @@ export default class SoundList extends HTMLElement {
             void this.finishFileDrag(e.event, e.index);
         });
 
-        container.onSoundDropped.addHandler(this.handleSoundDropped);
+        container.onItemDropped.addHandler(this.handleItemDropped);
 
-        GlobalEvents.addHandler("onSoundAdded", e => {
-            if (e.sound.soundboardUuid === this.currentSoundboardId)
-                container.addSound(e.sound, e.index);
+        GlobalEvents.addHandler("onPlayableAdded", e => {
+            if (e.playable.soundboardUuid === this.currentSoundboardId)
+                container.addItem(e.playable, e.index);
         });
 
-        GlobalEvents.addHandler("onSoundRemoved", s => {
-            container.removeSound(s);
+        GlobalEvents.addHandler("onPlayableRemoved", s => {
+            container.removeItem(s);
         });
 
         GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
-            this.loadSounds(sb.sounds, sb.uuid, sb.linkedFolder === null);
+            this.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
         });
 
-        GlobalEvents.addHandler("onSoundboardSoundsSorted", sb => {
+        GlobalEvents.addHandler("onSoundboardSorted", sb => {
             if (this.currentSoundboardId === sb.uuid) {
-                this.loadSounds(sb.sounds, sb.uuid, true);
+                this.loadItems(sb.playables, sb.uuid, true);
             }
         });
     }
 
-    loadSounds(sounds: Sound[], soundboardUuid: string, allowImport: boolean): void {
+    loadItems(playables: Playable[], soundboardUuid: string, allowImport: boolean): void {
         this.currentSoundboardId = soundboardUuid;
         this.containerElement.allowFileImport = allowImport;
-        this.containerElement.loadSounds(sounds);
+        this.containerElement.loadItems(playables);
     }
 
     filter(filter: string): void {
@@ -71,15 +71,15 @@ export default class SoundList extends HTMLElement {
 
     // Handlers
 
-    private handleSoundDropped = (e: SoundDroppedEventArgs): void => {
+    private handleItemDropped = (e: DroppedEventArgs): void => {
         if (!this.currentSoundboardId) return;
 
         // This will reload the list since it is listening to the onSoundboardChanged global event.
         const destinationUUID = e.item.draggingToNewSoundboard ? null : this.currentSoundboardId;
         if (e.item.dragMode === "copy") {
-            void window.actions.copySound(e.item.sound.uuid, destinationUUID, e.index);
+            void window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
         } else {
-            void window.actions.moveSound(e.item.sound.uuid, destinationUUID, e.index);
+            void window.actions.movePlayable(e.item.playable.uuid, destinationUUID, e.index);
         }
     };
 }

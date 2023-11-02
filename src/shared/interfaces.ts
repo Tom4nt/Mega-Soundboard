@@ -1,4 +1,5 @@
-import { Sound, Soundboard } from "./models";
+import { Playable } from "./models/playable";
+import { Soundboard } from "./models/soundboard";
 
 export type WindowState = "minimized" | "restored" | "maximized";
 export type UpdaterState = "unknown" | "downloaded" | "downloading" | "upToDate";
@@ -25,13 +26,13 @@ export interface IDevice {
     volume: number
 }
 
-export interface SoundAddedArgs {
-    sound: Sound,
+export interface PlayableAddedArgs {
+    playable: Playable,
     index?: number,
 }
 
-export interface SoundChangedArgs {
-    sound: Sound,
+export interface PlayableChangedArgs {
+    playable: Playable,
     soundboard: Soundboard,
 }
 

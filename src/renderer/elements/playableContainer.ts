@@ -1,10 +1,10 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import { Sound } from "../../shared/models";
-import { Draggable, FileDropArea, SoundItem } from "../elements";
+import { Playable, equals, isGroup } from "../../shared/models/playable";
+import { Draggable, FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 
-export interface SoundDroppedEventArgs {
-    item: SoundItem,
+export interface DroppedEventArgs {
+    item: PlayableItem,
     index: number,
 }
 
@@ -13,13 +13,14 @@ export interface FileDroppedEventArgs {
     index: number,
 }
 
-export default class SoundContainer extends HTMLElement {
-    private _loadedSounds: SoundItem[] = [];
-    private _dragElement: SoundItem | null = null;
+// TODO: Change to playable container
+export default class PlayableContainer extends HTMLElement {
+    private _loadedItems: PlayableItem[] = [];
+    private _dragElement: PlayableItem | null = null;
     private _dragDummyDiv!: HTMLDivElement;
     private _containerDiv!: HTMLDivElement;
     private _emptyMsgSpan!: HTMLSpanElement;
-    private _currSubContainer: SoundContainer | null = null;
+    private _currSubContainer: PlayableContainer | null = null;
 
     public allowFileImport = true;
 
@@ -27,21 +28,21 @@ export default class SoundContainer extends HTMLElement {
     public get filter(): string { return this._filter; }
     public set filter(v: string) {
         this._filter = v;
-        this.filterSounds(v);
+        this.filterItems(v);
     }
 
-    private _onSoundDragStart = new Event<Sound>();
-    public get onSoundDragStart(): ExposedEvent<Sound> { return this._onSoundDragStart.expose(); }
+    private _onItemDragStart = new Event<Playable>();
+    public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
 
     private _onFileDropped = new Event<FileDroppedEventArgs>();
     public get onFileDropped(): ExposedEvent<FileDroppedEventArgs> { return this._onFileDropped.expose(); }
 
-    private _onSoundDropped = new Event<SoundDroppedEventArgs>();
-    public get onSoundDropped(): ExposedEvent<SoundDroppedEventArgs> { return this._onSoundDropped.expose(); }
+    private _onItemDropped = new Event<DroppedEventArgs>();
+    public get onItemDropped(): ExposedEvent<DroppedEventArgs> { return this._onItemDropped.expose(); }
 
     public constructor(
         public readonly emptyMessageRequested: () => string,
-        public readonly parentSoundId?: string,
+        public readonly parentPlayableId?: string, // TODO: Remove parent dependency
     ) {
         super();
     }
@@ -68,7 +69,7 @@ export default class SoundContainer extends HTMLElement {
         this.append(dropArea);
 
         document.addEventListener("mousemove", e => {
-            if (Draggable.currentElement && Draggable.currentElement instanceof SoundItem) {
+            if (Draggable.currentElement && Draggable.currentElement instanceof PlayableItem) {
                 if (!this._dragElement) {
                     this.showDragDummy();
                     this._dragElement = Draggable.currentElement;
@@ -89,13 +90,13 @@ export default class SoundContainer extends HTMLElement {
         });
     }
 
-    loadSounds(sounds: Sound[]): void {
+    loadItems(playables: Playable[]): void {
         this.clear();
-        for (const sound of sounds) {
-            if (!this._dragElement || !Sound.equals(this._dragElement.sound, sound))
-                this.addSound(sound);
+        for (const playable of playables) {
+            if (!this._dragElement || !equals(this._dragElement.playable, playable))
+                this.addItem(playable);
         }
-        this.filterSounds(this._filter);
+        this.filterItems(this._filter);
     }
 
     showDragDummy(): void {
@@ -107,22 +108,22 @@ export default class SoundContainer extends HTMLElement {
         this._dragDummyDiv.style.display = "";
     }
 
-    filterSounds(filter: string): void {
-        for (const soundItem of this._loadedSounds) {
-            let isValid = !filter || soundItem.sound.name.contains(filter);
-            const isCurrentDragElement = (!this._dragElement || soundItem != this._dragElement);
+    filterItems(filter: string): void {
+        for (const item of this._loadedItems) {
+            let isValid = !filter || item.playable.name.contains(filter);
+            const isCurrentDragElement = (!this._dragElement || item != this._dragElement);
             isValid = isValid && isCurrentDragElement;
-            soundItem.style.display = isValid ? "" : "none";
+            item.style.display = isValid ? "" : "none";
         }
-        this.updateCurrentSoundContainer();
+        this.updateCurrentContainer();
         this.updateMessage();
     }
 
-    addSound(sound: Sound, index?: number): void {
-        const item = new SoundItem(sound);
+    addItem(playable: Playable, index?: number): void {
+        const item = new PlayableItem(playable);
 
         item.onExpandRequested.addHandler(() => {
-            if (this._currSubContainer?.parentSoundId === sound.uuid) {
+            if (this._currSubContainer?.parentPlayableId === playable.uuid) {
                 this.closeCurrentSubContainer();
             } else {
                 this.openSubContainer(item);
@@ -130,7 +131,7 @@ export default class SoundContainer extends HTMLElement {
         });
 
         item.onDragStart.addHandler(() => {
-            this._onSoundDragStart.raise(sound);
+            this._onItemDragStart.raise(playable);
         });
 
         item.onDragEnd.addHandler(() => {
@@ -141,34 +142,34 @@ export default class SoundContainer extends HTMLElement {
 
         if (index === undefined) {
             this._containerDiv.append(item);
-            this._loadedSounds.push(item);
+            this._loadedItems.push(item);
         }
         else {
             const child = this._containerDiv.childNodes[index];
             if (child) {
                 this._containerDiv.insertBefore(item, child);
-                this._loadedSounds.splice(index, 0, item);
+                this._loadedItems.splice(index, 0, item);
             }
             else {
                 this._containerDiv.append(item);
-                this._loadedSounds.push(item);
+                this._loadedItems.push(item);
             }
         }
         this.updateMessage();
     }
 
-    removeSound(sound: Sound): void {
+    removeItem(playable: Playable): void {
         let i = 0;
-        for (const item of this._loadedSounds) {
-            if (Sound.equals(item.sound, sound)) {
+        for (const item of this._loadedItems) {
+            if (equals(item.playable, playable)) {
                 item.destroy();
-                this._loadedSounds.splice(i, 1);
+                this._loadedItems.splice(i, 1);
                 this.updateMessage();
                 return;
             }
             i++;
         }
-        this.updateCurrentSoundContainer();
+        this.updateCurrentContainer();
     }
 
     getHeight(): number {
@@ -178,23 +179,23 @@ export default class SoundContainer extends HTMLElement {
     // --- // ---
 
     private clear(): void {
-        for (const item of this._loadedSounds) {
+        for (const item of this._loadedItems) {
             item.destroy();
         }
-        this._loadedSounds = [];
+        this._loadedItems = [];
         this.updateMessage();
     }
 
-    private hasVisibleSounds(): boolean {
-        return this._loadedSounds.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
+    private hasVisibleItems(): boolean {
+        return this._loadedItems.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
     }
 
-    private getDragDummyIndex(dragElement: SoundItem | null): number {
+    private getDragDummyIndex(dragElement: PlayableItem | null): number {
         return Utils.getElementIndex(this._dragDummyDiv, (e) => e != dragElement);
     }
 
     private updateMessage(): void {
-        if (!this.hasVisibleSounds()) this.displayEmptyMessage(this.emptyMessageRequested());
+        if (!this.hasVisibleItems()) this.displayEmptyMessage(this.emptyMessageRequested());
         else this.displayEmptyMessage("");
     }
 
@@ -213,15 +214,15 @@ export default class SoundContainer extends HTMLElement {
         this._onFileDropped.raise({ event: e, index: index });
     }
 
-    private openSubContainer(under: SoundItem): void {
+    private openSubContainer(under: PlayableItem): void {
         this.closeCurrentSubContainer();
-        const root = new SoundContainer(() => "No sounds in this group", under.sound.uuid);
+        const root = new PlayableContainer(() => "No sounds in this group", under.playable.uuid);
         this._currSubContainer = root;
         root.classList.add("group");
         root.style.height = "0";
         under.after(root);
 
-        if (Array.isArray(under.sound.source)) root.loadSounds(under.sound.source);
+        if (isGroup(under.playable)) root.loadItems(under.playable.playables);
         const h = root.getHeight();
 
         void root.offsetWidth; // Trigger reflow
@@ -230,28 +231,28 @@ export default class SoundContainer extends HTMLElement {
 
     private closeCurrentSubContainer(): void {
         if (!this._currSubContainer) return;
-        // TODO: Close animation. Remove event listeners (destroy() function).
+        // TODO: Close animation. Remove event listeners in a destroy() function.
         this._currSubContainer.remove();
         this._currSubContainer = null;
     }
 
     // Checks if the container needs to be moved or closed.
-    private updateCurrentSoundContainer(): void {
+    private updateCurrentContainer(): void {
         if (!this._currSubContainer) return;
-        const soundId = this._currSubContainer.parentSoundId;
-        if (!soundId) return;
-        const soundItem = this.findSoundItem(soundId);
-        if (soundItem) {
-            soundItem.after(this._currSubContainer);
-            const isVisible = soundItem.style.display != "none";
+        const id = this._currSubContainer.parentPlayableId;
+        if (!id) return;
+        const item = this.findItem(id);
+        if (item) {
+            item.after(this._currSubContainer);
+            const isVisible = item.style.display != "none";
             this._currSubContainer.style.display = isVisible ? "" : "none";
         } else {
             this.closeCurrentSubContainer();
         }
     }
 
-    private findSoundItem(id: string): SoundItem | undefined {
-        return this._loadedSounds.find(x => x.sound.uuid === id);
+    private findItem(id: string): PlayableItem | undefined {
+        return this._loadedItems.find(x => x.playable.uuid === id);
     }
 
     // Handlers
@@ -260,7 +261,7 @@ export default class SoundContainer extends HTMLElement {
         const targetElement = document.elementFromPoint(e.clientX, e.clientY);
 
         if (!targetElement) return;
-        if (!(targetElement instanceof SoundItem)) return;
+        if (!(targetElement instanceof PlayableItem)) return;
 
         if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElement)) {
             this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);
@@ -269,9 +270,9 @@ export default class SoundContainer extends HTMLElement {
         }
     };
 
-    private handleItemDrop = (dragElement: SoundItem): void => {
+    private handleItemDrop = (dragElement: PlayableItem): void => {
         const newIndex = this.getDragDummyIndex(dragElement);
         this.hideDragDummy();
-        this._onSoundDropped.raise({ index: newIndex, item: dragElement });
+        this._onItemDropped.raise({ index: newIndex, item: dragElement });
     };
 }

@@ -2,26 +2,28 @@ import { ExposedEvent } from "./events";
 import {
     KeyRecordingArgs,
     NonOptional,
-    SoundAddedArgs,
+    PlayableAddedArgs,
     SoundboardAddedArgs,
-    SoundChangedArgs,
+    PlayableChangedArgs,
     UpdaterState,
     WindowState
 } from "./interfaces";
-import { Settings, Sound, Soundboard } from "./models";
+import { Settings } from "./models";
+import { Playable } from "./models/playable";
+import { Soundboard } from "./models/soundboard";
 
 class ConcreteEvents {
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
     onOverlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
     onLoopSoundsChanged: ExposedEvent<boolean> | null = null;
     onSettingsChanged: ExposedEvent<Settings> | null = null;
-    onSoundAdded: ExposedEvent<SoundAddedArgs> | null = null;
-    onSoundChanged: ExposedEvent<SoundChangedArgs> | null = null;
-    onSoundRemoved: ExposedEvent<Sound> | null = null;
+    onPlayableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
+    onPlayableChanged: ExposedEvent<PlayableChangedArgs> | null = null;
+    onPlayableRemoved: ExposedEvent<Playable> | null = null;
     onSoundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
     onSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onSoundboardRemoved: ExposedEvent<Soundboard> | null = null;
-    onSoundboardSoundsSorted: ExposedEvent<Soundboard> | null = null;
+    onSoundboardSorted: ExposedEvent<Soundboard> | null = null;
     onWindowStateChanged: ExposedEvent<WindowState> | null = null;
     onWindowFocusChanged: ExposedEvent<boolean> | null = null;
     onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
@@ -29,7 +31,7 @@ class ConcreteEvents {
     onCurrentSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onMinToTrayChanged: ExposedEvent<boolean> | null = null;
     onUpdateStateChanged: ExposedEvent<UpdaterState> | null = null;
-    onSoundPlayRequested: ExposedEvent<Sound> | null = null;
+    onPlayRequested: ExposedEvent<Playable> | null = null;
     onStopAllSounds: ExposedEvent<void> | null = null;
     onZoomFactorChanged: ExposedEvent<number> | null = null;
 }

@@ -1,4 +1,5 @@
-import { Sound, Soundboard } from "../../shared/models";
+import { isSound, Playable } from "../../shared/models/playable";
+import { Soundboard } from "../../shared/models/soundboard";
 import { MultiSoundModal, SoundboardModal, SoundModal } from "../modals";
 
 export default class Actions {
@@ -23,15 +24,16 @@ export default class Actions {
         }
     }
 
-    static editSound(sound: Sound): void {
-        const editModal = new SoundModal(sound, false);
+    static editPlayable(playable: Playable): void {
+        if (!isSound(playable)) return; // TODO: Implement edit group.
+        const editModal = new SoundModal(playable, false);
         editModal.open();
         editModal.onSave.addHandler(() => {
-            window.actions.editSound(sound);
+            window.actions.editPlayable(playable);
         });
 
         editModal.onRemove.addHandler(() => {
-            window.actions.deleteSound(sound.uuid);
+            window.actions.deletePlayable(playable.uuid);
         });
     }
 

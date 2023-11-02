@@ -1,6 +1,6 @@
 import Keys from "../keys";
-import { convertPlayables } from "../sharedUtils";
-import { Playable, getSavablePlayable } from "./playable";
+import { convertPlayables, tryGetValue } from "../sharedUtils";
+import { Playable, getSavable } from "./playable";
 
 // All functions must be static so instances can be passed between processes.
 export type Soundboard = {
@@ -16,10 +16,10 @@ export function equals(from: Soundboard, to: Soundboard): boolean {
     return from.uuid === to.uuid;
 }
 
-export function getQuickSoundboard(uuid: string): Soundboard {
+export function getDefault(uuid: string, name: string): Soundboard {
     return {
-        uuid: uuid,
-        name: "Quick Sounds",
+        uuid,
+        name,
         keys: [],
         linkedFolder: null,
         playables: [],
@@ -33,7 +33,7 @@ export function getSavableSoundboard(soundboard: Soundboard): { [key: string]: u
         keys: soundboard.keys,
         volume: soundboard.volume,
         linkedFolder: soundboard.linkedFolder,
-        playables: soundboard.playables.map(x => getSavablePlayable(x)),
+        playables: soundboard.playables.map(x => getSavable(x)),
     };
 }
 
@@ -53,8 +53,9 @@ export function convertSoundboard(data: { [key: string]: unknown }, generateUuid
     const uuid = generateUuid();
 
     let playables: Playable[] = [];
-    if (Array.isArray(data["sounds"])) {
-        playables = convertPlayables(data["sounds"] as [], uuid, generateUuid);
+    const playablesTry = tryGetValue(data, ["playables", "sounds"], x => Array.isArray(x));
+    if (playablesTry) {
+        playables = convertPlayables(playablesTry as [], uuid, generateUuid);
     }
 
     return { uuid, name, keys, volume, linkedFolder, playables, };

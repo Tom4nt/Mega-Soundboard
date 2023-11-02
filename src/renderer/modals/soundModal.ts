@@ -1,10 +1,11 @@
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
-import { Sound } from "../../shared/models";
 import { Event, ExposedEvent } from "../../shared/events";
+import { Sound } from "../../shared/models/sound";
 
 type SaveEventArgs = { sound: Sound, moveRequested: boolean }
 
+// TODO: Create a Group modal or have a modal for all playables?
 export default class SoundModal extends Modal {
     private nameElement!: TextField;
     private moveElement!: Toggler;
@@ -78,18 +79,17 @@ export default class SoundModal extends Modal {
 
     private async update(): Promise<void> {
         this.nameElement.value = this.loadedSound.name;
-        if (typeof this.loadedSound.source === "string") this.pathElement.value = this.loadedSound.source;
+        this.pathElement.value = this.loadedSound.path;
         this.volumeElement.value = this.loadedSound.volume;
         this.keysElement.keys = this.loadedSound.keys;
 
-        const isGroup = Array.isArray(this.loadedSound.source);
         let isLinked = false;
         if (this.loadedSound.soundboardUuid) {
             const soundboard = await window.actions.getSoundboard(this.loadedSound.soundboardUuid);
             isLinked = soundboard.linkedFolder !== null;
         }
         this.moveElement.style.display = this.isNew ? "" : "none";
-        this.pathElement.style.display = !isLinked && !isGroup ? "" : "none";
+        this.pathElement.style.display = !isLinked ? "" : "none";
         this.removeButton.style.display = this.isNew || isLinked ? "none" : "";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
@@ -112,10 +112,10 @@ export default class SoundModal extends Modal {
 
     private async save(): Promise<void> {
         const path = await window.actions.parsePath(this.pathElement.value);
-        if (!await this.validate(path) || !path) return; // TODO: How does it save linked sounds?
+        if (!await this.validate(path) || !path) return;
 
         this.loadedSound.name = this.nameElement.value;
-        this.loadedSound.source = path;
+        this.loadedSound.path = path;
         this.loadedSound.volume = this.volumeElement.value;
         this.loadedSound.keys = this.keysElement.keys;
 

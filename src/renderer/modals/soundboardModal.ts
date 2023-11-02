@@ -1,7 +1,7 @@
 import { FileSelector, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Soundboard } from "../../shared/models";
+import { Soundboard } from "../../shared/models/soundboard";
 
 export default class SoundboardModal extends Modal {
     private nameElement!: TextField;
@@ -75,7 +75,7 @@ export default class SoundboardModal extends Modal {
         this.volumeElement.value = this.loadedSoundboard.volume;
         if (this.loadedSoundboard.linkedFolder) this.folderElement.value = this.loadedSoundboard.linkedFolder;
 
-        const displaysFolderField = this.loadedSoundboard.linkedFolder || this.loadedSoundboard.sounds.length <= 0;
+        const displaysFolderField = this.loadedSoundboard.linkedFolder || this.loadedSoundboard.playables.length <= 0;
         this.folderElement.style.display = displaysFolderField ? "" : "none";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";

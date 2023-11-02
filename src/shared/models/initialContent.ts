@@ -1,4 +1,5 @@
-import { Settings, Soundboard } from "../models";
+import { Settings } from "../models";
+import { Soundboard } from "./soundboard";
 
 export default class InitialContent {
     constructor(

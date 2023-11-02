@@ -1,8 +1,8 @@
 import * as p from "path";
 import { randomUUID } from "crypto";
-import { Sound } from "../../shared/models";
 import Utils from "./utils";
 import { validSoundExts } from "../../shared/sharedUtils";
+import { Sound } from "../../shared/models/sound";
 
 export default class SoundUtils {
 
@@ -12,12 +12,14 @@ export default class SoundUtils {
 
     static *iterateSoundsFromPaths(paths: string[], soundboardUuid: string): Generator<Sound> {
         for (const path of paths) {
-            yield new Sound(
-                randomUUID(),
-                Utils.getNameFromFile(path),
-                path, 100, [],
+            yield {
+                uuid: randomUUID(),
+                name: Utils.getNameFromFile(path),
+                path,
+                volume: 100,
+                keys: [],
                 soundboardUuid,
-            );
+            };
         }
     }
 

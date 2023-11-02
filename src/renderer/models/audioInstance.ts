@@ -81,7 +81,7 @@ export default class AudioInstance {
     }
 
     private constructor(
-        public readonly soundUuid: string,
+        public readonly uuid: string,
         public readonly audioElements: HTMLAudioElement[],
         public readonly volumeMult: number,
         private readonly stopEvent: Event<void>,
