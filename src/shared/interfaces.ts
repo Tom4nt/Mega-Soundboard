@@ -31,11 +31,6 @@ export interface PlayableAddedArgs {
     index?: number,
 }
 
-export interface PlayableChangedArgs {
-    playable: Playable,
-    soundboard: Soundboard,
-}
-
 export interface SoundboardAddedArgs {
     soundboard: Soundboard,
     index?: number,

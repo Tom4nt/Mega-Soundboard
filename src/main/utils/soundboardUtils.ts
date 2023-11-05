@@ -4,10 +4,11 @@ import path = require("path");
 import SoundUtils from "./soundUtils";
 import { randomUUID } from "crypto";
 import { Soundboard } from "../../shared/models/soundboard";
-import { getSoundWithPath, removeSubSounds } from "../../shared/sharedUtils";
-import { Sound } from "../../shared/models/sound";
-import { isGroup, isSound } from "../../shared/models/playable";
+import { Sound, isSound } from "../../shared/models/sound";
+import { getSoundWithPath, removeSubSounds } from "../../shared/models/container";
+import { isGroup } from "../../shared/models/group";
 
+// TODO: Move this to soundboard and use new container/playable functions.
 export default class SoundboardUtils {
 
     /** Adds Sounds to and/or removes them from the specified Soundboard as necessary

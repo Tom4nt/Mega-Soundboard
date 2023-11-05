@@ -1,13 +1,17 @@
-import { convertPlayables, tryGetValue } from "../sharedUtils";
+import { tryGetValue } from "../sharedUtils";
+import { Container, convertPlayables } from "./container";
 import { Playable, convertPlayable, getSavable, getSavablePlayable } from "./playable";
 
 type GroupMode = "sequence" | "random" | "first";
 
-export type Group = Playable & {
-    playables: Playable[],
+export type Group = Container & Playable & {
     mode: GroupMode,
     current: number,
 };
+
+export function isGroup(p: object): p is Group {
+    return "playables" in p && "mode" in p;
+}
 
 export function copyGroup(g: Group, generateUuid: () => string, soundboardUuid: string): Group {
     return convertGroup(getSavableGroup(g), generateUuid, soundboardUuid);

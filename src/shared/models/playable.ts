@@ -1,8 +1,9 @@
 import Keys from "../keys";
 import { tryGetValue } from "../sharedUtils";
-import { Group, convertGroup, copyGroup, getGroupPath, getSavableGroup } from "./group";
-import { Sound, convertSound, copySound, getSavableSound } from "./sound";
+import { convertGroup, copyGroup, getGroupPath, getSavableGroup, isGroup } from "./group";
+import { convertSound, copySound, getSavableSound, isSound } from "./sound";
 
+// TODO: Remove soundboard dependency or at least replace soundboardUuid with parent uuid.
 export type Playable = {
     uuid: string,
     soundboardUuid: string,
@@ -12,14 +13,6 @@ export type Playable = {
 };
 
 // ---
-
-export function isSound(p: object): p is Sound {
-    return "path" in p || "url" in p;
-}
-
-export function isGroup(p: object): p is Group {
-    return "playables" in p;
-}
 
 export function getPath(p: Playable): string {
     if (isSound(p)) {

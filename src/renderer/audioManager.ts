@@ -3,7 +3,7 @@ import { Settings } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
 import GlobalEvents from "./util/globalEvents";
-import { Playable, isSound } from "../shared/models/playable";
+import { Playable, getPath } from "../shared/models/playable";
 
 const MSG_ERR_NOT_CONNECTED = "The sound cannot be played because it is not connected to a Soundboard.";
 
@@ -102,11 +102,8 @@ export default class AudioManager {
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-        // TODO: Decide which sound on the group to play.
-        if (!isSound(playable)) return;
-
         const instance = await AudioInstance.create(
-            { uuid: playable.uuid, volume: playable.volume, path: playable.path },
+            { uuid: playable.uuid, volume: playable.volume, path: getPath(playable) },
             devices, sb.volume / 100, this.loops
         );
         instance.onEnd.addHandler(() => {
@@ -127,7 +124,7 @@ export default class AudioManager {
 
         console.log(`Added and playing instance of sound at ${playable.uuid}.`);
         this.playingInstances.push(instance);
-        this._onPlay.raise(playable);
+        this._onPlay.raise(playable); // TODO: A way to propagate this event in all items in the hierarchy
         void this.updatePTTState();
         this.raiseSingleInstanceCheckUpdate();
     }

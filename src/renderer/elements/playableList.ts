@@ -8,7 +8,6 @@ import PlayableContainer, { DroppedEventArgs } from "./playableContainer";
 const NO_SOUNDS = "This soundboard has no sounds";
 const SEARCH_EMPTY = "No sounds with the current filter";
 
-// TODO: Change to playable list
 export default class PlayableList extends HTMLElement {
     private currentSoundboardId?: string;
     private containerElement!: PlayableContainer;
@@ -40,9 +39,9 @@ export default class PlayableList extends HTMLElement {
             this.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
         });
 
-        GlobalEvents.addHandler("onSoundboardSorted", sb => {
-            if (this.currentSoundboardId === sb.uuid) {
-                this.loadItems(sb.playables, sb.uuid, true);
+        GlobalEvents.addHandler("onContainerSorted", c => {
+            if (this.currentSoundboardId === c.uuid) {
+                this.loadItems(c.playables, c.uuid, true);
             }
         });
     }

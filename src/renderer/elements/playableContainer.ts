@@ -1,5 +1,6 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import { Playable, equals, isGroup } from "../../shared/models/playable";
+import { isGroup } from "../../shared/models/group";
+import { Playable, equals } from "../../shared/models/playable";
 import { Draggable, FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 
@@ -13,14 +14,15 @@ export interface FileDroppedEventArgs {
     index: number,
 }
 
-// TODO: Change to playable container
+type SubContainer = { container: PlayableContainer, parentUuid: string };
+
 export default class PlayableContainer extends HTMLElement {
     private _loadedItems: PlayableItem[] = [];
     private _dragElement: PlayableItem | null = null;
     private _dragDummyDiv!: HTMLDivElement;
     private _containerDiv!: HTMLDivElement;
     private _emptyMsgSpan!: HTMLSpanElement;
-    private _currSubContainer: PlayableContainer | null = null;
+    private _currSubContainer: SubContainer | null = null;
 
     public allowFileImport = true;
 
@@ -42,7 +44,6 @@ export default class PlayableContainer extends HTMLElement {
 
     public constructor(
         public readonly emptyMessageRequested: () => string,
-        public readonly parentPlayableId?: string, // TODO: Remove parent dependency
     ) {
         super();
     }
@@ -123,7 +124,7 @@ export default class PlayableContainer extends HTMLElement {
         const item = new PlayableItem(playable);
 
         item.onExpandRequested.addHandler(() => {
-            if (this._currSubContainer?.parentPlayableId === playable.uuid) {
+            if (this._currSubContainer?.parentUuid === playable.uuid) {
                 this.closeCurrentSubContainer();
             } else {
                 this.openSubContainer(item);
@@ -216,8 +217,8 @@ export default class PlayableContainer extends HTMLElement {
 
     private openSubContainer(under: PlayableItem): void {
         this.closeCurrentSubContainer();
-        const root = new PlayableContainer(() => "No sounds in this group", under.playable.uuid);
-        this._currSubContainer = root;
+        const root = new PlayableContainer(() => "No sounds in this group");
+        this._currSubContainer = { container: root, parentUuid: under.playable.uuid };
         root.classList.add("group");
         root.style.height = "0";
         under.after(root);
@@ -232,20 +233,20 @@ export default class PlayableContainer extends HTMLElement {
     private closeCurrentSubContainer(): void {
         if (!this._currSubContainer) return;
         // TODO: Close animation. Remove event listeners in a destroy() function.
-        this._currSubContainer.remove();
+        this._currSubContainer.container.remove();
         this._currSubContainer = null;
     }
 
     // Checks if the container needs to be moved or closed.
     private updateCurrentContainer(): void {
         if (!this._currSubContainer) return;
-        const id = this._currSubContainer.parentPlayableId;
+        const id = this._currSubContainer.parentUuid;
         if (!id) return;
         const item = this.findItem(id);
         if (item) {
-            item.after(this._currSubContainer);
+            item.after(this._currSubContainer.container);
             const isVisible = item.style.display != "none";
-            this._currSubContainer.style.display = isVisible ? "" : "none";
+            this._currSubContainer.container.style.display = isVisible ? "" : "none";
         } else {
             this.closeCurrentSubContainer();
         }

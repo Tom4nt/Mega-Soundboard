@@ -1,15 +1,17 @@
 import Keys from "../keys";
-import { convertPlayables, tryGetValue } from "../sharedUtils";
+import { tryGetValue } from "../sharedUtils";
+import { Container, convertPlayables } from "./container";
 import { Playable, getSavable } from "./playable";
 
-// All functions must be static so instances can be passed between processes.
-export type Soundboard = {
-    uuid: string,
+export type Soundboard = Container & {
     name: string,
     keys: number[],
     volume: number,
     linkedFolder: string | null,
-    playables: Playable[],
+}
+
+export function isSoundboard(c: object): c is Soundboard {
+    return "linkedFolder" in c;
 }
 
 export function equals(from: Soundboard, to: Soundboard): boolean {

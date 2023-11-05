@@ -15,7 +15,7 @@ import SoundboardUtils from "./utils/soundboardUtils";
 import { actionBindings } from "./quickActionBindings";
 import { isAction } from "../shared/quickActions";
 import { Soundboard } from "../shared/models/soundboard";
-import { getSoundWithPath } from "../shared/sharedUtils";
+import { getSoundWithPath } from "../shared/models/container";
 
 /** Represents the app instance in the main process. */
 export default class MS {

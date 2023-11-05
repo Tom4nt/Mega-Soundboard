@@ -6,6 +6,10 @@ export type Sound = Playable & {
     path: string,
 };
 
+export function isSound(p: object): p is Sound {
+    return "path" in p || "url" in p;
+}
+
 export function copySound(s: Sound, uuid: string, soundboardUuid: string): Sound {
     return convertSound(getSavableSound(s), uuid, soundboardUuid);
 }

@@ -5,15 +5,15 @@ import MSR from "../msr";
 import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import { PlayableChangedArgs } from "../../shared/interfaces";
 import GlobalEvents from "../util/globalEvents";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Playable, equals, isGroup, isSound } from "../../shared/models/playable";
+import { Playable, equals } from "../../shared/models/playable";
+import { isSound } from "../../shared/models/sound";
+import { isGroup } from "../../shared/models/group";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 
-// TODO: Change to PlayableItem
 export default class PlayableItem extends Draggable {
     private titleElement!: HTMLSpanElement;
     private detailsElement!: HTMLSpanElement;
@@ -188,19 +188,21 @@ export default class PlayableItem extends Draggable {
 
     // Handlers
 
+    // TODO: Recursively check subplayables.
     private handlePlay = (playable: Playable): void => {
         if (equals(playable, this.playable))
             this.updatePlayingState();
     };
 
+    // TODO: Recursively check subplayables.
     private handleStop = (id: string): void => {
         if (id == this.playable.uuid)
             this.updatePlayingState();
     };
 
-    private handlePlayableChanged = (e: PlayableChangedArgs): void => {
-        if (equals(e.playable, this.playable) && isSound(e.playable)) {
-            this.playable = e.playable;
+    private handlePlayableChanged = (playable: Playable): void => {
+        if (equals(playable, this.playable) && isSound(playable)) {
+            this.playable = playable;
             this.update();
         }
     };

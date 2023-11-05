@@ -4,11 +4,11 @@ import {
     NonOptional,
     PlayableAddedArgs,
     SoundboardAddedArgs,
-    PlayableChangedArgs,
     UpdaterState,
     WindowState
 } from "./interfaces";
 import { Settings } from "./models";
+import { Container } from "./models/container";
 import { Playable } from "./models/playable";
 import { Soundboard } from "./models/soundboard";
 
@@ -18,12 +18,12 @@ class ConcreteEvents {
     onLoopSoundsChanged: ExposedEvent<boolean> | null = null;
     onSettingsChanged: ExposedEvent<Settings> | null = null;
     onPlayableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
-    onPlayableChanged: ExposedEvent<PlayableChangedArgs> | null = null;
+    onPlayableChanged: ExposedEvent<Playable> | null = null;
     onPlayableRemoved: ExposedEvent<Playable> | null = null;
     onSoundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
     onSoundboardChanged: ExposedEvent<Soundboard> | null = null;
     onSoundboardRemoved: ExposedEvent<Soundboard> | null = null;
-    onSoundboardSorted: ExposedEvent<Soundboard> | null = null;
+    onContainerSorted: ExposedEvent<Container> | null = null;
     onWindowStateChanged: ExposedEvent<WindowState> | null = null;
     onWindowFocusChanged: ExposedEvent<boolean> | null = null;
     onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;

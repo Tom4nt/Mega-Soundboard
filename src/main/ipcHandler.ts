@@ -73,6 +73,7 @@ const implementer: Actions = {
 
     async addSounds(playables, soundboardId, moveFile, startIndex) {
         const sb = await MS.instance.soundboardsCache.addSounds(playables, soundboardId, moveFile, startIndex);
+        // TODO: Soundboard shouldn't be selected here just because it's the default behaviour! Check throughout this file.
         await MS.instance.setCurrentSoundboard(sb);
     },
 
@@ -169,7 +170,7 @@ const implementer: Actions = {
     },
 
     async sortSoundboard(soundboardId) {
-        await MS.instance.soundboardsCache.sortSoundboard(soundboardId);
+        await MS.instance.soundboardsCache.sortContainer(soundboardId);
     },
 
     flagChangelogViewed() {

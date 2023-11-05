@@ -6,24 +6,24 @@ import path = require("path");
 import SoundboardUtils from "../utils/soundboardUtils";
 import { randomUUID } from "crypto";
 import { Sound } from "../../shared/models/sound";
-import { Soundboard, getDefault } from "../../shared/models/soundboard";
+import { Soundboard, getDefault, isSoundboard } from "../../shared/models/soundboard";
 import { Playable, compare, copy } from "../../shared/models/playable";
+import { Container, findContainer, findInContainer } from "../../shared/models/container";
 
-// TODO: Support playables. Recursive find, move, delete, etc...
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(paths: Sound[], soundboardId: string | null, move: boolean, startIndex?: number): Promise<Soundboard> {
-        const soundboard = await this.getSoundboard(soundboardId);
-        const soundsDestination = MS.instance.settingsCache.settings.soundsLocation;
+    async addSounds(paths: Sound[], sourceId: string | null, move: boolean, startIndex?: number): Promise<Container> {
+        const source = await this.getContainer(sourceId);
+        const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
-        let index = startIndex ?? soundboard.playables.length + 1;
+        let index = startIndex ?? source.playables.length + 1;
         for (const sound of paths) {
-            sound.soundboardUuid = soundboard.uuid;
-            soundboard.playables.splice(index, 0, sound);
-            if (move && soundsDestination) {
+            sound.soundboardUuid = source.uuid;
+            source.playables.splice(index, 0, sound);
+            if (move && destinationPath) {
                 const basename = path.basename(sound.path);
-                const soundDestination = path.join(soundsDestination, basename);
+                const soundDestination = path.join(destinationPath, basename);
                 moveTasks.push(fs.rename(sound.path, soundDestination));
                 sound.path = soundDestination;
             }
@@ -31,52 +31,48 @@ export default class SoundboardsCache {
             index += 1;
         }
 
-        EventSender.send("onSoundboardChanged", soundboard);
         await Promise.all([...moveTasks, DataAccess.saveSoundboards(this.soundboards)]);
-        return soundboard;
+        return source;
     }
 
     async editPlayable(playable: Playable): Promise<void> {
-        const [soundboard, index] = this.findPlayable(playable.uuid);
-        soundboard.playables[index] = playable;
-        EventSender.send("onPlayableChanged", { playable, soundboard: soundboard });
+        const [container, index] = this.findPlayable(playable.uuid);
+        container.playables[index] = playable;
+        EventSender.send("onPlayableChanged", playable);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
     async movePlayable(
-        playableId: string, destinationSoundboardId: string | null, destinationIndex: number, doesCopy: boolean
-    ): Promise<Soundboard> {
-        const [sourceSB, index] = this.findPlayable(playableId);
-        let playable = sourceSB.playables[index]!;
-        const destinationSB = await this.getSoundboard(destinationSoundboardId);
-        destinationSoundboardId = destinationSB.uuid;
+        playableId: string, destinationId: string | null, destinationIndex: number, doesCopy: boolean
+    ): Promise<Container> {
+        const [source, index] = this.findPlayable(playableId);
+        let playable = source.playables[index]!;
+        const destination = await this.getContainer(destinationId);
+        destinationId = destination.uuid;
 
-        if (sourceSB.linkedFolder === null && destinationSB.linkedFolder !== null)
+        if (isSoundboard(destination) && destination.linkedFolder !== null)
             throw Error(`Cannot ${doesCopy ? "copy" : "move"} a sound to a linked Soundboard.`);
 
         if (doesCopy) {
-            playable = copy(playable, randomUUID, destinationSoundboardId);
+            playable = copy(playable, randomUUID, destinationId);
         } else {
-            sourceSB.playables.splice(index, 1);
+            source.playables.splice(index, 1);
             EventSender.send("onPlayableRemoved", playable);
-            EventSender.send("onSoundboardChanged", sourceSB);
         }
 
-        destinationSB.playables.splice(destinationIndex, 0, playable);
-        playable.soundboardUuid = destinationSoundboardId;
+        destination.playables.splice(destinationIndex, 0, playable);
+        playable.soundboardUuid = destinationId;
         EventSender.send("onPlayableAdded", { playable, index: destinationIndex });
-        EventSender.send("onSoundboardChanged", destinationSB);
 
         await DataAccess.saveSoundboards(this.soundboards);
-        return destinationSB;
+        return destination;
     }
 
     async removePlayable(uuid: string): Promise<void> {
-        const [soundboard, index] = this.findPlayable(uuid);
-        const playable = soundboard.playables[index]!;
-        soundboard.playables.splice(index, 1);
+        const [source, index] = this.findPlayable(uuid);
+        const playable = source.playables[index]!;
+        source.playables.splice(index, 1);
         EventSender.send("onPlayableRemoved", playable);
-        EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -118,12 +114,10 @@ export default class SoundboardsCache {
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    async sortSoundboard(uuid: string): Promise<void> {
-        const index = this.findSoundboardIndex(uuid);
-        const soundboard = this.soundboards[index]!;
-        soundboard.playables = soundboard.playables.sort((a, b) => compare(a, b));
-        EventSender.send("onSoundboardSorted", soundboard);
-        EventSender.send("onSoundboardChanged", soundboard);
+    async sortContainer(uuid: string): Promise<void> {
+        const container = await this.getContainer(uuid);
+        container.playables = container.playables.sort((a, b) => compare(a, b));
+        EventSender.send("onContainerSorted", container);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -133,20 +127,19 @@ export default class SoundboardsCache {
         return soundboardIndex;
     }
 
-    private findPlayable(uuid: string): [Soundboard, number] {
+    private findPlayable(uuid: string): [Container, number] {
         for (const soundboard of this.soundboards) {
-            const playableIndex = soundboard.playables.findIndex((s) => s.uuid === uuid);
-            if (playableIndex >= 0) return [soundboard, playableIndex];
+            const res = findInContainer(soundboard, uuid);
+            if (res) return res;
         }
-        throw new Error(`Playable with runtime UUID ${uuid} could not be found.`);
+        throw new Error(`Cannot find playable container with runtime uuid ${uuid}.`);
     }
 
-    private async getSoundboard(uuid: string | null): Promise<Soundboard> {
+    private async getContainer(uuid: string | null): Promise<Container> {
         if (uuid) {
-            const destSoundboardIndex = this.findSoundboardIndex(uuid);
-            return this.soundboards[destSoundboardIndex]!;
-        } else {
-            return await MS.instance.soundboardsCache.addQuickSoundboard();
+            const sb = findContainer(this.soundboards, uuid);
+            if (sb) return sb;
         }
+        return await MS.instance.soundboardsCache.addQuickSoundboard();
     }
 }

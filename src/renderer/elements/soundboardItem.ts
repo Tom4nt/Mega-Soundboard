@@ -110,6 +110,7 @@ export default class SoundboardItem extends Draggable {
     }
 
     private addGlobalListeners(): void {
+        // TODO: Handle playableAdded/Removed
         GlobalEvents.addHandler("onSoundboardChanged", this.handleSoundboardChanged);
         GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
         MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
@@ -166,6 +167,7 @@ export default class SoundboardItem extends Draggable {
         }
     };
 
+    // TODO: Recursively check playables.
     private handlePlay = (p: Playable): void => {
         if (!p.soundboardUuid) return;
         if (this.soundboard.uuid === p.soundboardUuid) {
@@ -173,6 +175,7 @@ export default class SoundboardItem extends Draggable {
         }
     };
 
+    // TODO: Recursively check playables.
     private handleStop = (uuid: string): void => {
         const sound = this.soundboard.playables.find(x => x.uuid == uuid);
         if (!sound) return;
