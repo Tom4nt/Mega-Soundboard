@@ -1,6 +1,7 @@
 import Keys from "../../shared/keys";
+import { findInContainer } from "../../shared/models/container";
 import { Playable } from "../../shared/models/playable";
-import { Soundboard, equals } from "../../shared/models/soundboard";
+import { Soundboard, soundboardEquals } from "../../shared/models/soundboard";
 import { PlayableItem, Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
@@ -161,25 +162,22 @@ export default class SoundboardItem extends Draggable {
     // Handlers
 
     private handleSoundboardChanged = (sb: Soundboard): void => {
-        if (equals(sb, this.soundboard)) {
+        if (soundboardEquals(sb, this.soundboard)) {
             this.soundboard = sb;
             this.updateElements();
         }
     };
 
-    // TODO: Recursively check playables.
     private handlePlay = (p: Playable): void => {
-        if (!p.soundboardUuid) return;
-        if (this.soundboard.uuid === p.soundboardUuid) {
+        if (findInContainer(this.soundboard, p.uuid)) {
             this.updatePlayingIndicator(1);
         }
     };
 
-    // TODO: Recursively check playables.
     private handleStop = (uuid: string): void => {
-        const sound = this.soundboard.playables.find(x => x.uuid == uuid);
-        if (!sound) return;
-        this.updatePlayingIndicator(-1);
+        if (findInContainer(this.soundboard, uuid)) {
+            this.updatePlayingIndicator(-1);
+        }
     };
 
     private handleKeybindPressed = (keybind: number[]): void => {

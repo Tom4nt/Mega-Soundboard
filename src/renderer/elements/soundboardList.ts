@@ -2,7 +2,7 @@ import { SoundboardItem } from "../elements";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
 import GlobalEvents from "../util/globalEvents";
-import { Soundboard, equals } from "../../shared/models/soundboard";
+import { Soundboard, soundboardEquals } from "../../shared/models/soundboard";
 
 export default class SoundboardList extends HTMLElement {
     private selectedItem?: SoundboardItem;
@@ -77,7 +77,7 @@ export default class SoundboardList extends HTMLElement {
     selectSoundboard(soundboard: Soundboard): void {
         this.unselectAll();
         for (const item of this.getItems()) {
-            if (equals(item.soundboard, soundboard)) {
+            if (soundboardEquals(item.soundboard, soundboard)) {
                 item.soundboard = soundboard;
                 item.isSelected = true;
                 this.selectedItem = item;

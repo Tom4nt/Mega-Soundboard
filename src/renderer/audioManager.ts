@@ -124,7 +124,7 @@ export default class AudioManager {
 
         console.log(`Added and playing instance of sound at ${playable.uuid}.`);
         this.playingInstances.push(instance);
-        this._onPlay.raise(playable); // TODO: A way to propagate this event in all items in the hierarchy
+        this._onPlay.raise(playable);
         void this.updatePTTState();
         this.raiseSingleInstanceCheckUpdate();
     }

@@ -15,10 +15,10 @@ class ConcreteActions {
     zoomGet: (() => Promise<number>) | null = null;
     zoomReset: (() => void) | null = null;
 
-    addSounds: ((sounds: Sound[], soundboardId: string | null, moveFile: boolean, startIndex?: number) => Promise<void>) | null = null;
+    addSounds: ((sounds: Sound[], soundboardId: string | null, moveFile: boolean, startIndex?: number) => Promise<string>) | null = null;
     editPlayable: ((playable: Playable) => void) | null = null;
-    movePlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
-    copyPlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<void>) | null = null;
+    movePlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<string>) | null = null;
+    copyPlayable: ((id: string, destinationSoundboardId: string | null, destinationIndex: number) => Promise<string>) | null = null;
     deletePlayable: ((id: string) => void) | null = null;
     getNewSoundsFromPaths: ((paths: string[]) => Promise<Sound[]>) | null = null;
     getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;

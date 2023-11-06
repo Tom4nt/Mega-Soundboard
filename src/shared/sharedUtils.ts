@@ -18,8 +18,6 @@ export function normalizeString(str: string): string {
         .toLowerCase();
 }
 
-
-
 String.prototype.contains = function (other: string): boolean {
     return normalizeString(this as string).includes(normalizeString(other));
 };

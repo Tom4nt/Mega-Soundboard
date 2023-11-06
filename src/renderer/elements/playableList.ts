@@ -70,15 +70,16 @@ export default class PlayableList extends HTMLElement {
 
     // Handlers
 
-    private handleItemDropped = (e: DroppedEventArgs): void => {
+    private handleItemDropped = async (e: DroppedEventArgs): Promise<void> => {
         if (!this.currentSoundboardId) return;
 
         // This will reload the list since it is listening to the onSoundboardChanged global event.
-        const destinationUUID = e.item.draggingToNewSoundboard ? null : this.currentSoundboardId;
+        let destinationUUID = e.item.draggingToNewSoundboard ? null : this.currentSoundboardId;
         if (e.item.dragMode === "copy") {
-            void window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
+            destinationUUID = await window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
         } else {
-            void window.actions.movePlayable(e.item.playable.uuid, destinationUUID, e.index);
+            destinationUUID = await window.actions.movePlayable(e.item.playable.uuid, destinationUUID, e.index);
         }
+        window.actions.setCurrentSoundboard(destinationUUID);
     };
 }

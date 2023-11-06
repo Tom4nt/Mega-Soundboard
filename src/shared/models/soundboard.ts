@@ -14,8 +14,8 @@ export function isSoundboard(c: object): c is Soundboard {
     return "linkedFolder" in c;
 }
 
-export function equals(from: Soundboard, to: Soundboard): boolean {
-    return from.uuid === to.uuid;
+export function soundboardEquals(a: Soundboard, b: Soundboard): boolean {
+    return a.uuid === b.uuid;
 }
 
 export function getDefault(uuid: string, name: string): Soundboard {

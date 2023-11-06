@@ -73,8 +73,7 @@ const implementer: Actions = {
 
     async addSounds(playables, soundboardId, moveFile, startIndex) {
         const sb = await MS.instance.soundboardsCache.addSounds(playables, soundboardId, moveFile, startIndex);
-        // TODO: Soundboard shouldn't be selected here just because it's the default behaviour! Check throughout this file.
-        await MS.instance.setCurrentSoundboard(sb);
+        return sb.uuid;
     },
 
     editPlayable(playable) {
@@ -83,12 +82,12 @@ const implementer: Actions = {
 
     async movePlayable(id, destinationSoundboardId, destinationIndex) {
         const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, false);
-        await MS.instance.setCurrentSoundboard(sb);
+        return sb.uuid;
     },
 
     async copyPlayable(id, destinationSoundboardId, destinationIndex) {
         const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, true);
-        await MS.instance.setCurrentSoundboard(sb);
+        return sb.uuid;
     },
 
     deletePlayable(id) {
@@ -128,7 +127,8 @@ const implementer: Actions = {
             const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
             if (!selected) throw new Error("Cannot move: Current selected soundboard index is out of bounds.");
             await MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
-            await MS.instance.setCurrentSoundboard(selected);
+            const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
+            MS.instance.settingsCache.settings.selectedSoundboard = index; // Update the index because it changed.
         })();
     },
 

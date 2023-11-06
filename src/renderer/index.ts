@@ -219,7 +219,10 @@ function addElementListeners(): void {
     addSoundboardDropArea.onDrop.addHandler(async e => {
         addSoundboardButton.classList.remove("hover");
         const paths = await Utils.getValidSoundPaths(e);
-        if (paths) await Actions.addSounds(paths, null);
+        if (paths) {
+            const sbId = await Actions.addSounds(paths, null);
+            window.actions.setCurrentSoundboard(sbId);
+        }
     });
 
     updateButton.addEventListener("click", () => {
@@ -348,6 +351,7 @@ async function browseAndAddSounds(): Promise<void> {
     if (sb && sb.linkedFolder === null) {
         const paths = await window.actions.browseSounds();
         await Actions.addSounds(paths, sb.uuid);
+        window.actions.setCurrentSoundboard(sb.uuid);
     }
 }
 

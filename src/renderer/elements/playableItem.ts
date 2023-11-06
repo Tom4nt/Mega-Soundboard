@@ -11,6 +11,7 @@ import { Event, ExposedEvent } from "../../shared/events";
 import { Playable, equals } from "../../shared/models/playable";
 import { isSound } from "../../shared/models/sound";
 import { isGroup } from "../../shared/models/group";
+import { findInContainer } from "../../shared/models/container";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 
@@ -186,18 +187,20 @@ export default class PlayableItem extends Draggable {
         return copies;
     }
 
+    private containsPlayable(uuid: string): boolean {
+        return isGroup(this.playable) && findInContainer(this.playable, uuid) != undefined;
+    }
+
     // Handlers
 
-    // TODO: Recursively check subplayables.
     private handlePlay = (playable: Playable): void => {
-        if (equals(playable, this.playable))
-            this.updatePlayingState();
+        if (equals(playable, this.playable) || this.containsPlayable(playable.uuid))
+            this.updatePlayingState(); // TODO: Increment playing like in soundboards.
     };
 
-    // TODO: Recursively check subplayables.
     private handleStop = (id: string): void => {
-        if (id == this.playable.uuid)
-            this.updatePlayingState();
+        if (id == this.playable.uuid || this.containsPlayable(id))
+            this.updatePlayingState(); // TODO: Decrement.
     };
 
     private handlePlayableChanged = (playable: Playable): void => {
