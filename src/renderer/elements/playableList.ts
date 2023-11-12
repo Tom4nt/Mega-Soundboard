@@ -27,8 +27,12 @@ export default class PlayableList extends HTMLElement {
         container.onItemDropped.addHandler(this.handleItemDropped);
 
         GlobalEvents.addHandler("onPlayableAdded", e => {
-            if (e.playable.soundboardUuid === this.currentSoundboardId)
+            if (e.playable.parentUuid === this.currentSoundboardId) {
                 container.addItem(e.playable, e.index);
+            } else {
+                const targetContainer = container.getElementLocation(e.playable.uuid);
+                targetContainer?.addItem(e.playable);
+            }
         });
 
         GlobalEvents.addHandler("onPlayableRemoved", s => {

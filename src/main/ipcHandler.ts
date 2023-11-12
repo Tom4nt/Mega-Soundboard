@@ -106,6 +106,11 @@ const implementer: Actions = {
         return Promise.resolve(valid);
     },
 
+    async getPlayableRoot(uuid) {
+        void uuid;
+        return undefined; // TODO: Implement
+    },
+
     getSoundboard(uuid) {
         const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
         if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);

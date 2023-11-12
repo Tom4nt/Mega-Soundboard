@@ -5,8 +5,6 @@ import { IDevice } from "../shared/interfaces";
 import GlobalEvents from "./util/globalEvents";
 import { Playable, getPath } from "../shared/models/playable";
 
-const MSG_ERR_NOT_CONNECTED = "The sound cannot be played because it is not connected to a Soundboard.";
-
 export default class AudioManager {
     overlapSounds = false;
 
@@ -95,17 +93,14 @@ export default class AudioManager {
     async play(playable: Playable): Promise<void> {
         if (!this.overlapSounds) this.stopAllInternal(false);
 
-        if (!playable.soundboardUuid) throw Error(MSG_ERR_NOT_CONNECTED);
-        const sb = await window.actions.getSoundboard(playable.soundboardUuid);
-
         // In the future, devices will be stored as an array and the user will be able to add/remove them.
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
         const instance = await AudioInstance.create(
             { uuid: playable.uuid, volume: playable.volume, path: getPath(playable) },
-            devices, sb.volume / 100, this.loops
-        );
+            devices, this.loops
+        ); // TODO: Use function on playable to get final volume (affected by all parents).
         instance.onEnd.addHandler(() => {
             console.log(`Instance of ${playable.name} finished playing.`);
             this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);

@@ -17,6 +17,7 @@ export default class SoundModal extends Modal {
 
     private loadedSound: Sound;
     private isNew: boolean;
+    private isInLinkedSoundboard: boolean;
 
     public get onSave(): ExposedEvent<SaveEventArgs> { return this._onSave.expose(); }
     private readonly _onSave = new Event<SaveEventArgs>();
@@ -24,10 +25,11 @@ export default class SoundModal extends Modal {
     public get onRemove(): ExposedEvent<Sound> { return this._onRemove.expose(); }
     private readonly _onRemove = new Event<Sound>();
 
-    constructor(sound: Sound, isNew: boolean) {
+    constructor(sound: Sound, isNew: boolean, isInLinkedSoundboard: boolean) {
         super(false);
         this.loadedSound = sound;
         this.isNew = isNew;
+        this.isInLinkedSoundboard = isInLinkedSoundboard;
         this.modalTitle = isNew ? "Add Sound" : "Edit Sound";
     }
 
@@ -37,7 +39,7 @@ export default class SoundModal extends Modal {
 
     protected connectedCallback(): void {
         super.connectedCallback();
-        void this.update();
+        this.update();
     }
 
     protected getContent(): HTMLElement[] {
@@ -77,20 +79,15 @@ export default class SoundModal extends Modal {
         return buttons;
     }
 
-    private async update(): Promise<void> {
+    private update(): void {
         this.nameElement.value = this.loadedSound.name;
         this.pathElement.value = this.loadedSound.path;
         this.volumeElement.value = this.loadedSound.volume;
         this.keysElement.keys = this.loadedSound.keys;
 
-        let isLinked = false;
-        if (this.loadedSound.soundboardUuid) {
-            const soundboard = await window.actions.getSoundboard(this.loadedSound.soundboardUuid);
-            isLinked = soundboard.linkedFolder !== null;
-        }
         this.moveElement.style.display = this.isNew ? "" : "none";
-        this.pathElement.style.display = !isLinked ? "" : "none";
-        this.removeButton.style.display = this.isNew || isLinked ? "none" : "";
+        this.pathElement.style.display = !this.isInLinkedSoundboard ? "" : "none";
+        this.removeButton.style.display = this.isNew || this.isInLinkedSoundboard ? "none" : "";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";
     }

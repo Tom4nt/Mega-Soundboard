@@ -14,6 +14,7 @@ import { isGroup } from "../../shared/models/group";
 import { findInContainer } from "../../shared/models/container";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
+type DragSession = { sourceSoundboard: SimpleSoundboard, targetSoundboard: SimpleSoundboard | null };
 
 export default class PlayableItem extends Draggable {
     private titleElement!: HTMLSpanElement;
@@ -21,12 +22,14 @@ export default class PlayableItem extends Draggable {
     private indicatorElement!: HTMLDivElement;
     private currentKeyStateListener: KeyStateListener | null = null;
     private _draggingToNewSoundboard = false;
-    private currentHintSoundboard: SimpleSoundboard | null = null;
+    private playingSoundCount = 0;
+    private currentDragSession: DragSession | null = null;
 
     public get draggingToNewSoundboard(): boolean { return this._draggingToNewSoundboard; }
     public set draggingToNewSoundboard(v: boolean) {
         this._draggingToNewSoundboard = v;
-        void this.updateHint(undefined);
+        if (this.currentDragSession)
+            void this.updateHint(undefined);
     }
 
     private _expandRequested = new Event<PlayableItem>();
@@ -42,9 +45,10 @@ export default class PlayableItem extends Draggable {
         this.init();
     }
 
-    public updatePlayingState(): void {
-        const isPlaying = MSR.instance.audioManager.isPlaying(this.playable.uuid);
-        this.setPlayingState(isPlaying);
+    public updatePlayingIndicator(difference: number): void {
+        this.playingSoundCount += difference;
+        if (this.playingSoundCount < 0) this.playingSoundCount = 0; // Not supposed to happen
+        this.setPlayingState(this.playingSoundCount > 0);
     }
 
     public setPlayingState(playingState: boolean): void {
@@ -57,14 +61,17 @@ export default class PlayableItem extends Draggable {
         }
     }
 
-    public async updateHint(soundboard?: SimpleSoundboard): Promise<void> {
-        if (soundboard) this.currentHintSoundboard = soundboard;
-        const sb = this.currentHintSoundboard;
-        const isSameSB = sb?.uuid === this.playable.soundboardUuid && !this.draggingToNewSoundboard;
-        let sbName = isSameSB ? "" : sb?.name ?? "";
+    public updateHint(targetSb?: SimpleSoundboard): void {
+        if (!this.currentDragSession) return;
+        if (targetSb) this.currentDragSession.targetSoundboard = targetSb;
+        const targetSB = this.currentDragSession.targetSoundboard;
+        const sourceSB = this.currentDragSession.sourceSoundboard;
+        const isSameSB = targetSB?.uuid === sourceSB.uuid && !this.draggingToNewSoundboard;
+        let sbName = isSameSB ? "" : targetSB?.name ?? "";
         if (this.draggingToNewSoundboard) sbName = "new soundboard";
-        const copies = await this.getHintMode(
-            this.currentKeyStateListener?.isCtrlPressed ?? false, isSameSB);
+        const copies = this.getHintMode(
+            this.currentKeyStateListener?.isCtrlPressed ?? false, isSameSB, this.currentDragSession.sourceSoundboard.isLinked
+        );
         const prefix = sbName ?
             (copies ? "Copy to " : "Move to ") :
             (copies ? "Copy" : "");
@@ -74,7 +81,6 @@ export default class PlayableItem extends Draggable {
     public update(): void {
         this.titleElement.innerHTML = this.playable.name;
         this.detailsElement.innerHTML = Keys.toKeyString(this.playable.keys);
-        this.updatePlayingState();
     }
 
     public destroy(): void {
@@ -142,17 +148,24 @@ export default class PlayableItem extends Draggable {
         });
 
         this.addEventListener("contextmenu", () => {
-            Actions.editPlayable(this.playable);
+            void Actions.editPlayable(this.playable);
         });
 
         this.indicatorElement.addEventListener("click", () => {
             MSR.instance.audioManager.stop(this.playable.uuid);
         });
 
-        this.onDragStart.addHandler(() => {
+        this.onDragStart.addHandler(async (c) => {
+            const sb = await window.actions.getPlayableRoot(this.playable.uuid);
+            if (!sb) {
+                c.cancel = true;
+                return;
+            }
+            const simpleSb: SimpleSoundboard = { name: sb.name, isLinked: sb.linkedFolder != null, uuid: sb.uuid };
+            this.currentDragSession = { sourceSoundboard: simpleSb, targetSoundboard: null };
             this.currentKeyStateListener = new KeyStateListener();
             this.currentKeyStateListener.onStateChanged.addHandler(async () => {
-                await this.updateHint(undefined);
+                this.updateHint(undefined);
             });
         });
 
@@ -178,11 +191,9 @@ export default class PlayableItem extends Draggable {
         GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
     }
 
-    private async getHintMode(wantsCopy: boolean, sameSoundboard: boolean): Promise<boolean> {
-        if (!this.playable.soundboardUuid) return false;
+    private getHintMode(wantsCopy: boolean, isSameSoundboard: boolean, isLinkedSoundboard: boolean): boolean {
         let copies = wantsCopy;
-        const sb = await window.actions.getSoundboard(this.playable.soundboardUuid);
-        if (sb.linkedFolder !== null) copies = !sameSoundboard;
+        if (isLinkedSoundboard) copies = !isSameSoundboard;
         this.dragMode = copies ? "copy" : "move";
         return copies;
     }
@@ -195,12 +206,12 @@ export default class PlayableItem extends Draggable {
 
     private handlePlay = (playable: Playable): void => {
         if (equals(playable, this.playable) || this.containsPlayable(playable.uuid))
-            this.updatePlayingState(); // TODO: Increment playing like in soundboards.
+            this.updatePlayingIndicator(1);
     };
 
     private handleStop = (id: string): void => {
         if (id == this.playable.uuid || this.containsPlayable(id))
-            this.updatePlayingState(); // TODO: Decrement.
+            this.updatePlayingIndicator(-1);
     };
 
     private handlePlayableChanged = (playable: Playable): void => {

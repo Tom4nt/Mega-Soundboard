@@ -21,7 +21,6 @@ export default class AudioInstance {
     public static async create(
         sound: { uuid: string, volume: number, path: string },
         devices: IDevice[],
-        volumeMult: number,
         loop: boolean,
     ): Promise<AudioInstance> {
         const audioElements: HTMLAudioElement[] = [];
@@ -54,7 +53,7 @@ export default class AudioInstance {
                 }
             });
 
-            audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100) * (volumeMult), 2);
+            audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100), 2);
             audioElements.push(audio);
             isFirst = false;
         }
@@ -76,14 +75,13 @@ export default class AudioInstance {
         firstAudioElement.addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
         return new AudioInstance(
-            sound.uuid, audioElements, volumeMult, stopEvent, pauseEvent, playEvent, timeUpdateEvent
+            sound.uuid, audioElements, stopEvent, pauseEvent, playEvent, timeUpdateEvent
         );
     }
 
     private constructor(
         public readonly uuid: string,
         public readonly audioElements: HTMLAudioElement[],
-        public readonly volumeMult: number,
         private readonly stopEvent: Event<void>,
         private readonly pauseEvent: Event<void>,
         private readonly playEvent: Event<void>,

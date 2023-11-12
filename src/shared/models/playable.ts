@@ -3,10 +3,9 @@ import { tryGetValue } from "../sharedUtils";
 import { convertGroup, copyGroup, getGroupPath, getSavableGroup, isGroup } from "./group";
 import { convertSound, copySound, getSavableSound, isSound } from "./sound";
 
-// TODO: Remove soundboard dependency or at least replace soundboardUuid with parent uuid.
 export type Playable = {
     uuid: string,
-    soundboardUuid: string,
+    parentUuid: string,
     name: string,
     volume: number,
     keys: number[],
@@ -65,7 +64,7 @@ export function convert(
 }
 
 export function convertPlayable(
-    data: { [key: string]: unknown }, uuid: string, soundboardUuid: string
+    data: { [key: string]: unknown }, uuid: string, parentUuid: string
 ): Playable {
     // Defaults
     let name = "¯\\_(ツ)_/¯";
@@ -78,5 +77,5 @@ export function convertPlayable(
     const keysRes = tryGetValue(data, ["keys", "shortcut"], v => Keys.isKeys(v));
     if (keysRes) keys = data["keys"] as number[];
 
-    return { uuid, name, keys, soundboardUuid, volume, };
+    return { uuid, name, keys, parentUuid, volume, };
 }

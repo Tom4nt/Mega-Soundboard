@@ -33,9 +33,8 @@ export default class SoundboardUtils {
                         path: soundPath,
                         volume: 100,
                         keys: [],
-                        soundboardUuid: soundboard.uuid,
+                        parentUuid: soundboard.uuid,
                     };
-                    s.soundboardUuid = soundboard.uuid;
                     soundboard.playables.push(s);
                 }
             }

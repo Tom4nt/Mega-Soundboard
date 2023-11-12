@@ -159,6 +159,16 @@ export default class PlayableContainer extends HTMLElement {
         this.updateMessage();
     }
 
+    /** Recursively searches for the sub container where the element with the specified uuid belongs. */
+    getElementLocation(uuid: string): PlayableContainer | undefined {
+        if (!this._currSubContainer) return undefined;
+        if (this._currSubContainer.parentUuid === uuid) {
+            return this._currSubContainer.container;
+        } else {
+            return this._currSubContainer.container.getElementLocation(uuid);
+        }
+    }
+
     removeItem(playable: Playable): void {
         let i = 0;
         for (const item of this._loadedItems) {

@@ -13,14 +13,14 @@ import { Container, findContainer, findInContainer } from "../../shared/models/c
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(paths: Sound[], sourceId: string | null, move: boolean, startIndex?: number): Promise<Container> {
-        const source = await this.getContainer(sourceId);
+    async addSounds(paths: Sound[], targetContainerId: string | null, move: boolean, startIndex?: number): Promise<Container> {
+        const targetContainer = await this.getContainer(targetContainerId);
         const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
-        let index = startIndex ?? source.playables.length + 1;
+        let index = startIndex ?? targetContainer.playables.length + 1;
         for (const sound of paths) {
-            sound.soundboardUuid = source.uuid;
-            source.playables.splice(index, 0, sound);
+            sound.parentUuid = targetContainer.uuid;
+            targetContainer.playables.splice(index, 0, sound);
             if (move && destinationPath) {
                 const basename = path.basename(sound.path);
                 const soundDestination = path.join(destinationPath, basename);
@@ -32,7 +32,7 @@ export default class SoundboardsCache {
         }
 
         await Promise.all([...moveTasks, DataAccess.saveSoundboards(this.soundboards)]);
-        return source;
+        return targetContainer;
     }
 
     async editPlayable(playable: Playable): Promise<void> {
@@ -61,7 +61,7 @@ export default class SoundboardsCache {
         }
 
         destination.playables.splice(destinationIndex, 0, playable);
-        playable.soundboardUuid = destinationId;
+        playable.parentUuid = destinationId;
         EventSender.send("onPlayableAdded", { playable, index: destinationIndex });
 
         await DataAccess.saveSoundboards(this.soundboards);

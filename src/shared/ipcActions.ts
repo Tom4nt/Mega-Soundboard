@@ -22,6 +22,7 @@ class ConcreteActions {
     deletePlayable: ((id: string) => void) | null = null;
     getNewSoundsFromPaths: ((paths: string[]) => Promise<Sound[]>) | null = null;
     getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
+    getPlayableRoot: ((uuid: string) => Promise<Soundboard | undefined>) | null = null;
 
     getSoundboard: ((uuid: string) => Promise<Soundboard>) | null = null;
     getNewSoundboard: (() => Promise<Soundboard>) | null = null;

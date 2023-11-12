@@ -12,7 +12,7 @@ export default class Actions {
         const newSounds = await window.actions.getNewSoundsFromPaths(paths);
 
         if (paths.length == 1) {
-            const modal = new SoundModal(newSounds[0]!, true);
+            const modal = new SoundModal(newSounds[0]!, true, false);
             modal.open();
             return await new Promise<string>(r => {
                 modal.onSave.addHandler(e => {
@@ -30,9 +30,10 @@ export default class Actions {
         }
     }
 
-    static editPlayable(playable: Playable): void {
+    static async editPlayable(playable: Playable): Promise<void> {
         if (!isSound(playable)) return; // TODO: Implement edit group.
-        const editModal = new SoundModal(playable, false);
+        const root = await window.actions.getPlayableRoot(playable.uuid);
+        const editModal = new SoundModal(playable, false, root?.linkedFolder != null);
         editModal.open();
         editModal.onSave.addHandler(() => {
             window.actions.editPlayable(playable);
