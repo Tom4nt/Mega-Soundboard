@@ -13,8 +13,8 @@ import { Container, findContainer, findInContainer } from "../../shared/models/c
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(paths: Sound[], targetContainerId: string | null, move: boolean, startIndex?: number): Promise<Container> {
-        const targetContainer = await this.getContainer(targetContainerId);
+    async addSounds(paths: Sound[], destinationId: string | null, move: boolean, startIndex?: number): Promise<Container> {
+        const targetContainer = await this.getContainer(destinationId);
         const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
         let index = startIndex ?? targetContainer.playables.length + 1;

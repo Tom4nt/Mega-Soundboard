@@ -74,10 +74,11 @@ export default class PlayableList extends HTMLElement {
 
     // Handlers
 
+    /** Item dropped on the container. */
     private handleItemDropped = async (e: DroppedEventArgs): Promise<void> => {
         if (!this.currentSoundboardId) return;
 
-        // This will reload the list since it is listening to the onSoundboardChanged global event.
+        // TODO: Get correct destinationId (could be deep within a subContainer).
         let destinationUUID = e.item.draggingToNewSoundboard ? null : this.currentSoundboardId;
         if (e.item.dragMode === "copy") {
             destinationUUID = await window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);

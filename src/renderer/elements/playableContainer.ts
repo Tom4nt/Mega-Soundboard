@@ -4,9 +4,11 @@ import { Playable, equals } from "../../shared/models/playable";
 import { Draggable, FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 
+// TODO: Must have all the containers in a hierarchy.
 export interface DroppedEventArgs {
     item: PlayableItem,
     index: number,
+    container: PlayableContainer,
 }
 
 export interface FileDroppedEventArgs {
@@ -282,8 +284,9 @@ export default class PlayableContainer extends HTMLElement {
     };
 
     private handleItemDrop = (dragElement: PlayableItem): void => {
+        // TODO: Each container should listen to its subContainer itemDropped event (bubble up).
         const newIndex = this.getDragDummyIndex(dragElement);
         this.hideDragDummy();
-        this._onItemDropped.raise({ index: newIndex, item: dragElement });
+        this._onItemDropped.raise({ index: newIndex, item: dragElement, container: this });
     };
 }

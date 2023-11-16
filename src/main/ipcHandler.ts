@@ -71,8 +71,8 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
-    async addSounds(playables, soundboardId, moveFile, startIndex) {
-        const sb = await MS.instance.soundboardsCache.addSounds(playables, soundboardId, moveFile, startIndex);
+    async addSounds(playables, destinationId, moveFile, startIndex) {
+        const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
         return sb.uuid;
     },
 
@@ -80,13 +80,13 @@ const implementer: Actions = {
         void MS.instance.soundboardsCache.editPlayable(playable);
     },
 
-    async movePlayable(id, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, false);
+    async movePlayable(id, destinationId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, false);
         return sb.uuid;
     },
 
-    async copyPlayable(id, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationSoundboardId, destinationIndex, true);
+    async copyPlayable(id, destinationId, destinationIndex) {
+        const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, true);
         return sb.uuid;
     },
 
