@@ -4,11 +4,10 @@ import { Playable, equals } from "../../shared/models/playable";
 import { Draggable, FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 
-// TODO: Must have all the containers in a hierarchy.
 export interface DroppedEventArgs {
     item: PlayableItem,
     index: number,
-    container: PlayableContainer,
+    containerPath: PlayableContainer[],
 }
 
 export interface FileDroppedEventArgs {
@@ -16,15 +15,13 @@ export interface FileDroppedEventArgs {
     index: number,
 }
 
-type SubContainer = { container: PlayableContainer, parentUuid: string };
-
 export default class PlayableContainer extends HTMLElement {
     private _loadedItems: PlayableItem[] = [];
     private _dragElement: PlayableItem | null = null;
     private _dragDummyDiv!: HTMLDivElement;
     private _containerDiv!: HTMLDivElement;
     private _emptyMsgSpan!: HTMLSpanElement;
-    private _currSubContainer: SubContainer | null = null;
+    private _currSubContainer: PlayableContainer | null = null;
 
     public allowFileImport = true;
 
@@ -45,6 +42,7 @@ export default class PlayableContainer extends HTMLElement {
     public get onItemDropped(): ExposedEvent<DroppedEventArgs> { return this._onItemDropped.expose(); }
 
     public constructor(
+        public readonly parentUuid: string,
         public readonly emptyMessageRequested: () => string,
     ) {
         super();
@@ -71,15 +69,7 @@ export default class PlayableContainer extends HTMLElement {
         dropArea.append(emptyMsgSpan, itemsContainer);
         this.append(dropArea);
 
-        document.addEventListener("mousemove", e => {
-            if (Draggable.currentElement && Draggable.currentElement instanceof PlayableItem) {
-                if (!this._dragElement) {
-                    this.showDragDummy();
-                    this._dragElement = Draggable.currentElement;
-                }
-                this.handleDragOver(e);
-            }
-        });
+        document.addEventListener("mousemove", this.handleMouseMove);
 
         dropArea.onOver.addHandler(e => {
             this.showDragDummy();
@@ -91,6 +81,11 @@ export default class PlayableContainer extends HTMLElement {
         dropArea.onDrop.addHandler(e => {
             void this.finishFileDrag(e);
         });
+    }
+
+    protected disconnectedCallback(): void {
+        this.clear();
+        document.removeEventListener("mousemove", this.handleMouseMove);
     }
 
     loadItems(playables: Playable[]): void {
@@ -165,9 +160,9 @@ export default class PlayableContainer extends HTMLElement {
     getElementLocation(uuid: string): PlayableContainer | undefined {
         if (!this._currSubContainer) return undefined;
         if (this._currSubContainer.parentUuid === uuid) {
-            return this._currSubContainer.container;
+            return this._currSubContainer;
         } else {
-            return this._currSubContainer.container.getElementLocation(uuid);
+            return this._currSubContainer.getElementLocation(uuid);
         }
     }
 
@@ -229,10 +224,11 @@ export default class PlayableContainer extends HTMLElement {
 
     private openSubContainer(under: PlayableItem): void {
         this.closeCurrentSubContainer();
-        const root = new PlayableContainer(() => "No sounds in this group");
-        this._currSubContainer = { container: root, parentUuid: under.playable.uuid };
+        const root = new PlayableContainer(under.playable.uuid, () => "No sounds in this group");
+        this._currSubContainer = root;
         root.classList.add("group");
         root.style.height = "0";
+        root.onItemDropped.addHandler(this.handleSubContainerItemDropped);
         under.after(root);
 
         if (isGroup(under.playable)) root.loadItems(under.playable.playables);
@@ -244,8 +240,8 @@ export default class PlayableContainer extends HTMLElement {
 
     private closeCurrentSubContainer(): void {
         if (!this._currSubContainer) return;
-        // TODO: Close animation. Remove event listeners in a destroy() function.
-        this._currSubContainer.container.remove();
+        // TODO: Close animation.
+        this._currSubContainer.remove();
         this._currSubContainer = null;
     }
 
@@ -256,9 +252,9 @@ export default class PlayableContainer extends HTMLElement {
         if (!id) return;
         const item = this.findItem(id);
         if (item) {
-            item.after(this._currSubContainer.container);
+            item.after(this._currSubContainer);
             const isVisible = item.style.display != "none";
-            this._currSubContainer.container.style.display = isVisible ? "" : "none";
+            this._currSubContainer.style.display = isVisible ? "" : "none";
         } else {
             this.closeCurrentSubContainer();
         }
@@ -284,9 +280,22 @@ export default class PlayableContainer extends HTMLElement {
     };
 
     private handleItemDrop = (dragElement: PlayableItem): void => {
-        // TODO: Each container should listen to its subContainer itemDropped event (bubble up).
         const newIndex = this.getDragDummyIndex(dragElement);
         this.hideDragDummy();
-        this._onItemDropped.raise({ index: newIndex, item: dragElement, container: this });
+        this._onItemDropped.raise({ index: newIndex, item: dragElement, containerPath: [this] });
+    };
+
+    private handleSubContainerItemDropped = (e: DroppedEventArgs): void => {
+        this._onItemDropped.raise({ index: e.index, item: e.item, containerPath: [this, ...e.containerPath] });
+    };
+
+    private handleMouseMove = (e: MouseEvent): void => {
+        if (Draggable.currentElement && Draggable.currentElement instanceof PlayableItem) {
+            if (!this._dragElement) {
+                this.showDragDummy();
+                this._dragElement = Draggable.currentElement;
+            }
+            this.handleDragOver(e);
+        }
     };
 }

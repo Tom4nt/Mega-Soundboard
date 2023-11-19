@@ -121,6 +121,15 @@ export default class SoundboardsCache {
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
+    /** Finds the root container (Soundboard) where the playable whith the specified uuid is. */
+    findRoot(uuid: string): Soundboard | undefined {
+        for (const soundboard of this.soundboards) {
+            const result = findInContainer(soundboard, uuid);
+            if (result) return soundboard;
+        }
+        return undefined;
+    }
+
     findSoundboardIndex(uuid: string): number {
         const soundboardIndex = this.soundboards.findIndex(x => x.uuid === uuid);
         if (soundboardIndex < 0) throw new Error(`Soundboard with runtime UUID ${uuid} could not be found.`);

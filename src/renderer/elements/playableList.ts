@@ -10,33 +10,23 @@ const SEARCH_EMPTY = "No sounds with the current filter";
 
 export default class PlayableList extends HTMLElement {
     private currentSoundboardId?: string;
-    private containerElement!: PlayableContainer;
+    private containerElement?: PlayableContainer;
 
     private _onItemDragStart = new Event<Playable>();
     public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
 
     protected connectedCallback(): void {
-        const container = new PlayableContainer(() => this.getEmptyMessage());
-        this.containerElement = container;
-        this.append(container);
-
-        container.onFileDropped.addHandler(e => {
-            void this.finishFileDrag(e.event, e.index);
-        });
-
-        container.onItemDropped.addHandler(this.handleItemDropped);
-
         GlobalEvents.addHandler("onPlayableAdded", e => {
             if (e.playable.parentUuid === this.currentSoundboardId) {
-                container.addItem(e.playable, e.index);
+                this.containerElement?.addItem(e.playable, e.index);
             } else {
-                const targetContainer = container.getElementLocation(e.playable.uuid);
+                const targetContainer = this.containerElement?.getElementLocation(e.playable.uuid);
                 targetContainer?.addItem(e.playable);
             }
         });
 
         GlobalEvents.addHandler("onPlayableRemoved", s => {
-            container.removeItem(s);
+            this.containerElement?.removeItem(s);
         });
 
         GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
@@ -52,18 +42,33 @@ export default class PlayableList extends HTMLElement {
 
     loadItems(playables: Playable[], soundboardUuid: string, allowImport: boolean): void {
         this.currentSoundboardId = soundboardUuid;
-        this.containerElement.allowFileImport = allowImport;
-        this.containerElement.loadItems(playables);
+        const container = this.createContainer(soundboardUuid);
+        container.allowFileImport = allowImport;
+        container.loadItems(playables);
     }
 
     filter(filter: string): void {
-        this.containerElement.filter = filter;
+        if (this.containerElement) this.containerElement.filter = filter;
     }
 
     // --- // ---
 
+    private createContainer(soundboardUuid: string): PlayableContainer {
+        if (this.containerElement) this.containerElement.remove();
+
+        const container = new PlayableContainer(soundboardUuid, () => this.getEmptyMessage());
+        this.containerElement = container;
+        this.append(container);
+
+        container.onFileDropped.addHandler(e => {
+            void this.finishFileDrag(e.event, e.index);
+        });
+        container.onItemDropped.addHandler(this.handleItemDropped);
+        return container;
+    }
+
     private getEmptyMessage(): string {
-        return this.containerElement.filter ? SEARCH_EMPTY : NO_SOUNDS;
+        return this.containerElement?.filter ? SEARCH_EMPTY : NO_SOUNDS;
     }
 
     private async finishFileDrag(e: DragEvent, index: number): Promise<void> {
@@ -76,10 +81,14 @@ export default class PlayableList extends HTMLElement {
 
     /** Item dropped on the container. */
     private handleItemDropped = async (e: DroppedEventArgs): Promise<void> => {
-        if (!this.currentSoundboardId) return;
+        const deepestContainer = e.containerPath.at(-1);
+        const id = (deepestContainer) ?
+            deepestContainer.parentUuid :
+            this.currentSoundboardId;
 
-        // TODO: Get correct destinationId (could be deep within a subContainer).
-        let destinationUUID = e.item.draggingToNewSoundboard ? null : this.currentSoundboardId;
+        if (!id) return;
+
+        let destinationUUID = e.item.draggingToNewSoundboard ? null : id;
         if (e.item.dragMode === "copy") {
             destinationUUID = await window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
         } else {

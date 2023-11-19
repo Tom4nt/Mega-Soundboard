@@ -107,8 +107,7 @@ const implementer: Actions = {
     },
 
     async getPlayableRoot(uuid) {
-        void uuid;
-        return undefined; // TODO: Implement
+        return MS.instance.soundboardsCache.findRoot(uuid);
     },
 
     getSoundboard(uuid) {
