@@ -15,6 +15,8 @@ class ConcreteActions {
     zoomGet: (() => Promise<number>) | null = null;
     zoomReset: (() => void) | null = null;
 
+    play: ((playableUuid: string) => void) | null = null;
+
     addSounds: ((sounds: Sound[], destinationId: string | null, moveFile: boolean, startIndex?: number) => Promise<string>) | null = null;
     editPlayable: ((playable: Playable) => void) | null = null;
     movePlayable: ((id: string, destinationId: string | null, destinationIndex: number) => Promise<string>) | null = null;

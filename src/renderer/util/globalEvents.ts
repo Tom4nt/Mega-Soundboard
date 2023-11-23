@@ -20,6 +20,7 @@ export default class GlobalEvents {
     }
 
     private static registerEvents(): void {
+        // TODO: Inject event object into window to allow accessing events by property name instead of by addHandler(T).
         if (this.didRegisterEvents) throw Error("Events have already been registered.");
         const bridgeObject: Record<string, unknown> = {};
         for (const k of eventsKeys) {

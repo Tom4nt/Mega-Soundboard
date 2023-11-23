@@ -71,6 +71,11 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
+    play(playableUuid) {
+        void playableUuid;
+        // TODO: Find final volume recursively. Update "current" property for groups in "sequence" mode. Invoke onPlayRequested.
+    },
+
     async addSounds(playables, destinationId, moveFile, startIndex) {
         const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
         return sb.uuid;

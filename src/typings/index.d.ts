@@ -10,6 +10,7 @@ declare global {
     interface Window {
         // events: Events,
         actions: Actions,
+        events: Events, // TODO: Temp
         addListener: <T extends keyof Events>(name: T, f: (param: unknown) => void) => void;
         getInitialContent: () => InitialContent,
     }

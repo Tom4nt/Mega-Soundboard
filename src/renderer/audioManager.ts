@@ -72,6 +72,16 @@ export default class AudioManager {
                 await this.playUISound(UISoundPath.ERROR);
             }
         });
+
+        // TODO: Test
+        const t = (): void => {
+            const handler = (p: Playable): void => {
+                console.log(p.name);
+                window.events.onPlayRequested.removeHandler(handler);
+            };
+            window.events.onPlayRequested.addHandler(handler);
+        };
+        t();
     }
 
     static parseDevices(settings: Settings): IDevice[] {

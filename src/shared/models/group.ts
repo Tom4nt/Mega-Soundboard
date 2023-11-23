@@ -19,7 +19,17 @@ export function copyGroup(g: Group, generateUuid: () => string, soundboardUuid: 
 
 export function getGroupPath(group: Group): string {
     void group;
-    return ""; // TODO: Choose depending on mode.
+    // TODO: This logic should be contained in the main process only.
+    // switch (group.mode) {
+    //     case "first":
+    //         return group.playables[0] ? getPath(group.playables[0]) : "";
+    //     case "sequence":
+    //         return group.current;
+    //     case "random":
+    //         const index = randomInt(group.playables.length);
+    //         return group.playables[index] ? getPath(group.playables[index]) : "";
+    // }
+    return "";
 }
 
 export function getSavableGroup(g: Group): { [key: string]: unknown } {
