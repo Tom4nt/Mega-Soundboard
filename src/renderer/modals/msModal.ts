@@ -1,6 +1,5 @@
 import { UpdaterState } from "../../shared/interfaces";
 import { Modal, NewsModal } from "../modals";
-import GlobalEvents from "../util/globalEvents";
 
 export default class MSModal extends Modal {
     versionElement!: HTMLHeadingElement;
@@ -23,7 +22,7 @@ export default class MSModal extends Modal {
     protected override disconnectedCallback(): void {
         super.disconnectedCallback();
         if (this.isListeningToUpdateReady)
-            GlobalEvents.removeHandler("onUpdateStateChanged", this.handleUpdateStateChanged);
+            window.events.onUpdateStateChanged.removeHandler(this.handleUpdateStateChanged);
     }
 
     getContent(): HTMLElement[] {
@@ -98,7 +97,7 @@ export default class MSModal extends Modal {
             case "downloading":
                 this.updateInfoElement.innerText = "The update is being downloaded...";
                 if (!this.isListeningToUpdateReady)
-                    GlobalEvents.addHandler("onUpdateStateChanged", this.handleUpdateStateChanged);
+                    window.events.onUpdateStateChanged.addHandler(this.handleUpdateStateChanged);
                 this.isListeningToUpdateReady = true;
                 break;
             case "downloaded":

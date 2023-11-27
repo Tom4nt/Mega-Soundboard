@@ -5,7 +5,6 @@ import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import { Message, Settings } from "../shared/models";
 import AudioManager from "./audioManager";
-import GlobalEvents from "./util/globalEvents";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
 import { UpdaterState } from "../shared/interfaces";
@@ -85,10 +84,10 @@ async function init(): Promise<void> {
     overlapSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundOverlap");
     loopSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundLooping");
 
-    GlobalEvents.addHandler("onKeybindsStateChanged", state => enabeKeybindsToggler.isOn = state);
-    GlobalEvents.addHandler("onOverlapSoundsStateChanged", state => overlapSoundsToggler.isOn = state);
-    GlobalEvents.addHandler("onLoopSoundsChanged", state => loopSoundsToggler.isOn = state);
-    GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => updatePlayableListButtons(sb));
+    window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
+    window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
+    window.events.onLoopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
+    window.events.onCurrentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb));
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -379,14 +378,14 @@ function showPlayableDragTutorial(): void {
 
 //#region Main Events
 
-GlobalEvents.addHandler("onUpdateStateChanged", (state: UpdaterState) => {
+window.events.onUpdateStateChanged.addHandler((state: UpdaterState) => {
     if (state == "downloaded") {
         updateButton.style.display = "inherit";
         console.log("READY TO UPDATE");
     }
 });
 
-GlobalEvents.addHandler("onWindowFocusChanged", s => {
+window.events.onWindowFocusChanged.addHandler(s => {
     if (s) document.body.classList.add("focused");
     else document.body.classList.remove("focused");
 });

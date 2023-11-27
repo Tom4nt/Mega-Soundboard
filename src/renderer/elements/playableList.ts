@@ -1,7 +1,6 @@
 import { Event, ExposedEvent } from "../../shared/events";
 import { Playable } from "../../shared/models/playable";
 import Actions from "../util/actions";
-import GlobalEvents from "../util/globalEvents";
 import Utils from "../util/utils";
 import PlayableContainer, { DroppedEventArgs } from "./playableContainer";
 
@@ -16,7 +15,7 @@ export default class PlayableList extends HTMLElement {
     public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
 
     protected connectedCallback(): void {
-        GlobalEvents.addHandler("onPlayableAdded", e => {
+        window.events.onPlayableAdded.addHandler(e => {
             if (e.playable.parentUuid === this.currentSoundboardId) {
                 this.containerElement?.addItem(e.playable, e.index);
             } else {
@@ -25,15 +24,15 @@ export default class PlayableList extends HTMLElement {
             }
         });
 
-        GlobalEvents.addHandler("onPlayableRemoved", s => {
+        window.events.onPlayableRemoved.addHandler(s => {
             this.containerElement?.removeItem(s);
         });
 
-        GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
+        window.events.onCurrentSoundboardChanged.addHandler(sb => {
             this.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
         });
 
-        GlobalEvents.addHandler("onContainerSorted", c => {
+        window.events.onContainerSorted.addHandler(c => {
             if (this.currentSoundboardId === c.uuid) {
                 this.loadItems(c.playables, c.uuid, true);
             }

@@ -1,20 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { Events, EventsMap, eventsKeys } from "./ipcEvents";
+import { Events, EventsMap } from "./ipcEvents";
 import { actionsKeys, Actions } from "./ipcActions";
 import InitialContent from "./models/initialContent";
-import { Event } from "./events";
-
-// function registerEvents(): void {
-//     const bridgeObject: Record<string, unknown> = {};
-//     for (const k of eventsKeys) {
-//         const event = new Event<EventsMap[typeof k]>();
-//         bridgeObject[k] = event.expose();
-//         ipcRenderer.on(k, (_e, param) => {
-//             return event.raise(param as EventsMap[typeof k]);
-//         });
-//     }
-//     contextBridge.exposeInMainWorld("events", bridgeObject);
-// }
 
 function registerGetInitialContent(): void {
     const content = ipcRenderer.sendSync("load") as InitialContent;
@@ -28,18 +15,6 @@ function registerEvents(): void {
         });
     };
     contextBridge.exposeInMainWorld("addListener", bridgeObject);
-}
-
-function registerEvents2(): void {
-    const bridgeObject: Record<string, unknown> = {};
-    for (const k of eventsKeys) {
-        const event = new Event<EventsMap[typeof k]>();
-        bridgeObject[k] = event.expose();
-        ipcRenderer.on(k, (_e, param) => {
-            return event.raise(param as EventsMap[typeof k]);
-        });
-    }
-    contextBridge.exposeInMainWorld("events", bridgeObject);
 }
 
 function registerActions(): void {
@@ -56,4 +31,3 @@ function registerActions(): void {
 registerGetInitialContent();
 registerEvents();
 registerActions();
-registerEvents2();

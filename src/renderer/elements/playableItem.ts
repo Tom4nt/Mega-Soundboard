@@ -5,7 +5,6 @@ import MSR from "../msr";
 import Draggable from "./draggable";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import GlobalEvents from "../util/globalEvents";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
 import { Playable, equals } from "../../shared/models/playable";
@@ -180,15 +179,15 @@ export default class PlayableItem extends Draggable {
     private addGlobalListeners(): void {
         MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.addHandler(this.handleStop);
-        GlobalEvents.addHandler("onPlayableChanged", this.handlePlayableChanged);
-        GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
+        window.events.onPlayableChanged.addHandler(this.handlePlayableChanged);
+        window.events.onKeybindPressed.addHandler(this.handleKeybindPressed);
     }
 
     private removeGlobalListeners(): void {
         MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
-        GlobalEvents.removeHandler("onPlayableChanged", this.handlePlayableChanged);
-        GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
+        window.events.onPlayableChanged.removeHandler(this.handlePlayableChanged);
+        window.events.onKeybindPressed.removeHandler(this.handleKeybindPressed);
     }
 
     private getHintMode(wantsCopy: boolean, isSameSoundboard: boolean, isLinkedSoundboard: boolean): boolean {

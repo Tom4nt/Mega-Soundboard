@@ -1,7 +1,6 @@
 import { ActionName, actions } from "../../shared/quickActions";
 import { KeyRecorder, Toggler, FileSelector, Slider } from "../elements";
 import { Modal } from "../modals";
-import GlobalEvents from "../util/globalEvents";
 
 export default class SettingsModal extends Modal {
     private soundsLocationFileSelector!: FileSelector;
@@ -89,12 +88,12 @@ export default class SettingsModal extends Modal {
 
     protected override connectedCallback(): void {
         super.connectedCallback();
-        GlobalEvents.addHandler("onZoomFactorChanged", this.zoomFactorChangedHandler);
+        window.events.onZoomFactorChanged.addHandler(this.zoomFactorChangedHandler);
     }
 
     protected override disconnectedCallback(): void {
         super.disconnectedCallback();
-        GlobalEvents.removeHandler("onZoomFactorChanged", this.zoomFactorChangedHandler);
+        window.events.onZoomFactorChanged.removeHandler(this.zoomFactorChangedHandler);
     }
 
     private zoomFactorChangedHandler = (factor: number): void => {

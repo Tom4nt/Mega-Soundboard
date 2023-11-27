@@ -2,7 +2,6 @@ import { Event, ExposedEvent } from "../shared/events";
 import { Settings } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
-import GlobalEvents from "./util/globalEvents";
 import { Playable, getPath } from "../shared/models/playable";
 
 export default class AudioManager {
@@ -44,7 +43,7 @@ export default class AudioManager {
         this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
         this.loops = Settings.getActionState(settings, "toggleSoundLooping");
 
-        GlobalEvents.addHandler("onSettingsChanged", settings => {
+        window.events.onSettingsChanged.addHandler(settings => {
             this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
             this.loops = Settings.getActionState(settings, "toggleSoundLooping");
             this.mainDevice = settings.mainDevice;
@@ -53,35 +52,25 @@ export default class AudioManager {
             this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
         });
 
-        GlobalEvents.addHandler("onKeybindsStateChanged", s => {
+        window.events.onKeybindsStateChanged.addHandler(s => {
             void this.playUISound(s ? UISoundPath.ON : UISoundPath.OFF);
         });
 
-        GlobalEvents.addHandler("onPlayableRemoved", s => {
+        window.events.onPlayableRemoved.addHandler(s => {
             this.stop(s.uuid);
         });
 
-        GlobalEvents.addHandler("onStopAllSounds", () => {
+        window.events.onStopAllSounds.addHandler(() => {
             this.stopAll();
         });
 
-        GlobalEvents.addHandler("onPlayRequested", async s => {
+        window.events.onPlayRequested.addHandler(async s => {
             try {
                 await this.play(s);
             } catch (error) {
                 await this.playUISound(UISoundPath.ERROR);
             }
         });
-
-        // TODO: Test
-        const t = (): void => {
-            const handler = (p: Playable): void => {
-                console.log(p.name);
-                window.events.onPlayRequested.removeHandler(handler);
-            };
-            window.events.onPlayRequested.addHandler(handler);
-        };
-        t();
     }
 
     static parseDevices(settings: Settings): IDevice[] {

@@ -6,7 +6,6 @@ import { Soundboard, soundboardEquals } from "../../shared/models/soundboard";
 import { PlayableItem, Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
-import GlobalEvents from "../util/globalEvents";
 import Draggable from "./draggable";
 
 export default class SoundboardItem extends Draggable {
@@ -112,19 +111,19 @@ export default class SoundboardItem extends Draggable {
     }
 
     private addGlobalListeners(): void {
-        GlobalEvents.addHandler("onSoundboardChanged", this.handleSoundboardChanged);
-        GlobalEvents.addHandler("onKeybindPressed", this.handleKeybindPressed);
-        GlobalEvents.addHandler("onPlayableAdded", this.handlePlayableAdded);
-        GlobalEvents.addHandler("onPlayableRemoved", this.handlePlayableRemoved);
+        window.events.onSoundboardChanged.addHandler(this.handleSoundboardChanged);
+        window.events.onKeybindPressed.addHandler(this.handleKeybindPressed);
+        window.events.onPlayableAdded.addHandler(this.handlePlayableAdded);
+        window.events.onPlayableRemoved.addHandler(this.handlePlayableRemoved);
         MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.addHandler(this.handleStop);
     }
 
     private removeGlobalListeners(): void {
-        GlobalEvents.removeHandler("onSoundboardChanged", this.handleSoundboardChanged);
-        GlobalEvents.removeHandler("onKeybindPressed", this.handleKeybindPressed);
-        GlobalEvents.removeHandler("onPlayableAdded", this.handlePlayableAdded);
-        GlobalEvents.removeHandler("onPlayableRemoved", this.handlePlayableRemoved);
+        window.events.onSoundboardChanged.removeHandler(this.handleSoundboardChanged);
+        window.events.onKeybindPressed.removeHandler(this.handleKeybindPressed);
+        window.events.onPlayableAdded.removeHandler(this.handlePlayableAdded);
+        window.events.onPlayableRemoved.removeHandler(this.handlePlayableRemoved);
         MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
     }

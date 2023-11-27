@@ -1,7 +1,6 @@
 import Keys from "../../shared/keys";
 import { Event, ExposedEvent } from "../../shared/events";
 import { KeyRecordingArgs } from "../../shared/interfaces";
-import GlobalEvents from "../util/globalEvents";
 
 const NO_KEY_DESC = "No Keybind";
 
@@ -98,11 +97,11 @@ export default class KeyRecorder extends HTMLElement {
     }
 
     private addGlobalListeners(): void {
-        GlobalEvents.addHandler("onKeyRecordingProgress", this.handleRecoringProgress);
+        window.events.onKeyRecordingProgress.addHandler(this.handleRecoringProgress);
     }
 
     private removeGlobalListeners(): void {
-        GlobalEvents.removeHandler("onKeyRecordingProgress", this.handleRecoringProgress);
+        window.events.onKeyRecordingProgress.removeHandler(this.handleRecoringProgress);
     }
 
     // Handlers
