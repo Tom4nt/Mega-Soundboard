@@ -1,6 +1,6 @@
 import Keys from "../keys";
 import { tryGetValue } from "../sharedUtils";
-import { convertGroup, copyGroup, getGroupPath, getSavableGroup, isGroup } from "./group";
+import { convertGroup, copyGroup, getSavableGroup, isGroup } from "./group";
 import { convertSound, copySound, getSavableSound, isSound } from "./sound";
 
 export type Playable = {
@@ -12,15 +12,6 @@ export type Playable = {
 };
 
 // ---
-
-export function getPath(p: Playable): string {
-    if (isSound(p)) {
-        return p.path;
-    } else if (isGroup(p)) {
-        return getGroupPath(p);
-    }
-    return "";
-}
 
 export function compare(a: Playable, b: Playable): number {
     return a.name.localeCompare(b.name);

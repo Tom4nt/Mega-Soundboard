@@ -72,8 +72,11 @@ const implementer: Actions = {
     },
 
     play(playableUuid) {
-        void playableUuid;
         // TODO: Find final volume recursively. Update "current" property for groups in "sequence" mode. Invoke onPlayRequested.
+        void playableUuid;
+        // const volume = MS.instance.soundboardsCache.getVolume(playableUuid);
+        // const sound = getSound()
+        // EventSender.send("onPlayRequested",);
     },
 
     async addSounds(playables, destinationId, moveFile, startIndex) {

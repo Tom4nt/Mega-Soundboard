@@ -2,7 +2,7 @@ import { Event, ExposedEvent } from "../shared/events";
 import { Settings } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
-import { Playable, getPath } from "../shared/models/playable";
+import { Playable } from "../shared/models/playable";
 
 export default class AudioManager {
     overlapSounds = false;
@@ -96,8 +96,9 @@ export default class AudioManager {
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
+        // TODO: Use function on playable to get the path.
         const instance = await AudioInstance.create(
-            { uuid: playable.uuid, volume: playable.volume, path: getPath(playable) },
+            { uuid: playable.uuid, volume: playable.volume, path: "" },
             devices, this.loops
         ); // TODO: Use function on playable to get final volume (affected by all parents).
         instance.onEnd.addHandler(() => {

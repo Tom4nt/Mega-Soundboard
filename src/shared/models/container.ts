@@ -8,7 +8,22 @@ export type Container = {
     playables: Playable[],
 }
 
-/** Recursively finds the element index and container. */
+/** Recursively generates an array of all playables in the hierarchy of the specified playable.
+ * The first element is the root playable inside the container. The last element is the specified playable. */
+export function getHierarchy(root: Container, playableUuid: string): Playable[] {
+    const result: Playable[] = [];
+    for (const playable of root.playables) {
+        if (playable.uuid === playableUuid) {
+            return [playable];
+        } else if (isGroup(playable)) {
+            const h = getHierarchy(playable, playableUuid);
+            if (h.length > 0) result.push(playable, ...h);
+        }
+    }
+    return [];
+}
+
+/** Recursively finds the element index and direct container on the specified element in a root container. */
 export function findInContainer(root: Container, uuid: string): [Container, number] | undefined {
     let index = 0;
     for (const playable of root.playables) {

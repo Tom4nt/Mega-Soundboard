@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 import { Sound } from "../../shared/models/sound";
 import { Soundboard, getDefault, isSoundboard } from "../../shared/models/soundboard";
 import { Playable, compare, copy } from "../../shared/models/playable";
-import { Container, findContainer, findInContainer } from "../../shared/models/container";
+import { Container, findContainer, findInContainer, getHierarchy } from "../../shared/models/container";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -128,6 +128,15 @@ export default class SoundboardsCache {
             if (result) return soundboard;
         }
         return undefined;
+    }
+
+    getVolume(playableUuid: string): number {
+        const root = this.findRoot(playableUuid);
+        if (!root) return 100;
+        const h = getHierarchy(root, playableUuid);
+        const volumes = h.map(x => x.volume / 100);
+        const volume = volumes.reduce((prev, curr) => prev * curr);
+        return (root.volume / 100) * volume;
     }
 
     findSoundboardIndex(uuid: string): number {
