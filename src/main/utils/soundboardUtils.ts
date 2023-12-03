@@ -13,7 +13,7 @@ export default class SoundboardUtils {
      * to sync them with its linked folder. */
     static async syncSounds(soundboard: Soundboard): Promise<void> {
         if (!soundboard.linkedFolder) return;
-        await Utils.verifyAccessibleDirectory(soundboard.linkedFolder);
+        await Utils.assertAccessibleDirectory(soundboard.linkedFolder);
 
         const files = await fs.readdir(soundboard.linkedFolder);
 

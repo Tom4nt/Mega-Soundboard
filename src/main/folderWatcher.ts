@@ -21,7 +21,7 @@ export default class FolderWatcher {
     }
 
     async start(): Promise<void> {
-        await Utils.verifyAccessibleDirectory(this.folder);
+        await Utils.assertAccessibleDirectory(this.folder);
         void this.listen();
     }
 
