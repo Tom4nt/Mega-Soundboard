@@ -1,5 +1,6 @@
+import { isPlayableContainer } from "../../utils/utils";
 import { Group } from "./group";
-import { IPlayableContainer, IContainer, IPlayable, JSONObject } from "./interfaces";
+import { IContainer, IPlayable, JSONObject } from "./interfaces";
 import { Sound } from "./sound";
 
 export class Container implements IContainer {
@@ -32,18 +33,15 @@ export class Container implements IContainer {
         return playable.parent == this && this.playables.indexOf(playable) >= 0;
     }
 
-    findPlayableRecursive(predicate: (p: IPlayable) => boolean): IPlayable | undefined {
+    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
+        const result: IPlayable[] = [];
         for (const playable of this.playables) {
-            if (predicate(playable)) return playable;
-            if (this.isPlayableContainer(playable)) {
-                return playable.findPlayableRecursive(predicate);
+            if (predicate(playable)) result.push(playable);
+            if (isPlayableContainer(playable)) {
+                result.push(...playable.findPlayablesRecursive(predicate));
             }
         }
-        return undefined;
-    }
-
-    isPlayableContainer(playable: IPlayable): playable is IPlayableContainer {
-        return this.findPlayableRecursive.name in playable;
+        return result;
     }
 
     static convertPlayables(data: JSONObject[]): IPlayable[] {

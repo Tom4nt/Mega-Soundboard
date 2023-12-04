@@ -19,7 +19,7 @@ export interface IContainer {
     addPlayable(playable: IPlayable): void;
     removePlayable(playable: IPlayable): void;
     containsPlayable(playable: IPlayable): boolean;
-    findPlayableRecursive(predicate: (p: IPlayable) => boolean): IPlayable | undefined;
+    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[];
 }
 
 export interface IPlayable extends ICommon {

@@ -1,5 +1,7 @@
 import * as p from "path";
 import { promises as fs, constants as fsConstants, PathLike } from "fs";
+import { Container } from "../data/models/container";
+import { IPlayable, IPlayableContainer } from "../data/models/interfaces";
 
 export default class Utils {
 
@@ -59,4 +61,9 @@ export default class Utils {
         return point[0] >= rect.x && point[0] <= rect.x + rect.width &&
             point[1] >= rect.y && point[1] <= rect.y + rect.height;
     }
+}
+
+export function isPlayableContainer(playable: IPlayable): playable is IPlayableContainer {
+    const c = new Container([]);
+    return c.findPlayablesRecursive.name in playable;
 }

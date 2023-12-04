@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path = require("path");
 import { tryGetValue } from "../../../shared/sharedUtils";
-import Utils from "../../utils/utils";
+import Utils, { isPlayableContainer } from "../../utils/utils";
 import { CommonInfo } from "./commonInfo";
 import { Container } from "./container";
 import { IPlayable, ICommon, IContainer, IVolumeSource, JSONObject } from "./interfaces";
@@ -38,8 +38,8 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
         return this.container.getPlayables();
     }
 
-    findPlayableRecursive(uuid: string): IPlayable | undefined {
-        return this.container.findPlayableRecursive(uuid);
+    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
+        return this.container.findPlayablesRecursive(predicate);
     }
 
     getVolume(): number {
@@ -67,24 +67,23 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
             const file = files[i]!;
             const soundPath = path.join(this.linkedFolder, file);
             if (!Sound.isValidSoundFile(soundPath)) return;
-            const soundWithPath = getSoundWithPath(this.container.findPlayableRecursive(), soundPath);
+            const soundWithPath = this.container.findPlayablesRecursive(
+                p => !isPlayableContainer(p) && p.getAudioPath() == soundPath
+            )[0];
             const stat = await fs.stat(soundPath);
             if (!soundWithPath && stat.isFile()) {
-                const s: Sound = {
-                    uuid: randomUUID(),
-                    name: Utils.getNameFromFile(soundPath),
-                    path: soundPath,
-                    volume: 100,
-                    keys: [],
-                };
+                const info = new CommonInfo(randomUUID(), Utils.getNameFromFile(soundPath), 100, []);
+                const s = new Sound(info, soundPath);
                 this.container.addPlayable(s);
             }
         }
 
         // Loop through existing sounds and remove those without a file
         if (this.container.getPlayables().length > 0) {
-            // removeSubSounds
-            this.container.removePlayable(soundboard.linkedFolder, files);
+            const playables = this.container.findPlayablesRecursive(
+                p => !isPlayableContainer(p) && files.includes(p.getAudioPath())
+            );
+            playables.forEach(p => p.parent?.removePlayable(p));
         }
     }
 

@@ -34,8 +34,8 @@ export class Group implements IPlayableContainer, IVolumeSource {
         return this.container.containsPlayable(playable);
     }
 
-    findPlayableRecursive(predicate: (p: IPlayable) => boolean): IPlayable | undefined {
-        return this.container.findPlayableRecursive(predicate);
+    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): IPlayable | undefined {
+        return this.container.findPlayablesRecursive(predicate);
     }
 
     getAudioPath(): string {
