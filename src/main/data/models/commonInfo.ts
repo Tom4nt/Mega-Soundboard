@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import Keys from "../../../shared/keys";
 import { tryGetValue } from "../../../shared/sharedUtils";
 import { ICommon, JSONObject } from "./interfaces";
+import { ICommonData } from "../../../shared/models/data";
 
 export class CommonInfo implements ICommon {
     constructor(
@@ -21,6 +22,10 @@ export class CommonInfo implements ICommon {
 
     compare(other: ICommon): number {
         return this.name.localeCompare(other.name);
+    }
+
+    static fromData(data: ICommonData): CommonInfo {
+        return new CommonInfo(data.uuid, data.name, data.volume, data.keys);
     }
 
     static convert(data: JSONObject): CommonInfo {

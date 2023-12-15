@@ -12,7 +12,6 @@ import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
-import { Soundboard, getDefault } from "../shared/models/soundboard";
 
 export default class IPCHandler {
     public static register(): void {

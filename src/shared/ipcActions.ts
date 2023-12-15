@@ -1,8 +1,5 @@
 import { NonOptional, UpdaterState } from "./interfaces";
 import { OptionalSettings, Settings } from "./models";
-import { Playable } from "./models/playable";
-import { Sound } from "./models/sound";
-import { Soundboard } from "./models/soundboard";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {

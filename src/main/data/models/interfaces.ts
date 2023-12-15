@@ -16,7 +16,7 @@ export interface IVolumeSource {
 
 export interface IContainer {
     getPlayables(): readonly IPlayable[];
-    addPlayable(playable: IPlayable): void;
+    addPlayable(playable: IPlayable, index?: number): void;
     removePlayable(playable: IPlayable): void;
     containsPlayable(playable: IPlayable): boolean;
     findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[];

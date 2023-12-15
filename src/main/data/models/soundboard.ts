@@ -22,8 +22,8 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
     set volume(value: number) { this.info.volume = value; }
     get keys(): number[] { return this.info.keys; }
 
-    addPlayable(playable: IPlayable): void {
-        this.container.addPlayable(playable);
+    addPlayable(playable: IPlayable, index?: number): void {
+        this.container.addPlayable(playable, index);
     }
 
     removePlayable(playable: IPlayable): void {
@@ -85,6 +85,14 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
             );
             playables.forEach(p => p.parent?.removePlayable(p));
         }
+    }
+
+    static getDefault(name: string): Soundboard {
+        return new Soundboard(
+            new CommonInfo(randomUUID(), name, 100, []),
+            new Container([]),
+            null,
+        );
     }
 
     static convert(data: JSONObject): Soundboard {

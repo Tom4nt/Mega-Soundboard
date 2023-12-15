@@ -5,6 +5,7 @@ import { CommonInfo } from "./commonInfo";
 import { ICommon, IContainer, IPlayable, IVolumeSource, JSONObject } from "./interfaces";
 import Utils from "../../utils/utils";
 import { validSoundExts } from "../../../shared/sharedUtils";
+import { ISoundData } from "../../../shared/models/data";
 
 export class Sound implements IPlayable, IVolumeSource {
     readonly parent: (IContainer & IVolumeSource) | null = null;
@@ -42,6 +43,10 @@ export class Sound implements IPlayable, IVolumeSource {
 
     compare(other: ICommon): number {
         return this.info.compare(other);
+    }
+
+    static fromData(data: ISoundData): Sound {
+        return new Sound(CommonInfo.fromData(data), data.path);
     }
 
     static isSound(data: object): boolean {

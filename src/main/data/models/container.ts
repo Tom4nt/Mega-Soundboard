@@ -12,12 +12,13 @@ export class Container implements IContainer {
         return this.playables;
     }
 
-    addPlayable(playable: IPlayable): void {
+    addPlayable(playable: IPlayable, index?: number): void {
         if (playable.parent != null) {
             throw Error("The Playable can't be added to the container because it already has a parent.");
         }
         playable.parent = this;
-        this.playables.push(playable);
+        if (index == undefined) index = this.playables.length - 1;
+        this.playables.splice(index, 0, playable);
     }
 
     removePlayable(playable: IPlayable): void {

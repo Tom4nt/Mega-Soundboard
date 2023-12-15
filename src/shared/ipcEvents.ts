@@ -8,9 +8,6 @@ import {
     WindowState
 } from "./interfaces";
 import { Settings } from "./models";
-import { Container } from "./models/container";
-import { Playable } from "./models/playable";
-import { Soundboard } from "./models/soundboard";
 
 class ConcreteEvents {
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;

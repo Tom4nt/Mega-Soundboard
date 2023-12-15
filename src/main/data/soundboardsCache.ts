@@ -3,22 +3,23 @@ import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
-import SoundboardUtils from "../utils/soundboardUtils";
 import { randomUUID } from "crypto";
-import { Soundboard, getDefault, isSoundboard } from "../../shared/models/soundboard";
-import { Container, findContainer, findInContainer } from "../../shared/models/container";
+import { Container } from "./models/container";
+import { Soundboard } from "./models/soundboard";
+import { ISoundData } from "../../shared/models/data";
+import { Sound } from "./models/sound";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(paths: Sound[], destinationId: string | null, move: boolean, startIndex?: number): Promise<Container> {
+    async addSounds(sounds: ISoundData[], destinationId: string | null, move: boolean, startIndex?: number): Promise<Container> {
         const targetContainer = await this.getContainer(destinationId);
         const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
-        let index = startIndex ?? targetContainer.playables.length + 1;
-        for (const sound of paths) {
-            sound.parentUuid = targetContainer.uuid;
-            targetContainer.playables.splice(index, 0, sound);
+        let index = startIndex ?? targetContainer.getPlayables().length + 1;
+        for (const soundData of sounds) {
+            const sound = Sound.fromData(soundData);
+            targetContainer.addPlayable(sound, index);
             if (move && destinationPath) {
                 const basename = path.basename(sound.path);
                 const soundDestination = path.join(destinationPath, basename);
@@ -33,6 +34,7 @@ export default class SoundboardsCache {
         return targetContainer;
     }
 
+    // TODO: Needs to be 2 functions: one for Sounds and other for Groups.
     async editPlayable(playable: Playable): Promise<void> {
         const [container, index] = this.findPlayable(playable.uuid);
         container.playables[index] = playable;
@@ -44,7 +46,7 @@ export default class SoundboardsCache {
         playableId: string, destinationId: string | null, destinationIndex: number, doesCopy: boolean
     ): Promise<Container> {
         const [source, index] = this.findPlayable(playableId);
-        let playable = source.playables[index]!;
+        let playable = source.getPlayables()[index]!;
         const destination = await this.getContainer(destinationId);
         destinationId = destination.uuid;
 
@@ -68,8 +70,8 @@ export default class SoundboardsCache {
 
     async removePlayable(uuid: string): Promise<void> {
         const [source, index] = this.findPlayable(uuid);
-        const playable = source.playables[index]!;
-        source.playables.splice(index, 1);
+        const playable = source.getPlayables()[index]!;
+        source.removePlayable(playable);
         EventSender.send("onPlayableRemoved", playable);
         await DataAccess.saveSoundboards(this.soundboards);
     }
@@ -81,7 +83,7 @@ export default class SoundboardsCache {
     }
 
     async addQuickSoundboard(): Promise<Soundboard> {
-        const sb = getDefault(randomUUID(), "Quick Sounds");
+        const sb = Soundboard.getDefault("Quick Sounds");
         await this.addSoundboard(sb);
         return sb;
     }
@@ -89,7 +91,7 @@ export default class SoundboardsCache {
     async editSoundboard(soundboard: Soundboard): Promise<void> {
         const existingIndex = this.findSoundboardIndex(soundboard.uuid);
         this.soundboards[existingIndex] = soundboard;
-        await SoundboardUtils.syncSounds(soundboard);
+        await soundboard.syncSounds();
         EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
     }
