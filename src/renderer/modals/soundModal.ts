@@ -1,7 +1,6 @@
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Sound } from "../../shared/models/sound";
 
 type SaveEventArgs = { sound: Sound, moveRequested: boolean }
 

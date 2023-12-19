@@ -1,3 +1,4 @@
+import { IGroupData } from "../../../shared/models/data";
 import { tryGetValue } from "../../../shared/sharedUtils";
 import { CommonInfo } from "./commonInfo";
 import { Container } from "./container";
@@ -5,14 +6,14 @@ import { ICommon, IContainer, IPlayable, IPlayableContainer, IVolumeSource, JSON
 
 type GroupMode = "sequence" | "random" | "first";
 
-export class Group implements IPlayableContainer, IVolumeSource {
+export class Group implements IPlayableContainer {
     readonly parent: (IContainer & IVolumeSource) | null = null;
 
     constructor(
         private readonly info: CommonInfo,
         private readonly container: IContainer,
         public mode: GroupMode,
-        public current: number,
+        public current: number = 0,
     ) { }
 
     get uuid(): string { return this.info.uuid; }
@@ -34,8 +35,12 @@ export class Group implements IPlayableContainer, IVolumeSource {
         return this.container.containsPlayable(playable);
     }
 
-    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): IPlayable | undefined {
+    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
         return this.container.findPlayablesRecursive(predicate);
+    }
+
+    sortPlayables(): void {
+        return this.container.sortPlayables();
     }
 
     getAudioPath(): string {
@@ -81,7 +86,21 @@ export class Group implements IPlayableContainer, IVolumeSource {
         return this.info.compare(other);
     }
 
-    static isGroup(data: JSONObject): boolean {
+    edit(data: IGroupData): void {
+        this.info.name = data.name;
+        this.info.volume = data.volume;
+
+        this.info.keys.length = 0;
+        this.info.keys.push(...data.keys);
+
+        this.mode = data.mode;
+    }
+
+    static fromData(data: IGroupData): Group {
+        return new Group(CommonInfo.fromData(data), new Container([]), data.mode);
+    }
+
+    static isGroup(data: IPlayable): data is Group {
         return "playables" in data && "mode" in data;
     }
 

@@ -3,16 +3,19 @@ import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
-import { randomUUID } from "crypto";
-import { Container } from "./models/container";
 import { Soundboard } from "./models/soundboard";
-import { ISoundData } from "../../shared/models/data";
+import { IGroupData, ISoundData, ISoundboardData } from "../../shared/models/data";
 import { Sound } from "./models/sound";
+import { Group } from "./models/group";
+import { ICommon, ICommonContainer, IPlayable, IPlayableContainer } from "./models/interfaces";
+import { isPlayableContainer } from "../utils/utils";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
 
-    async addSounds(sounds: ISoundData[], destinationId: string | null, move: boolean, startIndex?: number): Promise<Container> {
+    async addSounds(
+        sounds: ISoundData[], destinationId: string | null, move: boolean, startIndex?: number
+    ): Promise<ICommonContainer> {
         const targetContainer = await this.getContainer(destinationId);
         const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
         const moveTasks: Promise<void>[] = [];
@@ -34,34 +37,40 @@ export default class SoundboardsCache {
         return targetContainer;
     }
 
-    // TODO: Needs to be 2 functions: one for Sounds and other for Groups.
-    async editPlayable(playable: Playable): Promise<void> {
-        const [container, index] = this.findPlayable(playable.uuid);
-        container.playables[index] = playable;
+    async editSound(soundData: ISoundData): Promise<void> {
+        const playable = this.findPlayable(soundData.uuid);
+        if (!Sound.isSound(playable)) throw Error("Specified playable is not a sound.");
+        playable.edit(soundData);
+        EventSender.send("onPlayableChanged", playable);
+        await DataAccess.saveSoundboards(this.soundboards);
+    }
+
+    async editGroup(groupData: IGroupData): Promise<void> {
+        const playable = this.findPlayable(groupData.uuid);
+        if (!Group.isGroup(playable)) throw Error("Specified playable is not a group.");
+        playable.edit(groupData);
         EventSender.send("onPlayableChanged", playable);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
     async movePlayable(
-        playableId: string, destinationId: string | null, destinationIndex: number, doesCopy: boolean
-    ): Promise<Container> {
-        const [source, index] = this.findPlayable(playableId);
-        let playable = source.getPlayables()[index]!;
+        playableId: string, destinationId: string | null, destinationIndex: number, copies: boolean
+    ): Promise<ICommon> {
+        let playable = this.findPlayable(playableId);
         const destination = await this.getContainer(destinationId);
         destinationId = destination.uuid;
 
-        if (isSoundboard(destination) && destination.linkedFolder !== null)
-            throw Error(`Cannot ${doesCopy ? "copy" : "move"} a sound to a linked Soundboard.`);
+        if (Soundboard.isSoundboard(destination) && destination.linkedFolder !== null)
+            throw Error(`Cannot ${copies ? "copy" : "move"} a sound to a linked Soundboard.`);
 
-        if (doesCopy) {
-            playable = copy(playable, randomUUID, destinationId);
+        if (copies) {
+            playable = playable.copy();
         } else {
-            source.playables.splice(index, 1);
+            playable.parent?.removePlayable(playable);
             EventSender.send("onPlayableRemoved", playable);
         }
 
-        destination.playables.splice(destinationIndex, 0, playable);
-        playable.parentUuid = destinationId;
+        destination.addPlayable(playable, destinationIndex);
         EventSender.send("onPlayableAdded", { playable, index: destinationIndex });
 
         await DataAccess.saveSoundboards(this.soundboards);
@@ -69,28 +78,28 @@ export default class SoundboardsCache {
     }
 
     async removePlayable(uuid: string): Promise<void> {
-        const [source, index] = this.findPlayable(uuid);
-        const playable = source.getPlayables()[index]!;
-        source.removePlayable(playable);
+        const playable = this.findPlayable(uuid);
+        if (playable.parent == null) return; // Cannot be removed because it's not in a parent.
+        playable.parent.removePlayable(playable);
         EventSender.send("onPlayableRemoved", playable);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    async addSoundboard(soundboard: Soundboard): Promise<void> {
-        this.soundboards.splice(0, 0, soundboard);
-        EventSender.send("onSoundboardAdded", { soundboard, index: 0 });
-        await DataAccess.saveSoundboards(this.soundboards);
+    async addSoundboard(soundboardData: ISoundboardData): Promise<void> {
+        const soundboard = Soundboard.fromData(soundboardData);
+        await this.addSoundboardInternal(soundboard);
     }
 
     async addQuickSoundboard(): Promise<Soundboard> {
         const sb = Soundboard.getDefault("Quick Sounds");
-        await this.addSoundboard(sb);
+        await this.addSoundboardInternal(sb);
         return sb;
     }
 
-    async editSoundboard(soundboard: Soundboard): Promise<void> {
-        const existingIndex = this.findSoundboardIndex(soundboard.uuid);
-        this.soundboards[existingIndex] = soundboard;
+    async editSoundboard(soundboardData: ISoundboardData): Promise<void> {
+        const soundboard = this.soundboards.find(s => s.uuid == soundboardData.uuid);
+        if (!soundboard) throw new Error("Soundboard not found.");
+        soundboard.edit(soundboardData);
         await soundboard.syncSounds();
         EventSender.send("onSoundboardChanged", soundboard);
         await DataAccess.saveSoundboards(this.soundboards);
@@ -116,19 +125,19 @@ export default class SoundboardsCache {
 
     async sortContainer(uuid: string): Promise<void> {
         const container = await this.getContainer(uuid);
-        container.playables = container.playables.sort((a, b) => compare(a, b));
+        container.sortPlayables();
         EventSender.send("onContainerSorted", container);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    /** Finds the root container (Soundboard) where the playable whith the specified uuid is. */
-    findRoot(uuid: string): Soundboard | undefined {
-        for (const soundboard of this.soundboards) {
-            const result = findInContainer(soundboard, uuid);
-            if (result) return soundboard;
-        }
-        return undefined;
-    }
+    // /** Finds the root container (Soundboard) where the playable whith the specified uuid is. */
+    // findRoot(uuid: string): Soundboard | undefined {
+    //     for (const soundboard of this.soundboards) {
+    //         const result = findInContainer(soundboard, uuid);
+    //         if (result) return soundboard;
+    //     }
+    //     return undefined;
+    // }
 
     findSoundboardIndex(uuid: string): number {
         const soundboardIndex = this.soundboards.findIndex(x => x.uuid === uuid);
@@ -136,18 +145,27 @@ export default class SoundboardsCache {
         return soundboardIndex;
     }
 
-    private findPlayable(uuid: string): [Container, number] {
+    private async addSoundboardInternal(soundboard: Soundboard): Promise<void> {
+        this.soundboards.splice(0, 0, soundboard);
+        EventSender.send("onSoundboardAdded", { soundboard, index: 0 });
+        await DataAccess.saveSoundboards(this.soundboards);
+    }
+
+    private findPlayable(uuid: string): IPlayable {
         for (const soundboard of this.soundboards) {
-            const res = findInContainer(soundboard, uuid);
-            if (res) return res;
+            const res = soundboard.findPlayablesRecursive(p => p.uuid == uuid);
+            if (res.length > 0) return res[0]!;
         }
         throw new Error(`Cannot find playable container with runtime uuid ${uuid}.`);
     }
 
-    private async getContainer(uuid: string | null): Promise<Container> {
+    private async getContainer(uuid: string | null): Promise<ICommonContainer> {
         if (uuid) {
-            const sb = findContainer(this.soundboards, uuid);
-            if (sb) return sb;
+            for (const sb of this.soundboards) {
+                if (sb.uuid == uuid) return sb;
+                const found = sb.findPlayablesRecursive(p => isPlayableContainer(p) && p.uuid == uuid);
+                if (found.length > 0) return found[0]! as IPlayableContainer;
+            }
         }
         return await MS.instance.soundboardsCache.addQuickSoundboard();
     }

@@ -7,7 +7,7 @@ import Utils from "../../utils/utils";
 import { validSoundExts } from "../../../shared/sharedUtils";
 import { ISoundData } from "../../../shared/models/data";
 
-export class Sound implements IPlayable, IVolumeSource {
+export class Sound implements IPlayable {
     readonly parent: (IContainer & IVolumeSource) | null = null;
 
     constructor(
@@ -45,11 +45,20 @@ export class Sound implements IPlayable, IVolumeSource {
         return this.info.compare(other);
     }
 
+    edit(data: ISoundData): void {
+        this.info.name = data.name;
+        this.info.volume = data.volume;
+        this.path = data.path;
+
+        this.info.keys.length = 0;
+        this.info.keys.push(...data.keys);
+    }
+
     static fromData(data: ISoundData): Sound {
         return new Sound(CommonInfo.fromData(data), data.path);
     }
 
-    static isSound(data: object): boolean {
+    static isSound(data: IPlayable): data is Sound {
         return "path" in data || "url" in data;
     }
 

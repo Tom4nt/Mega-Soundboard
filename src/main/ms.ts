@@ -5,17 +5,15 @@ import SoundboardsCache from "./data/soundboardsCache";
 import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
-import SoundUtils from "./utils/soundUtils";
 import { Settings } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
 import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
-import SoundboardUtils from "./utils/soundboardUtils";
 import { actionBindings } from "./quickActionBindings";
 import { isAction } from "../shared/quickActions";
-import { Soundboard } from "../shared/models/soundboard";
-import { getSoundWithPath } from "../shared/models/container";
+import { Soundboard } from "./data/models/soundboard";
+import { Sound } from "./data/models/sound";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -89,18 +87,20 @@ export default class MS {
         this.currentSoundboardWatcher = watcher;
 
         watcher.onSoundAdded.addHandler(p => {
-            const sound = SoundUtils.getNewSoundsFromPaths([p], soundboard.uuid)[0];
+            const sound = Sound.getNewSoundsFromPaths([p])[0];
             if (sound)
                 void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
         });
 
-        watcher.onSoundRemoved.addHandler(p => {
-            const sound = getSoundWithPath(soundboard.playables, p);
-            if (sound) void MS.instance.soundboardsCache.removePlayable(sound.uuid);
+        watcher.onSoundRemoved.addHandler(path => {
+            const sounds = soundboard.findPlayablesRecursive(p => Sound.isSound(p) && p.path == path);
+            if (sounds.length > 0) {
+                void MS.instance.soundboardsCache.removePlayable(sounds[0]!.uuid);
+            }
         });
 
         try {
-            await SoundboardUtils.syncSounds(soundboard);
+            await soundboard.syncSounds();
             await watcher.start();
         } catch (error) {
             // The folder is invalid and the soundboard will be shown as empty.

@@ -4,11 +4,12 @@ import { tryGetValue } from "../../../shared/sharedUtils";
 import Utils, { isPlayableContainer } from "../../utils/utils";
 import { CommonInfo } from "./commonInfo";
 import { Container } from "./container";
-import { IPlayable, ICommon, IContainer, IVolumeSource, JSONObject } from "./interfaces";
+import { IPlayable, ICommon, IContainer, JSONObject, ICommonContainer } from "./interfaces";
 import { Sound } from "./sound";
 import { randomUUID } from "crypto";
+import { ISoundboardData } from "../../../shared/models/data";
 
-export class Soundboard implements IContainer, IVolumeSource, ICommon {
+export class Soundboard implements ICommonContainer {
     constructor(
         private readonly info: CommonInfo,
         private readonly container: IContainer,
@@ -42,6 +43,10 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
         return this.container.findPlayablesRecursive(predicate);
     }
 
+    sortPlayables(): void {
+        return this.container.sortPlayables();
+    }
+
     getVolume(): number {
         return this.info.volume;
     }
@@ -53,6 +58,16 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
     getDefault(uuid: string, name: string): Soundboard {
         const info = new CommonInfo(uuid, name, 100, []);
         return new Soundboard(info, new Container([]), null);
+    }
+
+    edit(data: ISoundboardData): void {
+        this.info.name = data.name;
+
+        this.info.keys.length = 0;
+        this.info.keys.push(...data.keys);
+
+        this.info.volume = data.volume;
+        this.linkedFolder = data.linkedFolder;
     }
 
     /** Adds Sounds to and/or removes them from the specified Soundboard as necessary
@@ -87,12 +102,22 @@ export class Soundboard implements IContainer, IVolumeSource, ICommon {
         }
     }
 
+    static fromData(data: ISoundboardData): Soundboard {
+        const s = Soundboard.getDefault("");
+        s.edit(data);
+        return s;
+    }
+
     static getDefault(name: string): Soundboard {
         return new Soundboard(
             new CommonInfo(randomUUID(), name, 100, []),
             new Container([]),
             null,
         );
+    }
+
+    static isSoundboard(object: ICommonContainer): object is Soundboard {
+        return "linkedFolder" in object;
     }
 
     static convert(data: JSONObject): Soundboard {

@@ -5,13 +5,13 @@ import { Actions, actionsKeys } from "../shared/ipcActions";
 import MS from "./ms";
 import path = require("path");
 import SoundUtils from "./utils/soundUtils";
-import { randomUUID } from "crypto";
 import { validSoundExts } from "../shared/sharedUtils";
 import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
+import { Soundboard } from "./data/models/soundboard";
 
 export default class IPCHandler {
     public static register(): void {
@@ -83,8 +83,12 @@ const implementer: Actions = {
         return sb.uuid;
     },
 
-    editPlayable(playable) {
-        void MS.instance.soundboardsCache.editPlayable(playable);
+    editSound(data) {
+        void MS.instance.soundboardsCache.editSound(data);
+    },
+
+    editGroup(data) {
+        void MS.instance.soundboardsCache.editGroup(data);
     },
 
     async movePlayable(id, destinationId, destinationIndex) {
@@ -113,10 +117,6 @@ const implementer: Actions = {
         return Promise.resolve(valid);
     },
 
-    async getPlayableRoot(uuid) {
-        return MS.instance.soundboardsCache.findRoot(uuid);
-    },
-
     getSoundboard(uuid) {
         const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
         if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
@@ -124,7 +124,7 @@ const implementer: Actions = {
     },
 
     async getNewSoundboard() {
-        const sb: Soundboard = getDefault(randomUUID(), "");
+        const sb: Soundboard = Soundboard.getDefault("");
         return await Promise.resolve(sb);
     },
 

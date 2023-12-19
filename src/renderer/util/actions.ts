@@ -1,6 +1,3 @@
-import { Playable } from "../../shared/models/playable";
-import { isSound } from "../../shared/models/sound";
-import { Soundboard } from "../../shared/models/soundboard";
 import { MultiSoundModal, SoundboardModal, SoundModal } from "../modals";
 
 export default class Actions {

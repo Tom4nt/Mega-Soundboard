@@ -45,11 +45,15 @@ export class Container implements IContainer {
         return result;
     }
 
+    sortPlayables(): void {
+        this.playables.sort((a, b) => a.compare(b));
+    }
+
     static convertPlayables(data: JSONObject[]): IPlayable[] {
         const playables: IPlayable[] = [];
         data.forEach(item => {
             let s: IPlayable;
-            if (Group.isGroup(item)) {
+            if ("playables" in item && "mode" in item) {
                 s = Group.convert(item);
             } else {
                 s = Sound.convert(item);

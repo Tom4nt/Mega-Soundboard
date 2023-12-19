@@ -20,9 +20,10 @@ export interface IContainer {
     removePlayable(playable: IPlayable): void;
     containsPlayable(playable: IPlayable): boolean;
     findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[];
+    sortPlayables(): void;
 }
 
-export interface IPlayable extends ICommon {
+export interface IPlayable extends ICommon, IVolumeSource {
     getAudioPath(): string;
     get parent(): IContainer | null;
     set parent(value: IContainer | null);
@@ -30,4 +31,5 @@ export interface IPlayable extends ICommon {
     copy(): IPlayable;
 }
 
-export interface IPlayableContainer extends IPlayable, IContainer { }
+export interface ICommonContainer extends ICommon, IContainer, IVolumeSource { }
+export interface IPlayableContainer extends IPlayable, ICommonContainer { }
