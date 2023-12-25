@@ -4,7 +4,6 @@ import { autoUpdater } from "electron-updater";
 import { Actions, actionsKeys } from "../shared/ipcActions";
 import MS from "./ms";
 import path = require("path");
-import SoundUtils from "./utils/soundUtils";
 import { validSoundExts } from "../shared/sharedUtils";
 import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";
@@ -12,6 +11,8 @@ import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
 import { Soundboard } from "./data/models/soundboard";
+import { IPlayableData } from "../shared/models/data";
+import { Sound } from "./data/models/sound";
 
 export default class IPCHandler {
     public static register(): void {
@@ -70,25 +71,15 @@ const implementer: Actions = {
         EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
     },
 
-    play(playableUuid) {
-        // TODO: Find final volume recursively. Update "current" property for groups in "sequence" mode. Invoke onPlayRequested.
-        void playableUuid;
-        // const volume = MS.instance.soundboardsCache.getVolume(playableUuid);
-        // const sound = getSound()
-        // EventSender.send("onPlayRequested",);
-    },
+    async getPlayData(uuid) { return MS.instance.soundboardsCache.getPlayData(uuid); },
 
     async addSounds(playables, destinationId, moveFile, startIndex) {
         const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
         return sb.uuid;
     },
 
-    editSound(data) {
-        void MS.instance.soundboardsCache.editSound(data);
-    },
-
-    editGroup(data) {
-        void MS.instance.soundboardsCache.editGroup(data);
+    editPlayable(data) {
+        void MS.instance.soundboardsCache.editPlayable(data);
     },
 
     async movePlayable(id, destinationId, destinationIndex) {
@@ -108,24 +99,47 @@ const implementer: Actions = {
     getNewSoundsFromPaths(paths) {
         const currentSoundboard = MS.instance.getCurrentSoundboard();
         if (!currentSoundboard) throw new Error("Cannot find current soundboard.");
-        const sounds = SoundUtils.getNewSoundsFromPaths(paths, currentSoundboard.uuid);
-        return Promise.resolve(sounds);
+        const sounds = Sound.getNewSoundsFromPaths(paths);
+        sounds.forEach(s => currentSoundboard.addPlayable(s));
+        return Promise.resolve(sounds.map(s => s.asData()));
     },
 
     getValidSoundPaths(paths) {
-        const valid = SoundUtils.getValidSoundPaths(paths);
+        const valid = Sound.getValidSoundPaths(paths);
         return Promise.resolve(valid);
+    },
+
+    async getPlayableRoot(uuid) {
+        const root = MS.instance.soundboardsCache.findRoot(uuid);
+        return root?.asData();
+    },
+
+    async getPlayable(uuid) {
+        const sound = MS.instance.soundboardsCache.findPlayable(uuid);
+        return { ...sound, isGroup: !Sound.isSound(sound) } as IPlayableData;
+    },
+
+    async getContainerItems(uuid) {
+        // TODO
+        void uuid;
+        return [];
+    },
+
+    async getAllSounds(rootUuid) {
+        // TODO
+        void rootUuid;
+        return [];
     },
 
     getSoundboard(uuid) {
         const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
         if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
-        return Promise.resolve(sb);
+        return Promise.resolve(sb.asData());
     },
 
     async getNewSoundboard() {
         const sb: Soundboard = Soundboard.getDefault("");
-        return await Promise.resolve(sb);
+        return await Promise.resolve(sb.asData());
     },
 
     addSoundboard(soundboard) {
@@ -162,14 +176,16 @@ const implementer: Actions = {
         void MS.instance.soundboardsCache.editSoundboard(soundboard);
     },
 
-    setCurrentSoundboard(id) {
-        const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(id);
+    setCurrentSoundboard(uuid) {
+        const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(uuid);
         const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex]!;
         void MS.instance.setCurrentSoundboard(soundboard);
     },
 
+    async getCurrentSoundboard() { return MS.instance.getCurrentSoundboard()?.asData(); },
+
     async getSoundboards() {
-        return MS.instance.soundboardsCache.soundboards;
+        return MS.instance.soundboardsCache.soundboards.map(s => s.asData());
     },
 
     async getInitialSoundboardIndex() {

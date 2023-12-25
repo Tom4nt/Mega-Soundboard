@@ -1,5 +1,5 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import { Playable } from "../../shared/models/playable";
+import { IPlayableData } from "../../shared/models/data";
 import Actions from "../util/actions";
 import Utils from "../util/utils";
 import PlayableContainer, { DroppedEventArgs } from "./playableContainer";
@@ -11,12 +11,12 @@ export default class PlayableList extends HTMLElement {
     private currentSoundboardId?: string;
     private containerElement?: PlayableContainer;
 
-    private _onItemDragStart = new Event<Playable>();
-    public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
+    private _onItemDragStart = new Event<IPlayableData>();
+    public get onItemDragStart(): ExposedEvent<IPlayableData> { return this._onItemDragStart.expose(); }
 
     protected connectedCallback(): void {
         window.events.onPlayableAdded.addHandler(e => {
-            if (e.playable.parentUuid === this.currentSoundboardId) {
+            if (e.parentUuid === this.currentSoundboardId) {
                 this.containerElement?.addItem(e.playable, e.index);
             } else {
                 const targetContainer = this.containerElement?.getElementLocation(e.playable.uuid);
@@ -25,25 +25,30 @@ export default class PlayableList extends HTMLElement {
         });
 
         window.events.onPlayableRemoved.addHandler(s => {
-            this.containerElement?.removeItem(s);
+            this.containerElement?.removeItem(s.uuid);
         });
 
-        window.events.onCurrentSoundboardChanged.addHandler(sb => {
-            this.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
+        window.events.onCurrentSoundboardChanged.addHandler(async sb => {
+            const items = await window.actions.getContainerItems(sb.uuid);
+            this.loadItems(items, sb.uuid, sb.linkedFolder === null);
         });
 
         window.events.onContainerSorted.addHandler(c => {
-            if (this.currentSoundboardId === c.uuid) {
-                this.loadItems(c.playables, c.uuid, true);
+            if (this.currentSoundboardId === c.containerUuid) {
+                this.sortItems(c.itemsUuids);
             }
         });
     }
 
-    loadItems(playables: Playable[], soundboardUuid: string, allowImport: boolean): void {
+    loadItems(playables: IPlayableData[], soundboardUuid: string, allowImport: boolean): void {
         this.currentSoundboardId = soundboardUuid;
         const container = this.createContainer(soundboardUuid);
         container.allowFileImport = allowImport;
         container.loadItems(playables);
+    }
+
+    sortItems(uuids: string[]): void {
+        void uuids; // TODO
     }
 
     filter(filter: string): void {

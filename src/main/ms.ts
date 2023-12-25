@@ -79,7 +79,7 @@ export default class MS {
         this.currentSoundboardWatcher = null;
 
         if (!soundboard.linkedFolder) {
-            EventSender.send("onCurrentSoundboardChanged", soundboard);
+            EventSender.send("onCurrentSoundboardChanged", soundboard.asData());
             return;
         }
 
@@ -89,7 +89,7 @@ export default class MS {
         watcher.onSoundAdded.addHandler(p => {
             const sound = Sound.getNewSoundsFromPaths([p])[0];
             if (sound)
-                void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
+                void MS.instance.soundboardsCache.addSounds([sound.asData()], soundboard.uuid, false);
         });
 
         watcher.onSoundRemoved.addHandler(path => {
@@ -105,6 +105,6 @@ export default class MS {
         } catch (error) {
             // The folder is invalid and the soundboard will be shown as empty.
         }
-        EventSender.send("onCurrentSoundboardChanged", soundboard);
+        EventSender.send("onCurrentSoundboardChanged", soundboard.asData());
     }
 }

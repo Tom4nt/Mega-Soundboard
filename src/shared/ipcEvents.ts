@@ -1,5 +1,6 @@
 import { ExposedEvent } from "./events";
 import {
+    ContainerSortedArgs,
     KeyRecordingArgs,
     NonOptional,
     PlayableAddedArgs,
@@ -8,6 +9,7 @@ import {
     WindowState
 } from "./interfaces";
 import { Settings } from "./models";
+import { IPlayableData, ISoundboardData, PlayData } from "./models/data";
 
 class ConcreteEvents {
     onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
@@ -15,20 +17,21 @@ class ConcreteEvents {
     onLoopSoundsChanged: ExposedEvent<boolean> | null = null;
     onSettingsChanged: ExposedEvent<Settings> | null = null;
     onPlayableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
-    onPlayableChanged: ExposedEvent<Playable> | null = null;
-    onPlayableRemoved: ExposedEvent<Playable> | null = null;
+    onPlayableChanged: ExposedEvent<IPlayableData> | null = null;
+    onPlayableRemoved: ExposedEvent<IPlayableData> | null = null;
     onSoundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
-    onSoundboardChanged: ExposedEvent<Soundboard> | null = null;
-    onSoundboardRemoved: ExposedEvent<Soundboard> | null = null;
-    onContainerSorted: ExposedEvent<Container> | null = null;
+    onSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
+    onSoundboardRemoved: ExposedEvent<ISoundboardData> | null = null;
+    onContainerSorted: ExposedEvent<ContainerSortedArgs> | null = null;
     onWindowStateChanged: ExposedEvent<WindowState> | null = null;
     onWindowFocusChanged: ExposedEvent<boolean> | null = null;
     onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
     onKeybindPressed: ExposedEvent<number[]> | null = null;
-    onCurrentSoundboardChanged: ExposedEvent<Soundboard> | null = null;
+    onCurrentSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
     onMinToTrayChanged: ExposedEvent<boolean> | null = null;
     onUpdateStateChanged: ExposedEvent<UpdaterState> | null = null;
-    onPlayRequested: ExposedEvent<Playable> | null = null;
+    onPlayRequested: ExposedEvent<PlayData> | null = null;
+    onStopRequested: ExposedEvent<string> | null = null;
     onStopAllSounds: ExposedEvent<void> | null = null;
     onZoomFactorChanged: ExposedEvent<number> | null = null;
 }

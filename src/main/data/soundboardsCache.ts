@@ -4,11 +4,12 @@ import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
 import { Soundboard } from "./models/soundboard";
-import { IGroupData, ISoundData, ISoundboardData } from "../../shared/models/data";
+import { IPlayableData, ISoundData, ISoundboardData, PlayData } from "../../shared/models/data";
 import { Sound } from "./models/sound";
 import { Group } from "./models/group";
 import { ICommon, ICommonContainer, IPlayable, IPlayableContainer } from "./models/interfaces";
 import { isPlayableContainer } from "../utils/utils";
+import { ContainerSortedArgs } from "../../shared/interfaces";
 
 export default class SoundboardsCache {
     constructor(public readonly soundboards: Soundboard[]) { }
@@ -29,7 +30,7 @@ export default class SoundboardsCache {
                 moveTasks.push(fs.rename(sound.path, soundDestination));
                 sound.path = soundDestination;
             }
-            EventSender.send("onPlayableAdded", { playable: sound, index });
+            EventSender.send("onPlayableAdded", { parentUuid: targetContainer.uuid, playable: soundData, index });
             index += 1;
         }
 
@@ -37,19 +38,10 @@ export default class SoundboardsCache {
         return targetContainer;
     }
 
-    async editSound(soundData: ISoundData): Promise<void> {
-        const playable = this.findPlayable(soundData.uuid);
-        if (!Sound.isSound(playable)) throw Error("Specified playable is not a sound.");
-        playable.edit(soundData);
-        EventSender.send("onPlayableChanged", playable);
-        await DataAccess.saveSoundboards(this.soundboards);
-    }
-
-    async editGroup(groupData: IGroupData): Promise<void> {
-        const playable = this.findPlayable(groupData.uuid);
-        if (!Group.isGroup(playable)) throw Error("Specified playable is not a group.");
-        playable.edit(groupData);
-        EventSender.send("onPlayableChanged", playable);
+    async editPlayable(data: IPlayableData): Promise<void> {
+        const playable = this.findPlayable(data.uuid);
+        playable.edit(data);
+        EventSender.send("onPlayableChanged", data);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -63,15 +55,16 @@ export default class SoundboardsCache {
         if (Soundboard.isSoundboard(destination) && destination.linkedFolder !== null)
             throw Error(`Cannot ${copies ? "copy" : "move"} a sound to a linked Soundboard.`);
 
+        const data = { ...playable, isGroup: Group.isGroup(playable) };
         if (copies) {
             playable = playable.copy();
         } else {
             playable.parent?.removePlayable(playable);
-            EventSender.send("onPlayableRemoved", playable);
+            EventSender.send("onPlayableRemoved", data);
         }
 
         destination.addPlayable(playable, destinationIndex);
-        EventSender.send("onPlayableAdded", { playable, index: destinationIndex });
+        EventSender.send("onPlayableAdded", { parentUuid: destinationId, playable: data, index: destinationIndex });
 
         await DataAccess.saveSoundboards(this.soundboards);
         return destination;
@@ -81,7 +74,7 @@ export default class SoundboardsCache {
         const playable = this.findPlayable(uuid);
         if (playable.parent == null) return; // Cannot be removed because it's not in a parent.
         playable.parent.removePlayable(playable);
-        EventSender.send("onPlayableRemoved", playable);
+        EventSender.send("onPlayableRemoved", { ...playable, isGroup: Group.isGroup(playable) });
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -101,7 +94,7 @@ export default class SoundboardsCache {
         if (!soundboard) throw new Error("Soundboard not found.");
         soundboard.edit(soundboardData);
         await soundboard.syncSounds();
-        EventSender.send("onSoundboardChanged", soundboard);
+        EventSender.send("onSoundboardChanged", soundboardData);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -109,9 +102,9 @@ export default class SoundboardsCache {
         const sbIndex = this.findSoundboardIndex(id);
         const soundboard = this.soundboards[sbIndex]!;
         this.soundboards.splice(sbIndex, 1);
-        EventSender.send("onSoundboardRemoved", soundboard);
+        EventSender.send("onSoundboardRemoved", soundboard.asData());
         this.soundboards.splice(destinationIndex, 0, soundboard);
-        EventSender.send("onSoundboardAdded", { soundboard, index: destinationIndex });
+        EventSender.send("onSoundboardAdded", { soundboard: soundboard.asData(), index: destinationIndex });
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
@@ -119,25 +112,29 @@ export default class SoundboardsCache {
         const index = this.findSoundboardIndex(uuid);
         const soundboard = this.soundboards[index];
         this.soundboards.splice(index, 1);
-        EventSender.send("onSoundboardRemoved", soundboard);
+        EventSender.send("onSoundboardRemoved", soundboard?.asData());
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
     async sortContainer(uuid: string): Promise<void> {
         const container = await this.getContainer(uuid);
         container.sortPlayables();
-        EventSender.send("onContainerSorted", container);
+        const args: ContainerSortedArgs = {
+            containerUuid: uuid,
+            itemsUuids: container.getPlayables().map(p => p.uuid),
+        };
+        EventSender.send("onContainerSorted", args);
         await DataAccess.saveSoundboards(this.soundboards);
     }
 
-    // /** Finds the root container (Soundboard) where the playable whith the specified uuid is. */
-    // findRoot(uuid: string): Soundboard | undefined {
-    //     for (const soundboard of this.soundboards) {
-    //         const result = findInContainer(soundboard, uuid);
-    //         if (result) return soundboard;
-    //     }
-    //     return undefined;
-    // }
+    /** Finds the root container (Soundboard) where the playable whith the specified uuid is. */
+    findRoot(playableUuid: string): Soundboard | undefined {
+        for (const soundboard of this.soundboards) {
+            const result = soundboard.findPlayablesRecursive(p => p.uuid === playableUuid);
+            if (result.length > 0) return soundboard;
+        }
+        return undefined;
+    }
 
     findSoundboardIndex(uuid: string): number {
         const soundboardIndex = this.soundboards.findIndex(x => x.uuid === uuid);
@@ -145,18 +142,24 @@ export default class SoundboardsCache {
         return soundboardIndex;
     }
 
-    private async addSoundboardInternal(soundboard: Soundboard): Promise<void> {
-        this.soundboards.splice(0, 0, soundboard);
-        EventSender.send("onSoundboardAdded", { soundboard, index: 0 });
-        await DataAccess.saveSoundboards(this.soundboards);
-    }
-
-    private findPlayable(uuid: string): IPlayable {
+    findPlayable(uuid: string): IPlayable {
         for (const soundboard of this.soundboards) {
             const res = soundboard.findPlayablesRecursive(p => p.uuid == uuid);
             if (res.length > 0) return res[0]!;
         }
         throw new Error(`Cannot find playable container with runtime uuid ${uuid}.`);
+    }
+
+    getPlayData(uuid: string): PlayData {
+        const playable = MS.instance.soundboardsCache.findPlayable(uuid);
+        // TODO: Hierarchy
+        return { mainUuid: uuid, hierarchy: [], path: playable.getAudioPath(), volume: playable.getVolume() };
+    }
+
+    private async addSoundboardInternal(soundboard: Soundboard): Promise<void> {
+        this.soundboards.splice(0, 0, soundboard);
+        EventSender.send("onSoundboardAdded", { soundboard: soundboard.asData(), index: 0 });
+        await DataAccess.saveSoundboards(this.soundboards);
     }
 
     private async getContainer(uuid: string | null): Promise<ICommonContainer> {

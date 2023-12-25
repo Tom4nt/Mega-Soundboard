@@ -1,3 +1,5 @@
+import { IPlayableData } from "../../../shared/models/data";
+
 export type JSONObject = { [key: string]: unknown };
 
 export interface ICommon {
@@ -29,6 +31,8 @@ export interface IPlayable extends ICommon, IVolumeSource {
     set parent(value: IContainer | null);
     getSavable(): JSONObject;
     copy(): IPlayable;
+    edit(data: IPlayableData): void;
+    asData(): IPlayableData;
 }
 
 export interface ICommonContainer extends ICommon, IContainer, IVolumeSource { }

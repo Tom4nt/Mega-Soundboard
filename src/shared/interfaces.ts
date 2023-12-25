@@ -1,5 +1,4 @@
-import { Playable } from "./models/playable";
-import { Soundboard } from "./models/soundboard";
+import { IPlayableData, ISoundboardData } from "./models/data";
 
 export type WindowState = "minimized" | "restored" | "maximized";
 export type UpdaterState = "unknown" | "downloaded" | "downloading" | "upToDate";
@@ -27,13 +26,19 @@ export interface IDevice {
 }
 
 export interface PlayableAddedArgs {
-    playable: Playable,
+    playable: IPlayableData,
+    parentUuid: string,
     index?: number,
 }
 
 export interface SoundboardAddedArgs {
-    soundboard: Soundboard,
+    soundboard: ISoundboardData,
     index?: number,
+}
+
+export interface ContainerSortedArgs {
+    containerUuid: string,
+    itemsUuids: string[],
 }
 
 export interface KeyRecordingArgs {

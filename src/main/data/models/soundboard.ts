@@ -60,6 +60,16 @@ export class Soundboard implements ICommonContainer {
         return new Soundboard(info, new Container([]), null);
     }
 
+    getSavable(): JSONObject {
+        return {
+            name: this.name,
+            volume: this.volume,
+            keys: this.keys,
+            linkedFolder: this.linkedFolder,
+            sounds: this.getPlayables().map(p => p.getSavable()),
+        };
+    }
+
     edit(data: ISoundboardData): void {
         this.info.name = data.name;
 
@@ -100,6 +110,10 @@ export class Soundboard implements ICommonContainer {
             );
             playables.forEach(p => p.parent?.removePlayable(p));
         }
+    }
+
+    asData(): ISoundboardData {
+        return { ...this, hasSounds: this.getPlayables().length > 0 };
     }
 
     static fromData(data: ISoundboardData): Soundboard {

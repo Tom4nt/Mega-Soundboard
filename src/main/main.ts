@@ -10,6 +10,9 @@ import KeybindManager from "./managers/keybindManager";
 import { Settings } from "../shared/models";
 import IPCHandler from "./ipcHandler";
 import Updater from "./updater";
+import { Soundboard } from "./data/models/soundboard";
+import { IPlayableData } from "../shared/models/data";
+import { Group } from "./data/models/group";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -53,20 +56,22 @@ async function init(): Promise<void> {
     const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
 
     new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
-    await selectInitialSoundboard(soundboardsCache, settingsCache.settings.selectedSoundboard);
+    const sb = await selectInitialSoundboard(soundboardsCache, settingsCache.settings.selectedSoundboard);
 
     windowManager.loadingWindow.close();
     await windowManager.showMainWindow(() => new InitialContent(
         settingsCache.settings,
-        soundboardsCache.soundboards,
-        settingsCache.shouldShowChangelog()
+        soundboardsCache.soundboards.map(s => s.asData()),
+        sb.getPlayables().map<IPlayableData>(p => ({ ...p, isGroup: Group.isGroup(p) })),
+        settingsCache.shouldShowChangelog(),
     ));
 }
 
-async function selectInitialSoundboard(soundboardsCache: SoundboardsCache, selectedIndex: number): Promise<void> {
+async function selectInitialSoundboard(soundboardsCache: SoundboardsCache, selectedIndex: number): Promise<Soundboard> {
     let soundboard = soundboardsCache.soundboards[selectedIndex];
     if (!soundboard) soundboard = soundboardsCache.soundboards[0]!;
     await MS.instance.setCurrentSoundboard(soundboard);
+    return soundboard;
 }
 
 app.on("before-quit", () => {

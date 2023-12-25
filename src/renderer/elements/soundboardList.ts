@@ -1,7 +1,7 @@
+import { ISoundboardData } from "../../shared/models/data";
 import { SoundboardItem } from "../elements";
 import Utils from "../util/utils";
 import Draggable from "./draggable";
-import { Soundboard, soundboardEquals } from "../../shared/models/soundboard";
 
 export default class SoundboardList extends HTMLElement {
     private selectedItem?: SoundboardItem;
@@ -49,13 +49,7 @@ export default class SoundboardList extends HTMLElement {
         });
     }
 
-    getSelectedSoundboard(): Soundboard | null {
-        if (this.selectedItem)
-            return this.selectedItem.soundboard;
-        return null;
-    }
-
-    addSoundboard(soundboard: Soundboard, index?: number): void {
+    addSoundboard(soundboard: ISoundboardData, index?: number): void {
         const sbElement = new SoundboardItem(soundboard);
 
         sbElement.onDragEnd.addHandler(() => {
@@ -73,11 +67,11 @@ export default class SoundboardList extends HTMLElement {
         else this.appendChild(sbElement);
     }
 
-    selectSoundboard(soundboard: Soundboard): void {
+    selectSoundboard(sb: ISoundboardData): void {
         this.unselectAll();
         for (const item of this.getItems()) {
-            if (soundboardEquals(item.soundboard, soundboard)) {
-                item.soundboard = soundboard;
+            if (item.soundboard.uuid === sb.uuid) {
+                item.soundboard = sb;
                 item.isSelected = true;
                 this.selectedItem = item;
             }

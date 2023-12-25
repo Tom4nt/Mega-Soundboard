@@ -1,6 +1,5 @@
 import Actions from "./util/actions";
 import { Toggler, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, FileDropArea, PlayableList, PlayableItem, } from "./elements";
-import { DropdownDeviceItem } from "./elements/dropdown";
 import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
 import { Message, Settings } from "../shared/models";
@@ -8,7 +7,8 @@ import AudioManager from "./audioManager";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
 import { UpdaterState } from "../shared/interfaces";
-import { Soundboard } from "../shared/models/soundboard";
+import { DropDownItem } from "./elements/dropdown";
+import { DropdownItem } from "./elements/dropdown/dropdownItem";
 
 //#region Elements
 
@@ -87,7 +87,7 @@ async function init(): Promise<void> {
     window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
     window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
     window.events.onLoopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
-    window.events.onCurrentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb));
+    window.events.onCurrentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));
 
     const shouldShowChangelog = content.shouldShowChangelog;
     if (shouldShowChangelog) {
@@ -98,9 +98,9 @@ async function init(): Promise<void> {
 
     const sb = soundboards[content.settings.selectedSoundboard];
     if (sb) {
-        playableList.loadItems(sb.playables, sb.uuid, sb.linkedFolder === null);
+        playableList.loadItems(content.initialPlayables, sb.uuid, sb.linkedFolder === null);
         soundboardList.selectSoundboard(sb);
-        updatePlayableListButtons(sb);
+        updatePlayableListButtons(sb.linkedFolder !== null);
     }
 
     MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
@@ -108,8 +108,7 @@ async function init(): Promise<void> {
     });
 }
 
-function updatePlayableListButtons(soundboard: Soundboard): void {
-    const isLinked = soundboard.linkedFolder !== null;
+function updatePlayableListButtons(isLinked: boolean): void {
     addSoundButton.style.display = isLinked ? "none" : "";
     openFolderButton.style.display = isLinked ? "" : "none";
 }
@@ -122,18 +121,18 @@ function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void 
 
 function selectDevices(settings: Settings): void {
     const foundMain = mainDeviceDropdown.selectIfFound(item =>
-        item instanceof DropdownDeviceItem && item.device === settings.mainDevice);
+        item instanceof DropDownItem && item.value === settings.mainDevice);
 
     // If main device not found, load Default.
     if (!foundMain) mainDeviceDropdown.selectIfFound(item =>
-        item instanceof DropdownDeviceItem && item.device == "default");
+        item instanceof DropDownItem && item.value == "default");
 
     const foundSecondary = secondaryDeviceDropdown.selectIfFound(item =>
-        item instanceof DropdownDeviceItem && item.device === settings.secondaryDevice);
+        item instanceof DropDownItem && item.value === settings.secondaryDevice);
 
     // If secondary device not found, load None.
     if (!foundSecondary) secondaryDeviceDropdown.selectIfFound(item =>
-        item instanceof DropdownDeviceItem && item.device === "");
+        item instanceof DropDownItem && item.value === "");
 }
 
 function setVolumes(settings: Settings): void {
@@ -232,16 +231,15 @@ function addElementListeners(): void {
         void browseAndAddSounds();
     });
 
-    openFolderButton.addEventListener("click", () => {
-        const currentSoundboard = soundboardList.getSelectedSoundboard();
+    openFolderButton.addEventListener("click", async () => {
+        const currentSoundboard = await window.actions.getCurrentSoundboard();
         if (currentSoundboard?.linkedFolder)
             window.location.href = currentSoundboard.linkedFolder;
     });
 
-    sortButton.addEventListener("click", () => {
-        const currentSoundboard = soundboardList.getSelectedSoundboard();
-        if (!currentSoundboard) return;
-        void window.actions.sortSoundboard(currentSoundboard.uuid);
+    sortButton.addEventListener("click", async () => {
+        const currentSoundboard = await window.actions.getCurrentSoundboard();
+        if (currentSoundboard) void window.actions.sortSoundboard(currentSoundboard.uuid);
     });
 
     searchBox.onInput.addHandler(v => {
@@ -291,13 +289,13 @@ function addElementListeners(): void {
     });
 
     mainDeviceDropdown.onSelectedItem.addHandler(item => {
-        if (item instanceof DropdownDeviceItem && item.device)
-            window.actions.setMainDevice(item.device);
+        if (item?.value)
+            window.actions.setMainDevice(item.value as string);
     });
 
     secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
-        if (item instanceof DropdownDeviceItem)
-            window.actions.setSecondaryDevice(item.device);
+        if (item?.value)
+            window.actions.setSecondaryDevice(item.value as string);
     });
 
     enabeKeybindsToggler.onToggle.addHandler(() => {
@@ -317,14 +315,14 @@ function addElementListeners(): void {
 }
 
 function loadDevices(devices: MediaDeviceInfo[]): void {
-    secondaryDeviceDropdown.addItem(new DropdownDeviceItem("None", ""));
+    secondaryDeviceDropdown.addItem(new DropdownItem("None", ""));
     for (const device of devices) {
         if (device.deviceId === "default") {
-            mainDeviceDropdown.addItem(new DropdownDeviceItem("Default", "default"));
-            secondaryDeviceDropdown.addItem(new DropdownDeviceItem("Default", "default"));
+            mainDeviceDropdown.addItem(new DropdownItem("Default", "default"));
+            secondaryDeviceDropdown.addItem(new DropdownItem("Default", "default"));
         } else {
-            mainDeviceDropdown.addItem(new DropdownDeviceItem(device.label, device.deviceId));
-            secondaryDeviceDropdown.addItem(new DropdownDeviceItem(device.label, device.deviceId));
+            mainDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
+            secondaryDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
         }
     }
 }
@@ -346,8 +344,8 @@ function closeActionPanelContainers(e: MouseEvent): void {
 }
 
 async function browseAndAddSounds(): Promise<void> {
-    const sb = soundboardList.getSelectedSoundboard();
-    if (sb && sb.linkedFolder === null) {
+    const sb = await window.actions.getCurrentSoundboard();
+    if (sb?.linkedFolder === null) {
         const paths = await window.actions.browseSounds();
         await Actions.addSounds(paths, sb.uuid);
         window.actions.setCurrentSoundboard(sb.uuid);

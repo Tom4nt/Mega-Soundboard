@@ -54,6 +54,10 @@ export class Sound implements IPlayable {
         this.info.keys.push(...data.keys);
     }
 
+    asData(): ISoundData {
+        return { ...this, isGroup: false };
+    }
+
     static fromData(data: ISoundData): Sound {
         return new Sound(CommonInfo.fromData(data), data.path);
     }

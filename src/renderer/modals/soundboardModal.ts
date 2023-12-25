@@ -1,7 +1,7 @@
 import { FileSelector, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Soundboard } from "../../shared/models/soundboard";
+import { ISoundboardData } from "../../shared/models/data";
 
 export default class SoundboardModal extends Modal {
     private nameElement!: TextField;
@@ -11,15 +11,15 @@ export default class SoundboardModal extends Modal {
     private okButton!: HTMLButtonElement;
     private removeButton!: HTMLButtonElement;
 
-    private loadedSoundboard: Soundboard;
+    private loadedSoundboard: ISoundboardData;
 
-    public get onSaved(): ExposedEvent<Soundboard> { return this._onSaved.expose(); }
-    private readonly _onSaved = new Event<Soundboard>();
+    public get onSaved(): ExposedEvent<ISoundboardData> { return this._onSaved.expose(); }
+    private readonly _onSaved = new Event<ISoundboardData>();
 
-    public get onRemove(): ExposedEvent<Soundboard> { return this._onRemove.expose(); }
-    private readonly _onRemove = new Event<Soundboard>();
+    public get onRemove(): ExposedEvent<ISoundboardData> { return this._onRemove.expose(); }
+    private readonly _onRemove = new Event<ISoundboardData>();
 
-    constructor(soundboard: Soundboard, private isNew: boolean, private isLast: boolean) {
+    constructor(soundboard: ISoundboardData, private isNew: boolean, private isLast: boolean) {
         super(false);
         this.loadedSoundboard = soundboard;
         this.modalTitle = isNew ? "Add Soundboard" : "Edit Soundboard";
@@ -75,7 +75,7 @@ export default class SoundboardModal extends Modal {
         this.volumeElement.value = this.loadedSoundboard.volume;
         if (this.loadedSoundboard.linkedFolder) this.folderElement.value = this.loadedSoundboard.linkedFolder;
 
-        const displaysFolderField = this.loadedSoundboard.linkedFolder || this.loadedSoundboard.playables.length <= 0;
+        const displaysFolderField = this.loadedSoundboard.linkedFolder || !this.loadedSoundboard.hasSounds;
         this.folderElement.style.display = displaysFolderField ? "" : "none";
 
         this.okButton.innerHTML = this.isNew ? "Add" : "Save";

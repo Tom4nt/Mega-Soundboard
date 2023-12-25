@@ -2,7 +2,7 @@ import { Event, ExposedEvent } from "../shared/events";
 import { Settings } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
-import { Playable } from "../shared/models/playable";
+import { PlayData, UuidHierarchy } from "../shared/models/data";
 
 export default class AudioManager {
     overlapSounds = false;
@@ -23,11 +23,12 @@ export default class AudioManager {
     /** Internal Media Element used for app sounds. */
     private uiMediaElement = new Audio();
 
-    get onPlay(): ExposedEvent<Playable> { return this._onPlay.expose(); }
-    private readonly _onPlay = new Event<Playable>();
+    // TODO: Should provide a list of uuids of items that were involved in playing the sound.
+    get onPlay(): ExposedEvent<PlayData> { return this._onPlay.expose(); }
+    private readonly _onPlay = new Event<PlayData>();
 
-    get onStop(): ExposedEvent<string> { return this._onStop.expose(); }
-    private readonly _onStop = new Event<string>();
+    get onStop(): ExposedEvent<UuidHierarchy> { return this._onStop.expose(); }
+    private readonly _onStop = new Event<UuidHierarchy>();
 
     /** Used when sounds do not overlap. */
     private readonly _onSingleInstanceChanged = new Event<AudioInstance | null>();
@@ -71,6 +72,10 @@ export default class AudioManager {
                 await this.playUISound(UISoundPath.ERROR);
             }
         });
+
+        window.events.onStopRequested.addHandler(uuid => {
+            this.stop(uuid);
+        });
     }
 
     static parseDevices(settings: Settings): IDevice[] {
@@ -89,22 +94,22 @@ export default class AudioManager {
         return filtered;
     }
 
-    async play(playable: Playable): Promise<void> {
+    async play(data: PlayData): Promise<void> {
         if (!this.overlapSounds) this.stopAllInternal(false);
 
         // In the future, devices will be stored as an array and the user will be able to add/remove them.
         const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
         if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-        // TODO: Use function on playable to get the path.
         const instance = await AudioInstance.create(
-            { uuid: playable.uuid, volume: playable.volume, path: "" },
+            { uuid: data.mainUuid, volume: data.volume, path: "" },
             devices, this.loops
-        ); // TODO: Use function on playable to get final volume (affected by all parents).
+        );
         instance.onEnd.addHandler(() => {
-            console.log(`Instance of ${playable.name} finished playing.`);
+            console.log(`Instance of ${data.mainUuid} finished playing.`);
             this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-            this._onStop.raise(playable.uuid);
+            // TODO: The hierarchy may have changed. Request it from the main process.
+            this._onStop.raise(data.hierarchy);
             void this.updatePTTState();
             this.raiseSingleInstanceCheckUpdate();
         });
@@ -117,9 +122,10 @@ export default class AudioManager {
             throw error;
         }
 
-        console.log(`Added and playing instance of sound at ${playable.uuid}.`);
+        console.log(`Added and playing instance of sound at ${data.mainUuid}.`);
         this.playingInstances.push(instance);
-        this._onPlay.raise(playable);
+        // TODO: Should be fired from the main process.
+        this._onPlay.raise(data);
         void this.updatePTTState();
         this.raiseSingleInstanceCheckUpdate();
     }
@@ -191,7 +197,8 @@ export default class AudioManager {
         for (const instance of instancesCopy) {
             instance.stop();
             this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-            this._onStop.raise(uuid);
+            // TODO: Request hierarchy from the main process.
+            //this._onStop.raise(uuid);
             console.log(`Stopped an instance of the Playable with UUID ${uuid}.`);
         }
         if (raiseUpdates) {

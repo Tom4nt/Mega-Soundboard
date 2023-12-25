@@ -4,6 +4,7 @@ import { ActionName } from "../quickActions";
 
 export type OptionalSettings = Optional<Settings>;
 
+// TODO: Move settings model to main process.
 // All functions must be static so instances can be passed between processes.
 export default class Settings {
     constructor(

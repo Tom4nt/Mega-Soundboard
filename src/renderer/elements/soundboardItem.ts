@@ -1,8 +1,5 @@
-import { PlayableAddedArgs } from "../../shared/interfaces";
 import Keys from "../../shared/keys";
-import { findInContainer } from "../../shared/models/container";
-import { Playable, equals } from "../../shared/models/playable";
-import { Soundboard, soundboardEquals } from "../../shared/models/soundboard";
+import { ISoundboardData, PlayData, UuidHierarchy } from "../../shared/models/data";
 import { PlayableItem, Tooltip } from "../elements";
 import MSR from "../msr";
 import Actions from "../util/actions";
@@ -23,7 +20,7 @@ export default class SoundboardItem extends Draggable {
         else this.classList.remove("selected");
     }
 
-    constructor(public soundboard: Soundboard) {
+    constructor(public soundboard: ISoundboardData) {
         super();
         this.lockHorizontal = true;
         this.init();
@@ -68,14 +65,15 @@ export default class SoundboardItem extends Draggable {
     }
 
     private addListeners(): void {
-        this.addEventListener("auxclick", (e) => {
+        this.addEventListener("auxclick", async (e) => {
             if (e.button === 1) {
-                MSR.instance.audioManager.stopMultiple(this.soundboard.playables.map(x => x.uuid));
+                const sounds = await window.actions.getAllSounds(this.soundboard.uuid);
+                MSR.instance.audioManager.stopMultiple(sounds.map(x => x.uuid));
             }
         });
 
         this.addEventListener("contextmenu", async () => {
-            await Actions.editSoundboard(this.soundboard);
+            await Actions.editSoundboard(this.soundboard.uuid);
         });
 
         this.addEventListener("click", () => {
@@ -113,8 +111,6 @@ export default class SoundboardItem extends Draggable {
     private addGlobalListeners(): void {
         window.events.onSoundboardChanged.addHandler(this.handleSoundboardChanged);
         window.events.onKeybindPressed.addHandler(this.handleKeybindPressed);
-        window.events.onPlayableAdded.addHandler(this.handlePlayableAdded);
-        window.events.onPlayableRemoved.addHandler(this.handlePlayableRemoved);
         MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.addHandler(this.handleStop);
     }
@@ -122,8 +118,6 @@ export default class SoundboardItem extends Draggable {
     private removeGlobalListeners(): void {
         window.events.onSoundboardChanged.removeHandler(this.handleSoundboardChanged);
         window.events.onKeybindPressed.removeHandler(this.handleKeybindPressed);
-        window.events.onPlayableAdded.removeHandler(this.handlePlayableAdded);
-        window.events.onPlayableRemoved.removeHandler(this.handlePlayableRemoved);
         MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
         MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
     }
@@ -161,21 +155,21 @@ export default class SoundboardItem extends Draggable {
 
     // Handlers
 
-    private handleSoundboardChanged = (sb: Soundboard): void => {
-        if (soundboardEquals(sb, this.soundboard)) {
+    private handleSoundboardChanged = (sb: ISoundboardData): void => {
+        if (sb.uuid === this.soundboard.uuid) {
             this.soundboard = sb;
             this.updateElements();
         }
     };
 
-    private handlePlay = (p: Playable): void => {
-        if (findInContainer(this.soundboard, p.uuid)) {
+    private handlePlay = (p: PlayData): void => {
+        if (p.hierarchy.includes(this.soundboard.uuid)) {
             this.updatePlayingIndicator(1);
         }
     };
 
-    private handleStop = (uuid: string): void => {
-        if (findInContainer(this.soundboard, uuid)) {
+    private handleStop = (hierarchy: UuidHierarchy): void => {
+        if (hierarchy.includes(this.soundboard.uuid)) {
             this.updatePlayingIndicator(-1);
         }
     };
@@ -184,14 +178,5 @@ export default class SoundboardItem extends Draggable {
         if (Keys.equals(keybind, this.soundboard.keys)) {
             window.actions.setCurrentSoundboard(this.soundboard.uuid);
         }
-    };
-
-    private handlePlayableAdded = (e: PlayableAddedArgs): void => {
-        this.soundboard.playables.splice(e.index ?? 0, 0, e.playable);
-    };
-
-    private handlePlayableRemoved = (p: Playable): void => {
-        const index = this.soundboard.playables.findIndex(x => equals(x, p));
-        if (index) this.soundboard.playables.splice(index, 1);
     };
 }

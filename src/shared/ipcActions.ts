@@ -1,6 +1,6 @@
 import { NonOptional, UpdaterState } from "./interfaces";
 import { OptionalSettings, Settings } from "./models";
-import { IGroupData, ISoundData, ISoundboardData } from "./models/data";
+import { IPlayableData, ISoundData, ISoundboardData, PlayData } from "./models/data";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {
@@ -13,35 +13,37 @@ class ConcreteActions {
     zoomGet: (() => Promise<number>) | null = null;
     zoomReset: (() => void) | null = null;
 
-    play: ((playableUuid: string) => void) | null = null;
-
     addSounds: ((sounds: ISoundData[], destinationId: string | null, moveFile: boolean, startIndex?: number) => Promise<string>) | null = null;
-    editSound: ((data: ISoundData) => void) | null = null;
-    editGroup: ((data: IGroupData) => void) | null = null;
-    movePlayable: ((id: string, destinationId: string | null, destinationIndex: number) => Promise<string>) | null = null;
-    copyPlayable: ((id: string, destinationId: string | null, destinationIndex: number) => Promise<string>) | null = null;
-    deletePlayable: ((id: string) => void) | null = null;
+    editPlayable: ((data: IPlayableData) => void) | null = null;
+    movePlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => Promise<string>) | null = null;
+    copyPlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => Promise<string>) | null = null;
+    deletePlayable: ((uuid: string) => void) | null = null;
     getNewSoundsFromPaths: ((paths: string[]) => Promise<ISoundData[]>) | null = null;
     getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
-    // getPlayableRoot: ((uuid: string) => Promise<Soundboard | undefined>) | null = null;
+    getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
+    getPlayable: ((uuid: string) => Promise<IPlayableData | undefined>) | null = null;
+    getContainerItems: ((uuid: string) => Promise<IPlayableData[]>) | null = null;
+    getAllSounds: ((rootUuid: string) => Promise<ISoundData[]>) | null = null;
+    getPlayData: ((uuid: string) => Promise<PlayData>) | null = null;
 
     getSoundboard: ((uuid: string) => Promise<ISoundboardData>) | null = null;
     getNewSoundboard: (() => Promise<ISoundboardData>) | null = null;
     addSoundboard: ((soundboard: ISoundboardData) => void) | null = null;
-    moveSoundboard: ((id: string, destinationIndex: number) => void) | null = null;
-    deleteSoundboard: ((id: string) => void) | null = null;
+    moveSoundboard: ((uuid: string, destinationIndex: number) => void) | null = null;
+    deleteSoundboard: ((uuid: string) => void) | null = null;
     editSoundboard: ((soundboard: ISoundboardData) => void) | null = null;
-    setCurrentSoundboard: ((id: string) => void) | null = null;
+    setCurrentSoundboard: ((uuid: string) => void) | null = null;
+    getCurrentSoundboard: (() => Promise<ISoundboardData | undefined>) | null = null;
     getSoundboards: (() => Promise<ISoundboardData[]>) | null = null;
     getInitialSoundboardIndex: (() => Promise<number>) | null = null;
-    sortSoundboard: ((id: string) => Promise<void>) | null = null;
+    sortSoundboard: ((uuid: string) => Promise<void>) | null = null;
 
     flagChangelogViewed: (() => void) | null = null;
     installUpdate: (() => void) | null = null;
     checkUpdate: (() => Promise<UpdaterState>) | null = null;
 
-    setMainDevice: ((id?: string, volume?: number) => void) | null = null;
-    setSecondaryDevice: ((id?: string | null, volume?: number) => void) | null = null;
+    setMainDevice: ((uuid?: string, volume?: number) => void) | null = null;
+    setSecondaryDevice: ((uuid?: string | null, volume?: number) => void) | null = null;
 
     getSettings: (() => Promise<Settings>) | null = null;
     saveSettings: ((settings: OptionalSettings) => void) | null = null;
@@ -58,7 +60,7 @@ class ConcreteActions {
     parsePath: ((path: string) => Promise<string | null>) | null = null;
 
     startKeyRecordingSession: (() => Promise<string>) | null = null;
-    stopKeyRecordingSession: ((id: string) => void) | null = null;
+    stopKeyRecordingSession: ((uuid: string) => void) | null = null;
     holdPTT: (() => Promise<string>) | null = null;
     releasePTT: ((handle: string) => Promise<void>) | null = null;
 

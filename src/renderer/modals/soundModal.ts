@@ -1,8 +1,9 @@
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
 import { Event, ExposedEvent } from "../../shared/events";
+import { ISoundData } from "../../shared/models/data";
 
-type SaveEventArgs = { sound: Sound, moveRequested: boolean }
+type SaveEventArgs = { sound: ISoundData, moveRequested: boolean }
 
 // TODO: Create a Group modal or have a modal for all playables?
 export default class SoundModal extends Modal {
@@ -14,17 +15,17 @@ export default class SoundModal extends Modal {
     private okButton!: HTMLButtonElement;
     private removeButton!: HTMLButtonElement;
 
-    private loadedSound: Sound;
+    private loadedSound: ISoundData;
     private isNew: boolean;
     private isInLinkedSoundboard: boolean;
 
     public get onSave(): ExposedEvent<SaveEventArgs> { return this._onSave.expose(); }
     private readonly _onSave = new Event<SaveEventArgs>();
 
-    public get onRemove(): ExposedEvent<Sound> { return this._onRemove.expose(); }
-    private readonly _onRemove = new Event<Sound>();
+    public get onRemove(): ExposedEvent<string> { return this._onRemove.expose(); }
+    private readonly _onRemove = new Event<string>();
 
-    constructor(sound: Sound, isNew: boolean, isInLinkedSoundboard: boolean) {
+    constructor(sound: ISoundData, isNew: boolean, isInLinkedSoundboard: boolean) {
         super(false);
         this.loadedSound = sound;
         this.isNew = isNew;
@@ -120,7 +121,7 @@ export default class SoundModal extends Modal {
     }
 
     private removeSound(): void {
-        this._onRemove.raise(this.loadedSound);
+        this._onRemove.raise(this.loadedSound.uuid);
         this.close();
     }
 }

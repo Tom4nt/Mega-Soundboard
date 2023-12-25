@@ -1,6 +1,8 @@
-export default abstract class DropDownItem extends HTMLElement {
+export class DropdownItem extends HTMLElement {
     constructor(
-        public readonly text: string) {
+        public readonly text: string,
+        public readonly value: unknown,
+    ) {
         super();
     }
 

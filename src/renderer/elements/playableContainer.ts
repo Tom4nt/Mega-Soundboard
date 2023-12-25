@@ -1,6 +1,5 @@
 import { Event, ExposedEvent } from "../../shared/events";
-import { isGroup } from "../../shared/models/group";
-import { Playable, equals } from "../../shared/models/playable";
+import { IPlayableData } from "../../shared/models/data";
 import { Draggable, FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 
@@ -32,8 +31,8 @@ export default class PlayableContainer extends HTMLElement {
         this.filterItems(v);
     }
 
-    private _onItemDragStart = new Event<Playable>();
-    public get onItemDragStart(): ExposedEvent<Playable> { return this._onItemDragStart.expose(); }
+    private _onItemDragStart = new Event<IPlayableData>();
+    public get onItemDragStart(): ExposedEvent<IPlayableData> { return this._onItemDragStart.expose(); }
 
     private _onFileDropped = new Event<FileDroppedEventArgs>();
     public get onFileDropped(): ExposedEvent<FileDroppedEventArgs> { return this._onFileDropped.expose(); }
@@ -88,10 +87,10 @@ export default class PlayableContainer extends HTMLElement {
         document.removeEventListener("mousemove", this.handleMouseMove);
     }
 
-    loadItems(playables: Playable[]): void {
+    loadItems(playables: IPlayableData[]): void {
         this.clear();
         for (const playable of playables) {
-            if (!this._dragElement || !equals(this._dragElement.playable, playable))
+            if (!this._dragElement || this._dragElement.playable.uuid !== playable.uuid)
                 this.addItem(playable);
         }
         this.filterItems(this._filter);
@@ -117,14 +116,14 @@ export default class PlayableContainer extends HTMLElement {
         this.updateMessage();
     }
 
-    addItem(playable: Playable, index?: number): void {
+    addItem(playable: IPlayableData, index?: number): void {
         const item = new PlayableItem(playable);
 
         item.onExpandRequested.addHandler(() => {
             if (this._currSubContainer?.parentUuid === playable.uuid) {
                 this.closeCurrentSubContainer();
             } else {
-                this.openSubContainer(item);
+                void this.openSubContainer(item);
             }
         });
 
@@ -166,10 +165,10 @@ export default class PlayableContainer extends HTMLElement {
         }
     }
 
-    removeItem(playable: Playable): void {
+    removeItem(uuid: string): void {
         let i = 0;
         for (const item of this._loadedItems) {
-            if (equals(item.playable, playable)) {
+            if (item.playable.uuid === uuid) {
                 item.destroy();
                 this._loadedItems.splice(i, 1);
                 this.updateMessage();
@@ -222,7 +221,7 @@ export default class PlayableContainer extends HTMLElement {
         this._onFileDropped.raise({ event: e, index: index });
     }
 
-    private openSubContainer(under: PlayableItem): void {
+    private async openSubContainer(under: PlayableItem): Promise<void> {
         this.closeCurrentSubContainer();
         const root = new PlayableContainer(under.playable.uuid, () => "No sounds in this group");
         this._currSubContainer = root;
@@ -231,7 +230,8 @@ export default class PlayableContainer extends HTMLElement {
         root.onItemDropped.addHandler(this.handleSubContainerItemDropped);
         under.after(root);
 
-        if (isGroup(under.playable)) root.loadItems(under.playable.playables);
+        const items = await window.actions.getContainerItems(under.playable.uuid);
+        if (under.playable.isGroup) root.loadItems(items);
         const h = root.getHeight();
 
         void root.offsetWidth; // Trigger reflow

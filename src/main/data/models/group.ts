@@ -96,6 +96,10 @@ export class Group implements IPlayableContainer {
         this.mode = data.mode;
     }
 
+    asData(): IGroupData {
+        return { ...this, isGroup: true };
+    }
+
     static fromData(data: IGroupData): Group {
         return new Group(CommonInfo.fromData(data), new Container([]), data.mode);
     }

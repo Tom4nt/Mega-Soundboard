@@ -4,9 +4,8 @@ import Utils from "../utils/utils";
 import { Settings } from "../../shared/models";
 import { promises as fs, constants as fsc } from "fs";
 import * as fsSync from "fs";
-import { randomUUID } from "crypto";
-import { Soundboard, convertSoundboard, getDefault, getSavableSoundboard } from "../../shared/models/soundboard";
 import { convertSettings } from "../../shared/models/settings";
+import { Soundboard } from "./models/soundboard";
 
 type JSONObj = { [key: string]: unknown }
 
@@ -56,7 +55,7 @@ export default class DataAccess {
     }
 
     static async saveSoundboards(soundboards: Soundboard[]): Promise<void> {
-        const obj = { soundboards: soundboards.map(x => getSavableSoundboard(x)) };
+        const obj = { soundboards: soundboards.map(x => x.getSavable()) };
         const json = JSON.stringify(obj, undefined, 4);
         await fs.mkdir(savePath, { recursive: true });
         await fs.writeFile(soundboardsPath, json);
@@ -82,13 +81,13 @@ export default class DataAccess {
     private static getSoundboards(soundboards: JSONObj[]): Soundboard[] {
         const sbs: Soundboard[] = [];
         soundboards.forEach(sb => {
-            sbs.push(convertSoundboard(sb, () => randomUUID()));
+            sbs.push(Soundboard.convert(sb));
         });
         return sbs;
     }
 
     private static getDefaultSoundboards(): Soundboard[] {
-        const sbs = [getDefault(randomUUID(), "Default")];
+        const sbs = [Soundboard.getDefault("Default")];
         return sbs;
     }
 }

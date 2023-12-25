@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import * as p from "path";
 import Utils from "./utils/utils";
 import { Event, ExposedEvent } from "../shared/events";
-import SoundUtils from "./utils/soundUtils";
+import { Sound } from "./data/models/sound";
 
 export default class FolderWatcher {
     private watcher: AsyncIterable<fs.FileChangeInfo<string>>;
@@ -43,13 +43,13 @@ export default class FolderWatcher {
 
         if (exists) {
             const stat = await fs.stat(path);
-            if (!stat.isFile() || !SoundUtils.isValidSoundFile(path)) return;
+            if (!stat.isFile() || !Sound.isValidSoundFile(path)) return;
             console.log(`Added ${path}`);
             this._onSoundAdded.raise(path);
         }
 
         else {
-            if (!SoundUtils.isValidSoundFile(path)) return;
+            if (!Sound.isValidSoundFile(path)) return;
             console.log(`Removed ${path}`);
             this._onSoundRemoved.raise(path);
         }

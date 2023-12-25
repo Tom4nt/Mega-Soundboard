@@ -1,10 +1,11 @@
 import { Settings } from "../models";
-import { Soundboard } from "./soundboard";
+import { IPlayableData, ISoundboardData } from "./data";
 
 export default class InitialContent {
     constructor(
         readonly settings: Settings,
-        readonly soundboards: Soundboard[],
+        readonly soundboards: ISoundboardData[],
+        readonly initialPlayables: IPlayableData[],
         readonly shouldShowChangelog: boolean,
     ) { }
 }

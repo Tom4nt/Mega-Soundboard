@@ -7,10 +7,7 @@ import Utils from "../util/utils";
 import Actions from "../util/actions";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
-import { Playable, equals } from "../../shared/models/playable";
-import { isSound } from "../../shared/models/sound";
-import { isGroup } from "../../shared/models/group";
-import { findInContainer } from "../../shared/models/container";
+import { IPlayableData, PlayData, UuidHierarchy } from "../../shared/models/data";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 type DragSession = { sourceSoundboard: SimpleSoundboard, targetSoundboard: SimpleSoundboard | null };
@@ -39,7 +36,7 @@ export default class PlayableItem extends Draggable {
         return "drag";
     }
 
-    constructor(public playable: Playable) {
+    constructor(public playable: IPlayableData) {
         super();
         this.init();
     }
@@ -123,14 +120,15 @@ export default class PlayableItem extends Draggable {
         right.append(expandIcon);
 
         const items: Node[] = [
-            left, ...isGroup(this.playable) ? [right] : [], this.indicatorElement
+            left, ...this.playable.isGroup ? [right] : [], this.indicatorElement
         ];
         this.append(...items);
 
         const handleClick = async (e: MouseEvent): Promise<void> => {
             if (e.target === this.indicatorElement) return;
             try {
-                await MSR.instance.audioManager.play(this.playable);
+                const data = await window.actions.getPlayData(this.playable.uuid);
+                await MSR.instance.audioManager.play(data);
             } catch (error) {
                 new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
                 await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
@@ -147,7 +145,7 @@ export default class PlayableItem extends Draggable {
         });
 
         this.addEventListener("contextmenu", () => {
-            void Actions.editPlayable(this.playable);
+            void Actions.editPlayable(this.playable.uuid);
         });
 
         this.indicatorElement.addEventListener("click", () => {
@@ -197,24 +195,20 @@ export default class PlayableItem extends Draggable {
         return copies;
     }
 
-    private containsPlayable(uuid: string): boolean {
-        return isGroup(this.playable) && findInContainer(this.playable, uuid) != undefined;
-    }
-
     // Handlers
 
-    private handlePlay = (playable: Playable): void => {
-        if (equals(playable, this.playable) || this.containsPlayable(playable.uuid))
+    private handlePlay = (playable: PlayData): void => {
+        if (playable.hierarchy.includes(this.playable.uuid))
             this.updatePlayingIndicator(1);
     };
 
-    private handleStop = (id: string): void => {
-        if (id == this.playable.uuid || this.containsPlayable(id))
+    private handleStop = (hierarchy: UuidHierarchy): void => {
+        if (hierarchy.includes(this.playable.uuid))
             this.updatePlayingIndicator(-1);
     };
 
-    private handlePlayableChanged = (playable: Playable): void => {
-        if (equals(playable, this.playable) && isSound(playable)) {
+    private handlePlayableChanged = (playable: IPlayableData): void => {
+        if (playable.uuid === this.playable.uuid) {
             this.playable = playable;
             this.update();
         }
@@ -223,7 +217,8 @@ export default class PlayableItem extends Draggable {
     private handleKeybindPressed = async (keys: number[]): Promise<void> => {
         if (Keys.equals(keys, this.playable.keys)) {
             try {
-                await MSR.instance.audioManager.play(this.playable);
+                const data = await window.actions.getPlayData(this.playable.uuid);
+                await MSR.instance.audioManager.play(data);
             } catch (error) {
                 await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
             }
