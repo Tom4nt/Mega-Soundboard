@@ -1,99 +1,109 @@
 import * as p from "path";
 import { randomUUID } from "crypto";
 import { tryGetValue } from "../../../shared/sharedUtils";
-import { CommonInfo } from "./commonInfo";
-import { ICommon, IContainer, IPlayable, IVolumeSource, JSONObject } from "./interfaces";
+import { BaseProperties } from "./baseProperties";
+import { IPlayable, IPlayableContainer, JSONObject } from "./interfaces";
 import Utils from "../../utils/utils";
 import { validSoundExts } from "../../../shared/sharedUtils";
-import { ISoundData } from "../../../shared/models/data";
+import { ISoundData } from "../../../shared/models/dataInterfaces";
 
 export class Sound implements IPlayable {
-    readonly parent: (IContainer & IVolumeSource) | null = null;
+	constructor(
+		private readonly baseProperties: BaseProperties,
+		public path: string,
+	) {
+		this.uuid = baseProperties.uuid;
+		this.name = baseProperties.name;
+		this.keys = baseProperties.keys;
+		this.volume = baseProperties.volume;
+	}
 
-    constructor(
-        private readonly info: CommonInfo,
-        public path: string,
-    ) { }
+	readonly isSound = true;
+	readonly isGroup = false;
+	readonly isContainer = false;
+	readonly isSoundboard = false;
 
-    get uuid(): string { return this.info.uuid; }
-    get name(): string { return this.info.name; }
-    set name(value: string) { this.info.name = value; }
-    get volume(): number { return this.info.volume; }
-    set volume(value: number) { this.info.volume = value; }
-    get keys(): number[] { return this.info.keys; }
+	readonly uuid: string;
+	name: string;
+	keys: number[];
+	volume: number;
+	readonly parent: IPlayableContainer | null = null;
 
-    getAudioPath(): string {
-        return this.path;
-    }
+	getAudioPath(): string {
+		return this.path;
+	}
 
-    getVolume(): number {
-        return ((this.parent?.getVolume() ?? 0) / 100) * (this.info.volume / 100);
-    }
+	getFinalVolume(): number {
+		return ((this.parent?.getFinalVolume() ?? 0) / 100) * (this.volume / 100);
+	}
 
-    getSavable(): JSONObject {
-        return {
-            ...this.info.getSavable(),
-            path: this.path,
-        };
-    }
+	getSavable(): JSONObject {
+		return {
+			...this.baseProperties.getSavable(),
+			path: this.path,
+		};
+	}
 
-    copy(): Sound {
-        return Sound.convert(this.getSavable());
-    }
+	copy(): Sound {
+		return Sound.convert(this.getSavable());
+	}
 
-    compare(other: ICommon): number {
-        return this.info.compare(other);
-    }
+	compare(other: IPlayable): number {
+		return this.name.localeCompare(other.name);
+	}
 
-    edit(data: ISoundData): void {
-        this.info.name = data.name;
-        this.info.volume = data.volume;
-        this.path = data.path;
+	edit(data: ISoundData): void {
+		this.name = data.name;
+		this.volume = data.volume;
+		this.path = data.path;
 
-        this.info.keys.length = 0;
-        this.info.keys.push(...data.keys);
-    }
+		this.baseProperties.keys.length = 0;
+		this.baseProperties.keys.push(...data.keys);
+	}
 
-    asData(): ISoundData {
-        return { ...this, isGroup: false };
-    }
+	asData(): ISoundData {
+		return {
+			uuid: this.uuid,
+			name: this.name,
+			path: this.path,
+			keys: this.keys,
+			volume: this.volume,
+			isGroup: false,
+		};
+	}
 
-    static fromData(data: ISoundData): Sound {
-        return new Sound(CommonInfo.fromData(data), data.path);
-    }
+	static fromData(data: ISoundData): Sound {
+		return new Sound(BaseProperties.fromData(data), data.path);
+	}
 
-    static isSound(data: IPlayable): data is Sound {
-        return "path" in data || "url" in data;
-    }
+	static convert(data: JSONObject): Sound {
+		const info = BaseProperties.convert(data);
 
-    static convert(data: JSONObject): Sound {
-        const info = CommonInfo.convert(data);
+		let path: string = "?";
+		const pathRes = tryGetValue(data, ["path", "url"], v => typeof v === "string");
+		if (pathRes) path = pathRes as string;
 
-        let path: string = "?";
-        const pathRes = tryGetValue(data, ["path", "url"], v => typeof v === "string");
-        if (pathRes) path = pathRes as string;
+		return new Sound(info, path);
+	}
 
-        return new Sound(info, path);
-    }
+	static getNewSoundsFromPaths(paths: string[]): Sound[] {
+		return Array.from(this.iterateSoundsFromPaths(paths));
+	}
 
-    static getNewSoundsFromPaths(paths: string[]): Sound[] {
-        return Array.from(this.iterateSoundsFromPaths(paths));
-    }
+	static *iterateSoundsFromPaths(paths: string[]): Generator<Sound> {
+		for (const path of paths) {
+			const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(path), 100, []);
+			yield new Sound(info, path);
+		}
+	}
 
-    static *iterateSoundsFromPaths(paths: string[]): Generator<Sound> {
-        for (const path of paths) {
-            const info = new CommonInfo(randomUUID(), Utils.getNameFromFile(path), 100, []);
-            yield new Sound(info, path);
-        }
-    }
+	static isValidSoundFile(path: string): boolean {
+		let ext = p.extname(path);
+		if (ext.startsWith(".")) ext = ext.substring(1);
+		return validSoundExts.includes(ext);
+	}
 
-    static isValidSoundFile(path: string): boolean {
-        let ext = p.extname(path);
-        if (ext.startsWith(".")) ext = ext.substring(1);
-        return validSoundExts.includes(ext);
-    }
-
-    static getValidSoundPaths(paths: string[]): string[] {
-        return paths.filter(x => this.isValidSoundFile(x));
-    }
+	static getValidSoundPaths(paths: string[]): string[] {
+		return paths.filter(x => this.isValidSoundFile(x));
+	}
 }

@@ -1,125 +1,139 @@
-import { IGroupData } from "../../../shared/models/data";
+import { convertPlayables } from "../../utils/utils";
+import { IGroupData } from "../../../shared/models/dataInterfaces";
 import { tryGetValue } from "../../../shared/sharedUtils";
-import { CommonInfo } from "./commonInfo";
+import { BaseProperties } from "./baseProperties";
+import { IPlayable, IPlayableContainer, JSONObject } from "./interfaces";
 import { Container } from "./container";
-import { ICommon, IContainer, IPlayable, IPlayableContainer, IVolumeSource, JSONObject } from "./interfaces";
 
 type GroupMode = "sequence" | "random" | "first";
 
 export class Group implements IPlayableContainer {
-    readonly parent: (IContainer & IVolumeSource) | null = null;
+	constructor(
+		private readonly baseProperties: BaseProperties,
+		public mode: GroupMode,
+		public current: number = 0,
+		playables: IPlayable[],
+	) {
+		this.container = new Container(playables);
+		this.uuid = baseProperties.uuid;
+		this.name = baseProperties.name;
+		this.volume = baseProperties.volume;
+		this.keys = baseProperties.keys;
+	}
 
-    constructor(
-        private readonly info: CommonInfo,
-        private readonly container: IContainer,
-        public mode: GroupMode,
-        public current: number = 0,
-    ) { }
+	readonly isGroup = true;
+	readonly isSound = false;
+	readonly isSoundboard = false;
+	readonly isContainer = true;
 
-    get uuid(): string { return this.info.uuid; }
-    get name(): string { return this.info.name; }
-    set name(value: string) { this.info.name = value; }
-    get volume(): number { return this.info.volume; }
-    set volume(value: number) { this.info.volume = value; }
-    get keys(): number[] { return this.info.keys; }
+	private readonly container: Container;
+	readonly parent: IPlayableContainer | null = null;
+	readonly uuid: string;
+	name: string;
+	volume: number;
+	keys: number[];
 
-    addPlayable(playable: IPlayable): void {
-        this.container.addPlayable(playable);
-    }
+	getPlayables(): readonly IPlayable[] {
+		return this.container.getPlayables();
+	}
 
-    removePlayable(playable: IPlayable): void {
-        this.container.removePlayable(playable);
-    }
+	addPlayable(playable: IPlayable, index?: number | undefined): void {
+		playable.parent = this;
+		this.container.addPlayable(playable, index);
+	}
 
-    containsPlayable(playable: IPlayable): boolean {
-        return this.container.containsPlayable(playable);
-    }
+	removePlayable(playable: IPlayable): void {
+		playable.parent = null;
+		this.container.removePlayable(playable);
+	}
 
-    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
-        return this.container.findPlayablesRecursive(predicate);
-    }
+	containsPlayable(playable: IPlayable): boolean {
+		return this.container.containsPlayable(playable);
+	}
 
-    sortPlayables(): void {
-        return this.container.sortPlayables();
-    }
+	findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
+		return this.container.findPlayablesRecursive(predicate);
+	}
 
-    getAudioPath(): string {
-        const playables = this.container.getPlayables();
-        if (playables.length <= 0) throw Error("The group is empty.");
-        let index = 0;
-        switch (this.mode) {
-            case "first":
-                index = 0;
-                break;
-            case "sequence":
-                this.current = (this.current + 1) % playables.length;
-                index = this.current;
-                break;
-            case "random":
-                index = Math.floor(Math.random() * playables.length);
-                break;
-        }
-        return playables[index]!.getAudioPath();
-    }
+	sortPlayables(): void {
+		this.container.sortPlayables();
+	}
 
-    getPlayables(): readonly IPlayable[] {
-        return this.container.getPlayables();
-    }
+	getAudioPath(): string {
+		const playables = this.container.getPlayables();
+		if (playables.length <= 0) throw Error("The group is empty.");
+		let index = 0;
+		switch (this.mode) {
+			case "first":
+				index = 0;
+				break;
+			case "sequence":
+				this.current = (this.current + 1) % playables.length;
+				index = this.current;
+				break;
+			case "random":
+				index = Math.floor(Math.random() * playables.length);
+				break;
+		}
+		return playables[index]!.getAudioPath();
+	}
 
-    getVolume(): number {
-        return ((this.parent?.getVolume() ?? 0) / 100) * (this.info.volume / 100);
-    }
+	getFinalVolume(): number {
+		return ((this.parent?.getFinalVolume() ?? 0) / 100) * (this.volume / 100);
+	}
 
-    getSavable(): JSONObject {
-        return {
-            ...this.info.getSavable(),
-            playables: this.container.getPlayables().map(x => x.getSavable()),
-            mode: this.mode,
-        };
-    }
+	getSavable(): JSONObject {
+		return {
+			...this.baseProperties.getSavable(),
+			playables: this.getPlayables().map(x => x.getSavable()),
+			mode: this.mode,
+		};
+	}
 
-    copy(): Group {
-        return Group.convert(this.getSavable());
-    }
+	copy(): Group {
+		return Group.convert(this.getSavable());
+	}
 
-    compare(other: ICommon): number {
-        return this.info.compare(other);
-    }
+	compare(other: IPlayable): number {
+		return this.name.localeCompare(other.name);
+	}
 
-    edit(data: IGroupData): void {
-        this.info.name = data.name;
-        this.info.volume = data.volume;
+	edit(data: IGroupData): void {
+		this.baseProperties.name = data.name;
+		this.baseProperties.volume = data.volume;
 
-        this.info.keys.length = 0;
-        this.info.keys.push(...data.keys);
+		this.baseProperties.keys.length = 0;
+		this.baseProperties.keys.push(...data.keys);
 
-        this.mode = data.mode;
-    }
+		this.mode = data.mode;
+	}
 
-    asData(): IGroupData {
-        return { ...this, isGroup: true };
-    }
+	asData(): IGroupData {
+		return {
+			uuid: this.uuid,
+			name: this.name,
+			mode: this.mode,
+			keys: this.keys,
+			volume: this.volume,
+			isGroup: true,
+		};
+	}
 
-    static fromData(data: IGroupData): Group {
-        return new Group(CommonInfo.fromData(data), new Container([]), data.mode);
-    }
+	static fromData(data: IGroupData): Group {
+		return new Group(BaseProperties.fromData(data), data.mode, 0, []);
+	}
 
-    static isGroup(data: IPlayable): data is Group {
-        return "playables" in data && "mode" in data;
-    }
+	static convert(data: JSONObject): Group {
+		const info = BaseProperties.convert(data);
 
-    static convert(data: JSONObject): Group {
-        const info = CommonInfo.convert(data);
+		let playables: IPlayable[] = [];
+		const res = tryGetValue(data, ["playables"], v => Array.isArray(v));
+		if (res) playables = convertPlayables(res as []);
 
-        let playables: IPlayable[] = [];
-        const res = tryGetValue(data, ["playables"], v => Array.isArray(v));
-        if (res) playables = Container.convertPlayables(res as []);
+		let mode: GroupMode = "sequence";
+		const res2 = tryGetValue(data, ["mode"], v => typeof v === "string");
+		if (res2) mode = res2 as GroupMode;
 
-        let mode: GroupMode = "sequence";
-        const res2 = tryGetValue(data, ["mode"], v => typeof v === "string");
-        if (res2) mode = res2 as GroupMode;
-
-        const container = new Container(playables);
-        return new Group(info, container, mode, 0);
-    }
+		return new Group(info, mode, 0, playables);
+	}
 }

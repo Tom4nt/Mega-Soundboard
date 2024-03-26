@@ -1,65 +1,44 @@
-import { isPlayableContainer } from "../../utils/utils";
-import { Group } from "./group";
-import { IContainer, IPlayable, JSONObject } from "./interfaces";
-import { Sound } from "./sound";
+import { IContainer, IPlayable, IPlayableContainer } from "./interfaces";
 
 export class Container implements IContainer {
-    constructor(
-        private readonly playables: IPlayable[],
-    ) { }
+	constructor(
+		private readonly playables: IPlayable[],
+	) { }
 
-    getPlayables(): readonly IPlayable[] {
-        return this.playables;
-    }
+	readonly isSoundboard = false;
+	readonly isGroup = false;
 
-    addPlayable(playable: IPlayable, index?: number): void {
-        if (playable.parent != null) {
-            throw Error("The Playable can't be added to the container because it already has a parent.");
-        }
-        playable.parent = this;
-        if (index == undefined) index = this.playables.length - 1;
-        this.playables.splice(index, 0, playable);
-    }
+	getPlayables(): readonly IPlayable[] {
+		return this.playables;
+	}
 
-    removePlayable(playable: IPlayable): void {
-        if (playable.parent != this) {
-            throw Error("The Playable is not in this container.");
-        }
-        playable.parent = null;
-        const index = this.playables.indexOf(playable);
-        this.playables.splice(index, 1);
-    }
+	addPlayable(playable: IPlayable, index?: number): void {
+		if (index == undefined) index = this.playables.length - 1;
+		this.playables.splice(index, 0, playable);
+	}
 
-    containsPlayable(playable: IPlayable): boolean {
-        return playable.parent == this && this.playables.indexOf(playable) >= 0;
-    }
+	removePlayable(playable: IPlayable): void {
+		playable.parent = null;
+		const index = this.playables.indexOf(playable);
+		this.playables.splice(index, 1);
+	}
 
-    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
-        const result: IPlayable[] = [];
-        for (const playable of this.playables) {
-            if (predicate(playable)) result.push(playable);
-            if (isPlayableContainer(playable)) {
-                result.push(...playable.findPlayablesRecursive(predicate));
-            }
-        }
-        return result;
-    }
+	containsPlayable(playable: IPlayable): boolean {
+		return this.playables.indexOf(playable) >= 0;
+	}
 
-    sortPlayables(): void {
-        this.playables.sort((a, b) => a.compare(b));
-    }
+	findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
+		const result: IPlayable[] = [];
+		for (const playable of this.playables) {
+			if (predicate(playable)) result.push(playable);
+			if (playable.isContainer) {
+				result.push(...(playable as IPlayableContainer).findPlayablesRecursive(predicate));
+			}
+		}
+		return result;
+	}
 
-    static convertPlayables(data: JSONObject[]): IPlayable[] {
-        const playables: IPlayable[] = [];
-        data.forEach(item => {
-            let s: IPlayable;
-            if ("playables" in item && "mode" in item) {
-                s = Group.convert(item);
-            } else {
-                s = Sound.convert(item);
-            }
-            playables.push(s);
-        });
-        return playables;
-    }
+	sortPlayables(): void {
+		this.playables.sort((a, b) => a.compare(b));
+	}
 }

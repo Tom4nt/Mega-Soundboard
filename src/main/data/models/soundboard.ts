@@ -1,152 +1,175 @@
 import { promises as fs } from "fs";
 import path = require("path");
 import { tryGetValue } from "../../../shared/sharedUtils";
-import Utils, { isPlayableContainer } from "../../utils/utils";
-import { CommonInfo } from "./commonInfo";
+import Utils, { convertPlayables } from "../../utils/utils";
+import { BaseProperties } from "./baseProperties";
 import { Container } from "./container";
-import { IPlayable, ICommon, IContainer, JSONObject, ICommonContainer } from "./interfaces";
+import { IPlayable, JSONObject, IPlayableContainer } from "./interfaces";
 import { Sound } from "./sound";
 import { randomUUID } from "crypto";
-import { ISoundboardData } from "../../../shared/models/data";
+import { ISoundboardData } from "../../../shared/models/dataInterfaces";
 
-export class Soundboard implements ICommonContainer {
-    constructor(
-        private readonly info: CommonInfo,
-        private readonly container: IContainer,
-        public linkedFolder: string | null,
-    ) { }
+export class Soundboard implements IPlayableContainer {
+	constructor(
+		private readonly baseProperties: BaseProperties,
+		public linkedFolder: string | null,
+		playables: IPlayable[],
+	) {
+		this.container = new Container(playables);
+		this.uuid = baseProperties.uuid;
+		this.name = baseProperties.name;
+		this.keys = baseProperties.keys;
+		this.volume = baseProperties.volume;
+	}
 
-    get uuid(): string { return this.info.uuid; }
-    get name(): string { return this.info.name; }
-    set name(value: string) { this.info.name = value; }
-    get volume(): number { return this.info.volume; }
-    set volume(value: number) { this.info.volume = value; }
-    get keys(): number[] { return this.info.keys; }
+	readonly isContainer = true;
+	readonly isSoundboard = true;
+	readonly isSound = false;
+	readonly isGroup = false;
 
-    addPlayable(playable: IPlayable, index?: number): void {
-        this.container.addPlayable(playable, index);
-    }
+	private readonly container: Container;
+	readonly uuid: string;
+	parent: IPlayableContainer | null = null;
+	name: string;
+	keys: number[];
+	volume: number;
 
-    removePlayable(playable: IPlayable): void {
-        this.container.removePlayable(playable);
-    }
+	getAudioPath(): string {
+		const playables = this.getPlayables();
+		const index = Math.floor(Math.random() * playables.length);
+		return playables[index]!.getAudioPath();
+	}
 
-    containsPlayable(playable: IPlayable): boolean {
-        return this.container.containsPlayable(playable);
-    }
+	copy(): IPlayable {
+		return Soundboard.convert(this.getSavable());
+	}
 
-    getPlayables(): readonly IPlayable[] {
-        return this.container.getPlayables();
-    }
+	getPlayables(): readonly IPlayable[] {
+		return this.container.getPlayables();
+	}
 
-    findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
-        return this.container.findPlayablesRecursive(predicate);
-    }
+	addPlayable(playable: IPlayable, index?: number | undefined): void {
+		playable.parent = this;
+		this.container.addPlayable(playable, index);
+	}
 
-    sortPlayables(): void {
-        return this.container.sortPlayables();
-    }
+	removePlayable(playable: IPlayable): void {
+		playable.parent = null;
+		this.container.removePlayable(playable);
+	}
 
-    getVolume(): number {
-        return this.info.volume;
-    }
+	containsPlayable(playable: IPlayable): boolean {
+		return this.container.containsPlayable(playable);
+	}
 
-    compare(other: ICommon): number {
-        return this.info.compare(other);
-    }
+	findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
+		return this.container.findPlayablesRecursive(predicate);
+	}
 
-    getDefault(uuid: string, name: string): Soundboard {
-        const info = new CommonInfo(uuid, name, 100, []);
-        return new Soundboard(info, new Container([]), null);
-    }
+	sortPlayables(): void {
+		this.container.sortPlayables();
+	}
 
-    getSavable(): JSONObject {
-        return {
-            name: this.name,
-            volume: this.volume,
-            keys: this.keys,
-            linkedFolder: this.linkedFolder,
-            sounds: this.getPlayables().map(p => p.getSavable()),
-        };
-    }
+	getFinalVolume(): number {
+		return this.volume;
+	}
 
-    edit(data: ISoundboardData): void {
-        this.info.name = data.name;
+	compare(other: IPlayable): number {
+		return this.name.localeCompare(other.name);
+	}
 
-        this.info.keys.length = 0;
-        this.info.keys.push(...data.keys);
+	getDefault(uuid: string, name: string): Soundboard {
+		const info = new BaseProperties(uuid, name, 100, []);
+		return new Soundboard(info, null, []);
+	}
 
-        this.info.volume = data.volume;
-        this.linkedFolder = data.linkedFolder;
-    }
+	getSavable(): JSONObject {
+		return {
+			name: this.name,
+			volume: this.volume,
+			keys: this.keys,
+			linkedFolder: this.linkedFolder,
+			sounds: this.container.getPlayables().map(p => p.getSavable()),
+		};
+	}
 
-    /** Adds Sounds to and/or removes them from the specified Soundboard as necessary
-     * to sync them with its linked folder. */
-    async syncSounds(): Promise<void> {
-        if (!this.linkedFolder) return;
-        await Utils.assertAccessibleDirectory(this.linkedFolder);
-        const files = await fs.readdir(this.linkedFolder);
+	edit(data: ISoundboardData): void {
+		this.name = data.name;
+		this.keys.length = 0;
+		this.keys.push(...data.keys);
+		this.volume = data.volume;
+		this.linkedFolder = data.linkedFolder;
+	}
 
-        // Loop through files and add unexisting sounds
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i]!;
-            const soundPath = path.join(this.linkedFolder, file);
-            if (!Sound.isValidSoundFile(soundPath)) return;
-            const soundWithPath = this.container.findPlayablesRecursive(
-                p => !isPlayableContainer(p) && p.getAudioPath() == soundPath
-            )[0];
-            const stat = await fs.stat(soundPath);
-            if (!soundWithPath && stat.isFile()) {
-                const info = new CommonInfo(randomUUID(), Utils.getNameFromFile(soundPath), 100, []);
-                const s = new Sound(info, soundPath);
-                this.container.addPlayable(s);
-            }
-        }
+	/** Adds Sounds to and/or removes them from the specified Soundboard as necessary
+	 * to sync them with its linked folder. */
+	async syncSounds(): Promise<void> {
+		if (!this.linkedFolder) return;
+		await Utils.assertAccessibleDirectory(this.linkedFolder);
+		const files = await fs.readdir(this.linkedFolder);
 
-        // Loop through existing sounds and remove those without a file
-        if (this.container.getPlayables().length > 0) {
-            const playables = this.container.findPlayablesRecursive(
-                p => !isPlayableContainer(p) && files.includes(p.getAudioPath())
-            );
-            playables.forEach(p => p.parent?.removePlayable(p));
-        }
-    }
+		// Loop through files and add unexisting sounds
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i]!;
+			const soundPath = path.join(this.linkedFolder, file);
+			if (!Sound.isValidSoundFile(soundPath)) return;
+			const soundWithPath = this.container.findPlayablesRecursive(
+				p => !p.isContainer && p.getAudioPath() == soundPath
+			)[0];
+			const stat = await fs.stat(soundPath);
+			if (!soundWithPath && stat.isFile()) {
+				const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(soundPath), 100, []);
+				const s = new Sound(info, soundPath);
+				this.container.addPlayable(s);
+			}
+		}
 
-    asData(): ISoundboardData {
-        return { ...this, hasSounds: this.getPlayables().length > 0 };
-    }
+		// Loop through existing sounds and remove those without a file
+		if (this.container.getPlayables().length > 0) {
+			const playables = this.container.findPlayablesRecursive(
+				p => !p.isContainer && files.includes(p.getAudioPath())
+			);
+			playables.forEach(p => p.parent?.removePlayable(p));
+		}
+	}
 
-    static fromData(data: ISoundboardData): Soundboard {
-        const s = Soundboard.getDefault("");
-        s.edit(data);
-        return s;
-    }
+	asData(): ISoundboardData {
+		return {
+			keys: this.baseProperties.keys,
+			name: this.baseProperties.name,
+			linkedFolder: this.linkedFolder,
+			uuid: this.baseProperties.uuid,
+			volume: this.baseProperties.volume,
+			hasSounds: this.container.getPlayables().length > 0,
+			isGroup: false,
+		};
+	}
 
-    static getDefault(name: string): Soundboard {
-        return new Soundboard(
-            new CommonInfo(randomUUID(), name, 100, []),
-            new Container([]),
-            null,
-        );
-    }
+	static fromData(data: ISoundboardData): Soundboard {
+		const s = Soundboard.getDefault("");
+		s.edit(data);
+		return s;
+	}
 
-    static isSoundboard(object: ICommonContainer): object is Soundboard {
-        return "linkedFolder" in object;
-    }
+	static getDefault(name: string): Soundboard {
+		return new Soundboard(
+			new BaseProperties(randomUUID(), name, 100, []),
+			null, [],
+		);
+	}
 
-    static convert(data: JSONObject): Soundboard {
-        const commonInfo = CommonInfo.convert(data);
+	static convert(data: JSONObject): Soundboard {
+		const commonInfo = BaseProperties.convert(data);
 
-        let linkedFolder: string | null = null;
-        if (typeof data["linkedFolder"] === "string") linkedFolder = data["linkedFolder"];
+		let linkedFolder: string | null = null;
+		if (typeof data["linkedFolder"] === "string") linkedFolder = data["linkedFolder"];
 
-        let playables: IPlayable[] = [];
-        const playablesTry = tryGetValue(data, ["playables", "sounds"], x => Array.isArray(x));
-        if (playablesTry) {
-            playables = Container.convertPlayables(playablesTry as []);
-        }
+		let playables: IPlayable[] = [];
+		const playablesTry = tryGetValue(data, ["playables", "sounds"], x => Array.isArray(x));
+		if (playablesTry) {
+			playables = convertPlayables(playablesTry as []);
+		}
 
-        const container = new Container(playables);
-        return new Soundboard(commonInfo, container, linkedFolder);
-    }
+		return new Soundboard(commonInfo, linkedFolder, playables);
+	}
 }

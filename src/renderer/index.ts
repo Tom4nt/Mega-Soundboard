@@ -65,327 +65,327 @@ window.addEventListener("contextmenu", (e) => void closeActionPanelContainers(e)
 //#region Functions
 
 async function init(): Promise<void> {
-    const content = window.getInitialContent();
+	const content = window.getInitialContent();
 
-    getElementReferences();
-    addElementListeners();
+	getElementReferences();
+	addElementListeners();
 
-    MessageQueue.setHost(messageHost);
+	MessageQueue.setHost(messageHost);
 
-    const devices = await AudioManager.getAudioDevices();
-    loadDevicesPanel(devices, content.settings);
+	const devices = await AudioManager.getAudioDevices();
+	loadDevicesPanel(devices, content.settings);
 
-    const soundboards = content.soundboards;
-    for (const sb of soundboards) {
-        soundboardList.addSoundboard(sb);
-    }
+	const soundboards = content.soundboards;
+	for (const sb of soundboards) {
+		soundboardList.addSoundboard(sb);
+	}
 
-    enabeKeybindsToggler.isOn = Settings.getActionState(content.settings, "toggleKeybinds");
-    overlapSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundOverlap");
-    loopSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundLooping");
+	enabeKeybindsToggler.isOn = Settings.getActionState(content.settings, "toggleKeybinds");
+	overlapSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundOverlap");
+	loopSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundLooping");
 
-    window.events.onKeybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
-    window.events.onOverlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
-    window.events.onLoopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
-    window.events.onCurrentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));
+	window.events.keybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
+	window.events.overlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
+	window.events.loopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
+	window.events.currentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));
 
-    const shouldShowChangelog = content.shouldShowChangelog;
-    if (shouldShowChangelog) {
-        const modal = await NewsModal.load();
-        modal.open();
-        window.actions.flagChangelogViewed();
-    }
+	const shouldShowChangelog = content.shouldShowChangelog;
+	if (shouldShowChangelog) {
+		const modal = await NewsModal.load();
+		modal.open();
+		window.actions.flagChangelogViewed();
+	}
 
-    const sb = soundboards[content.settings.selectedSoundboard];
-    if (sb) {
-        playableList.loadItems(content.initialPlayables, sb.uuid, sb.linkedFolder === null);
-        soundboardList.selectSoundboard(sb);
-        updatePlayableListButtons(sb.linkedFolder !== null);
-    }
+	const sb = soundboards[content.settings.selectedSoundboard];
+	if (sb) {
+		playableList.loadItems(content.initialPlayables, sb.uuid, sb.linkedFolder === null);
+		soundboardList.selectSoundboard(sb);
+		updatePlayableListButtons(sb.linkedFolder !== null);
+	}
 
-    MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
-        seekbar.currentInstance = audioInst;
-    });
+	MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
+		seekbar.currentInstance = audioInst;
+	});
 }
 
 function updatePlayableListButtons(isLinked: boolean): void {
-    addSoundButton.style.display = isLinked ? "none" : "";
-    openFolderButton.style.display = isLinked ? "" : "none";
+	addSoundButton.style.display = isLinked ? "none" : "";
+	openFolderButton.style.display = isLinked ? "" : "none";
 }
 
 function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {
-    loadDevices(devices);
-    selectDevices(settings);
-    setVolumes(settings);
+	loadDevices(devices);
+	selectDevices(settings);
+	setVolumes(settings);
 }
 
 function selectDevices(settings: Settings): void {
-    const foundMain = mainDeviceDropdown.selectIfFound(item =>
-        item instanceof DropDownItem && item.value === settings.mainDevice);
+	const foundMain = mainDeviceDropdown.selectIfFound(item =>
+		item instanceof DropDownItem && item.value === settings.mainDevice);
 
-    // If main device not found, load Default.
-    if (!foundMain) mainDeviceDropdown.selectIfFound(item =>
-        item instanceof DropDownItem && item.value == "default");
+	// If main device not found, load Default.
+	if (!foundMain) mainDeviceDropdown.selectIfFound(item =>
+		item instanceof DropDownItem && item.value == "default");
 
-    const foundSecondary = secondaryDeviceDropdown.selectIfFound(item =>
-        item instanceof DropDownItem && item.value === settings.secondaryDevice);
+	const foundSecondary = secondaryDeviceDropdown.selectIfFound(item =>
+		item instanceof DropDownItem && item.value === settings.secondaryDevice);
 
-    // If secondary device not found, load None.
-    if (!foundSecondary) secondaryDeviceDropdown.selectIfFound(item =>
-        item instanceof DropDownItem && item.value === "");
+	// If secondary device not found, load None.
+	if (!foundSecondary) secondaryDeviceDropdown.selectIfFound(item =>
+		item instanceof DropDownItem && item.value === "");
 }
 
 function setVolumes(settings: Settings): void {
-    mainDeviceVolumeSlider.value = settings.mainDeviceVolume;
-    secondaryDeviceVolumeSlider.value = settings.secondaryDeviceVolume;
+	mainDeviceVolumeSlider.value = settings.mainDeviceVolume;
+	secondaryDeviceVolumeSlider.value = settings.secondaryDeviceVolume;
 }
 
 function getElementReferences(): void {
-    messageHost = document.getElementById("message-host") as MessageHost;
+	messageHost = document.getElementById("message-host") as MessageHost;
 
-    msbutton = document.getElementById("logo") as HTMLButtonElement;
-    soundboardList = document.getElementById("soundboardlist") as SoundboardList;
-    updateButton = document.getElementById("update-button") as HTMLButtonElement;
-    addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
-    addSoundboardDropArea = document.getElementById("droparea-addSoundboard") as FileDropArea;
+	msbutton = document.getElementById("logo") as HTMLButtonElement;
+	soundboardList = document.getElementById("soundboardlist") as SoundboardList;
+	updateButton = document.getElementById("update-button") as HTMLButtonElement;
+	addSoundboardButton = document.getElementById("button-addSoundboard") as HTMLButtonElement;
+	addSoundboardDropArea = document.getElementById("droparea-addSoundboard") as FileDropArea;
 
-    searchBox = document.getElementById("searchbox") as SearchBox;
-    playableList = document.getElementById("soundlist") as PlayableList;
-    addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
-    openFolderButton = document.getElementById("open-folder-button") as HTMLButtonElement;
-    sortButton = document.getElementById("sort-button") as HTMLButtonElement;
+	searchBox = document.getElementById("searchbox") as SearchBox;
+	playableList = document.getElementById("soundlist") as PlayableList;
+	addSoundButton = document.getElementById("add-sound-button") as HTMLButtonElement;
+	openFolderButton = document.getElementById("open-folder-button") as HTMLButtonElement;
+	sortButton = document.getElementById("sort-button") as HTMLButtonElement;
 
-    deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
-    quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
-    deviceSettingsButton = document.getElementById("btndevicesettings") as HTMLButtonElement;
-    quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
-    randomSoundButton = document.getElementById("btn-randomsound") as HTMLButtonElement;
-    stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
-    seekbar = document.getElementById("seekbar") as Seekbar;
+	deviceSettings = document.getElementById("devicesettings") as HTMLDivElement;
+	quickSettings = document.getElementById("quicksettings") as HTMLDivElement;
+	deviceSettingsButton = document.getElementById("btndevicesettings") as HTMLButtonElement;
+	quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
+	randomSoundButton = document.getElementById("btn-randomsound") as HTMLButtonElement;
+	stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
+	seekbar = document.getElementById("seekbar") as Seekbar;
 
-    mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
-    secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;
-    mainDeviceVolumeSlider = deviceSettings.querySelector("#slider-mainDeviceVolume") as Slider;
-    secondaryDeviceVolumeSlider = deviceSettings.querySelector("#slider-secondaryDeviceVolume") as Slider;
+	mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
+	secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;
+	mainDeviceVolumeSlider = deviceSettings.querySelector("#slider-mainDeviceVolume") as Slider;
+	secondaryDeviceVolumeSlider = deviceSettings.querySelector("#slider-secondaryDeviceVolume") as Slider;
 
-    enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds") as Toggler;
-    overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds") as Toggler;
-    loopSoundsToggler = quickSettings.querySelector("#toggler-loopSounds") as Toggler;
-    buttonMoreSettings = quickSettings.querySelector("#button-more-settings") as HTMLButtonElement;
+	enabeKeybindsToggler = quickSettings.querySelector("#toggler-enableKeybinds") as Toggler;
+	overlapSoundsToggler = quickSettings.querySelector("#toggler-overlapSounds") as Toggler;
+	loopSoundsToggler = quickSettings.querySelector("#toggler-loopSounds") as Toggler;
+	buttonMoreSettings = quickSettings.querySelector("#button-more-settings") as HTMLButtonElement;
 }
 
 function addElementListeners(): void {
-    // This prevents scrolling with the middle mouse button.
-    // It is necessary to allow clicking on playables with the middle mouse button.
-    document.addEventListener("mousedown", e => {
-        if (e.button === 1) {
-            e.preventDefault();
-            return false;
-        }
-        return true;
-    });
+	// This prevents scrolling with the middle mouse button.
+	// It is necessary to allow clicking on playables with the middle mouse button.
+	document.addEventListener("mousedown", e => {
+		if (e.button === 1) {
+			e.preventDefault();
+			return false;
+		}
+		return true;
+	});
 
-    addEventListener("keyup", (ev) => {
-        if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);
-        else if (ev.ctrlKey && ev.key == "-") window.actions.zoomIncrement(-0.1);
-        else if (ev.ctrlKey && ev.key == "0") window.actions.zoomReset();
-    });
+	addEventListener("keyup", (ev) => {
+		if (ev.ctrlKey && ev.key == "+") window.actions.zoomIncrement(0.1);
+		else if (ev.ctrlKey && ev.key == "-") window.actions.zoomIncrement(-0.1);
+		else if (ev.ctrlKey && ev.key == "0") window.actions.zoomReset();
+	});
 
-    msbutton.addEventListener("click", () => {
-        new MSModal().open();
-    });
+	msbutton.addEventListener("click", () => {
+		new MSModal().open();
+	});
 
-    addSoundboardButton.addEventListener("click", () => {
-        void Actions.addSoundboard();
-    });
+	addSoundboardButton.addEventListener("click", () => {
+		void Actions.addSoundboard();
+	});
 
-    addSoundboardButton.addEventListener("mouseenter", () => {
-        if (Draggable.currentElement instanceof PlayableItem) {
-            Draggable.currentElement.draggingToNewSoundboard = true;
-        }
-    });
+	addSoundboardButton.addEventListener("mouseenter", () => {
+		if (Draggable.currentElement instanceof PlayableItem) {
+			Draggable.currentElement.draggingToNewSoundboard = true;
+		}
+	});
 
-    addSoundboardButton.addEventListener("mouseleave", () => {
-        if (Draggable.currentElement instanceof PlayableItem) {
-            Draggable.currentElement.draggingToNewSoundboard = false;
-        }
-    });
+	addSoundboardButton.addEventListener("mouseleave", () => {
+		if (Draggable.currentElement instanceof PlayableItem) {
+			Draggable.currentElement.draggingToNewSoundboard = false;
+		}
+	});
 
-    addSoundboardDropArea.onEnter.addHandler(() => addSoundboardButton.classList.add("hover"));
-    addSoundboardDropArea.onLeave.addHandler(() => addSoundboardButton.classList.remove("hover"));
+	addSoundboardDropArea.onEnter.addHandler(() => addSoundboardButton.classList.add("hover"));
+	addSoundboardDropArea.onLeave.addHandler(() => addSoundboardButton.classList.remove("hover"));
 
-    addSoundboardDropArea.onDrop.addHandler(async e => {
-        addSoundboardButton.classList.remove("hover");
-        const paths = await Utils.getValidSoundPaths(e);
-        if (paths) {
-            const sbId = await Actions.addSounds(paths, null);
-            window.actions.setCurrentSoundboard(sbId);
-        }
-    });
+	addSoundboardDropArea.onDrop.addHandler(async e => {
+		addSoundboardButton.classList.remove("hover");
+		const paths = await Utils.getValidSoundPaths(e);
+		if (paths) {
+			const sbId = await Actions.addSounds(paths, null);
+			window.actions.setCurrentSoundboard(sbId);
+		}
+	});
 
-    updateButton.addEventListener("click", () => {
-        window.actions.installUpdate();
-    });
+	updateButton.addEventListener("click", () => {
+		window.actions.installUpdate();
+	});
 
-    addSoundButton.addEventListener("click", () => {
-        void browseAndAddSounds();
-    });
+	addSoundButton.addEventListener("click", () => {
+		void browseAndAddSounds();
+	});
 
-    openFolderButton.addEventListener("click", async () => {
-        const currentSoundboard = await window.actions.getCurrentSoundboard();
-        if (currentSoundboard?.linkedFolder)
-            window.location.href = currentSoundboard.linkedFolder;
-    });
+	openFolderButton.addEventListener("click", async () => {
+		const currentSoundboard = await window.actions.getCurrentSoundboard();
+		if (currentSoundboard?.linkedFolder)
+			window.location.href = currentSoundboard.linkedFolder;
+	});
 
-    sortButton.addEventListener("click", async () => {
-        const currentSoundboard = await window.actions.getCurrentSoundboard();
-        if (currentSoundboard) void window.actions.sortSoundboard(currentSoundboard.uuid);
-    });
+	sortButton.addEventListener("click", async () => {
+		const currentSoundboard = await window.actions.getCurrentSoundboard();
+		if (currentSoundboard) void window.actions.sortSoundboard(currentSoundboard.uuid);
+	});
 
-    searchBox.onInput.addHandler(v => {
-        playableList.filter(v);
-    });
+	searchBox.onInput.addHandler(v => {
+		playableList.filter(v);
+	});
 
-    searchBox.onButtonClick.addHandler(() => {
-        playableList.filter("");
-    });
+	searchBox.onButtonClick.addHandler(() => {
+		playableList.filter("");
+	});
 
-    playableList.onItemDragStart.addHandler(async () => {
-        const s = await window.actions.getSettings();
-        if (s.showSoundDragTutorial) {
-            showPlayableDragTutorial();
-            window.actions.saveSettings({ showSoundDragTutorial: false });
-        }
-    });
+	playableList.onItemDragStart.addHandler(async () => {
+		const s = await window.actions.getSettings();
+		if (s.showSoundDragTutorial) {
+			showPlayableDragTutorial();
+			window.actions.saveSettings({ showSoundDragTutorial: false });
+		}
+	});
 
-    //#region Action Panel
+	//#region Action Panel
 
-    randomSoundButton.addEventListener("click", () => {
-        void window.actions.executeQuickAction("playRandomSound");
-    });
+	randomSoundButton.addEventListener("click", () => {
+		void window.actions.executeQuickAction("playRandomSound");
+	});
 
-    stopAllButton.addEventListener("click", () => {
-        MSR.instance.audioManager.stopAll();
-    });
+	stopAllButton.addEventListener("click", () => {
+		MSR.instance.audioManager.stopAll();
+	});
 
-    deviceSettingsButton.addEventListener("click", () => {
-        deviceSettings.classList.toggle("closed");
-    });
+	deviceSettingsButton.addEventListener("click", () => {
+		deviceSettings.classList.toggle("closed");
+	});
 
-    quickSettingsButton.addEventListener("click", () => {
-        quickSettings.classList.toggle("closed");
-    });
+	quickSettingsButton.addEventListener("click", () => {
+		quickSettings.classList.toggle("closed");
+	});
 
-    overlapSoundsToggler.onToggle.addHandler(() => {
-        void window.actions.executeQuickAction("toggleSoundOverlap");
-    });
+	overlapSoundsToggler.onToggle.addHandler(() => {
+		void window.actions.executeQuickAction("toggleSoundOverlap");
+	});
 
-    mainDeviceVolumeSlider.onValueChange.addHandler(s => {
-        window.actions.setMainDevice(undefined, s.value);
-    });
+	mainDeviceVolumeSlider.onValueChange.addHandler(s => {
+		window.actions.setMainDevice(undefined, s.value);
+	});
 
-    secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
-        window.actions.setSecondaryDevice(undefined, s.value);
-    });
+	secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
+		window.actions.setSecondaryDevice(undefined, s.value);
+	});
 
-    mainDeviceDropdown.onSelectedItem.addHandler(item => {
-        if (item?.value)
-            window.actions.setMainDevice(item.value as string);
-    });
+	mainDeviceDropdown.onSelectedItem.addHandler(item => {
+		if (item?.value)
+			window.actions.setMainDevice(item.value as string);
+	});
 
-    secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
-        if (item?.value)
-            window.actions.setSecondaryDevice(item.value as string);
-    });
+	secondaryDeviceDropdown.onSelectedItem.addHandler(item => {
+		if (item?.value)
+			window.actions.setSecondaryDevice(item.value as string);
+	});
 
-    enabeKeybindsToggler.onToggle.addHandler(() => {
-        void window.actions.executeQuickAction("toggleKeybinds");
-    });
+	enabeKeybindsToggler.onToggle.addHandler(() => {
+		void window.actions.executeQuickAction("toggleKeybinds");
+	});
 
-    loopSoundsToggler.onToggle.addHandler(() => {
-        void window.actions.executeQuickAction("toggleSoundLooping");
-    });
+	loopSoundsToggler.onToggle.addHandler(() => {
+		void window.actions.executeQuickAction("toggleSoundLooping");
+	});
 
-    buttonMoreSettings.addEventListener("click", () => {
-        quickSettings.classList.add("closed");
-        new SettingsModal().open();
-    });
+	buttonMoreSettings.addEventListener("click", () => {
+		quickSettings.classList.add("closed");
+		new SettingsModal().open();
+	});
 
-    //#endregion
+	//#endregion
 }
 
 function loadDevices(devices: MediaDeviceInfo[]): void {
-    secondaryDeviceDropdown.addItem(new DropdownItem("None", ""));
-    for (const device of devices) {
-        if (device.deviceId === "default") {
-            mainDeviceDropdown.addItem(new DropdownItem("Default", "default"));
-            secondaryDeviceDropdown.addItem(new DropdownItem("Default", "default"));
-        } else {
-            mainDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
-            secondaryDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
-        }
-    }
+	secondaryDeviceDropdown.addItem(new DropdownItem("None", ""));
+	for (const device of devices) {
+		if (device.deviceId === "default") {
+			mainDeviceDropdown.addItem(new DropdownItem("Default", "default"));
+			secondaryDeviceDropdown.addItem(new DropdownItem("Default", "default"));
+		} else {
+			mainDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
+			secondaryDeviceDropdown.addItem(new DropdownItem(device.label, device.deviceId));
+		}
+	}
 }
 
 function closeActionPanelContainers(e: MouseEvent): void {
-    if (!e.composedPath().includes(deviceSettings) &&
-        !e.composedPath().includes(deviceSettingsButton) &&
-        !deviceSettings.classList.contains("closed")
-    ) {
-        deviceSettings.classList.add("closed");
-    }
+	if (!e.composedPath().includes(deviceSettings) &&
+		!e.composedPath().includes(deviceSettingsButton) &&
+		!deviceSettings.classList.contains("closed")
+	) {
+		deviceSettings.classList.add("closed");
+	}
 
-    if (!e.composedPath().includes(quickSettings) &&
-        !e.composedPath().includes(quickSettingsButton) &&
-        !quickSettings.classList.contains("closed")
-    ) {
-        quickSettings.classList.add("closed");
-    }
+	if (!e.composedPath().includes(quickSettings) &&
+		!e.composedPath().includes(quickSettingsButton) &&
+		!quickSettings.classList.contains("closed")
+	) {
+		quickSettings.classList.add("closed");
+	}
 }
 
 async function browseAndAddSounds(): Promise<void> {
-    const sb = await window.actions.getCurrentSoundboard();
-    if (sb?.linkedFolder === null) {
-        const paths = await window.actions.browseSounds();
-        await Actions.addSounds(paths, sb.uuid);
-        window.actions.setCurrentSoundboard(sb.uuid);
-    }
+	const sb = await window.actions.getCurrentSoundboard();
+	if (sb?.linkedFolder === null) {
+		const paths = await window.actions.browseSounds();
+		await Actions.addSounds(paths, sb.uuid);
+		window.actions.setCurrentSoundboard(sb.uuid);
+	}
 }
 
 function showPlayableDragTutorial(): void {
-    const htmlMessage = `
+	const htmlMessage = `
         <p>Hold <kbd>CTRL</kbd> to copy.</p>
     `;
-    MessageQueue.pushMessage(new Message(htmlMessage));
+	MessageQueue.pushMessage(new Message(htmlMessage));
 
-    const tt = new Tooltip();
-    tt.tooltipText = "Try dragging here!";
-    tt.side = "left";
-    tt.isAutomatic = false;
-    tt.attach(addSoundboardButton);
-    tt.show();
+	const tt = new Tooltip();
+	tt.tooltipText = "Try dragging here!";
+	tt.side = "left";
+	tt.isAutomatic = false;
+	tt.attach(addSoundboardButton);
+	tt.show();
 
-    addSoundboardButton.classList.add("shiny");
-    addSoundboardButton.addEventListener("mouseover", () => {
-        addSoundboardButton.classList.remove("shiny");
-        tt.hide();
-    });
+	addSoundboardButton.classList.add("shiny");
+	addSoundboardButton.addEventListener("mouseover", () => {
+		addSoundboardButton.classList.remove("shiny");
+		tt.hide();
+	});
 }
 
 //#endregion
 
 //#region Main Events
 
-window.events.onUpdateStateChanged.addHandler((state: UpdaterState) => {
-    if (state == "downloaded") {
-        updateButton.style.display = "inherit";
-        console.log("READY TO UPDATE");
-    }
+window.events.updateStateChanged.addHandler((state: UpdaterState) => {
+	if (state == "downloaded") {
+		updateButton.style.display = "inherit";
+		console.log("READY TO UPDATE");
+	}
 });
 
-window.events.onWindowFocusChanged.addHandler(s => {
-    if (s) document.body.classList.add("focused");
-    else document.body.classList.remove("focused");
+window.events.windowFocusChanged.addHandler(s => {
+	if (s) document.body.classList.add("focused");
+	else document.body.classList.remove("focused");
 });
 
 //#endregion

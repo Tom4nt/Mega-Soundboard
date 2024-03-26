@@ -1,39 +1,40 @@
 import { ExposedEvent } from "./events";
 import {
-    ContainerSortedArgs,
-    KeyRecordingArgs,
-    NonOptional,
-    PlayableAddedArgs,
-    SoundboardAddedArgs,
-    UpdaterState,
-    WindowState
+	ContainerSortedArgs,
+	KeyRecordingArgs,
+	NonOptional,
+	PlayableAddedArgs,
+	SoundboardAddedArgs,
+	UpdaterState,
+	WindowState
 } from "./interfaces";
 import { Settings } from "./models";
-import { IPlayableData, ISoundboardData, PlayData } from "./models/data";
+import { IPlayableData, ISoundboardData, PlayData } from "./models/dataInterfaces";
 
 class ConcreteEvents {
-    onKeybindsStateChanged: ExposedEvent<boolean> | null = null;
-    onOverlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
-    onLoopSoundsChanged: ExposedEvent<boolean> | null = null;
-    onSettingsChanged: ExposedEvent<Settings> | null = null;
-    onPlayableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
-    onPlayableChanged: ExposedEvent<IPlayableData> | null = null;
-    onPlayableRemoved: ExposedEvent<IPlayableData> | null = null;
-    onSoundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
-    onSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
-    onSoundboardRemoved: ExposedEvent<ISoundboardData> | null = null;
-    onContainerSorted: ExposedEvent<ContainerSortedArgs> | null = null;
-    onWindowStateChanged: ExposedEvent<WindowState> | null = null;
-    onWindowFocusChanged: ExposedEvent<boolean> | null = null;
-    onKeyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
-    onKeybindPressed: ExposedEvent<number[]> | null = null;
-    onCurrentSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
-    onMinToTrayChanged: ExposedEvent<boolean> | null = null;
-    onUpdateStateChanged: ExposedEvent<UpdaterState> | null = null;
-    onPlayRequested: ExposedEvent<PlayData> | null = null;
-    onStopRequested: ExposedEvent<string> | null = null;
-    onStopAllSounds: ExposedEvent<void> | null = null;
-    onZoomFactorChanged: ExposedEvent<number> | null = null;
+	keybindsStateChanged: ExposedEvent<boolean> | null = null;
+	overlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
+	loopSoundsChanged: ExposedEvent<boolean> | null = null;
+	settingsChanged: ExposedEvent<Settings> | null = null;
+	playableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
+	playableChanged: ExposedEvent<IPlayableData> | null = null;
+	playableRemoved: ExposedEvent<IPlayableData> | null = null;
+	soundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
+	soundboardChanged: ExposedEvent<ISoundboardData> | null = null;
+	soundboardRemoved: ExposedEvent<ISoundboardData> | null = null;
+	containerSorted: ExposedEvent<ContainerSortedArgs> | null = null;
+	windowStateChanged: ExposedEvent<WindowState> | null = null;
+	windowFocusChanged: ExposedEvent<boolean> | null = null;
+	keyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
+	keybindPressed: ExposedEvent<number[]> | null = null;
+	currentSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
+	minToTrayChanged: ExposedEvent<boolean> | null = null;
+	updateStateChanged: ExposedEvent<UpdaterState> | null = null;
+	playRequested: ExposedEvent<PlayData> | null = null;
+	stopRequested: ExposedEvent<string> | null = null;
+	stopMultiple: ExposedEvent<string[]> | null = null;
+	stopAll: ExposedEvent<void> | null = null;
+	zoomFactorChanged: ExposedEvent<number> | null = null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
