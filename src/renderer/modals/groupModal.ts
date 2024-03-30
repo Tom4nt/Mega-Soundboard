@@ -117,7 +117,7 @@ export default class GroupModal extends Modal {
 	}
 
 	private ungroup(): void {
-		// TODO
+		void window.actions.ungroupGroup(this.loadedGroup.uuid);
 		this.close();
 	}
 }

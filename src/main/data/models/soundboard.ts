@@ -141,7 +141,7 @@ export class Soundboard implements IPlayableContainer {
 			uuid: this.baseProperties.uuid,
 			volume: this.baseProperties.volume,
 			hasSounds: this.container.getPlayables().length > 0,
-			isGroup: false,
+			isGroup: this.isGroup,
 		};
 	}
 

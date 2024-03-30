@@ -128,7 +128,7 @@ export default class PlayableItem extends Draggable {
 			if (e.target === this.indicatorElement) return;
 			try {
 				const data = await window.actions.getPlayData(this.playable.uuid);
-				await MSR.instance.audioManager.play(data);
+				if (data) await MSR.instance.audioManager.play(data);
 			} catch (error) {
 				new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
 				await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
@@ -140,7 +140,7 @@ export default class PlayableItem extends Draggable {
 
 		this.addEventListener("auxclick", e => {
 			if (e.button === 1) {
-				MSR.instance.audioManager.stop(this.playable.uuid);
+				void MSR.instance.audioManager.stop(this.playable.uuid);
 			}
 		});
 
@@ -149,7 +149,7 @@ export default class PlayableItem extends Draggable {
 		});
 
 		this.indicatorElement.addEventListener("click", () => {
-			MSR.instance.audioManager.stop(this.playable.uuid);
+			void MSR.instance.audioManager.stop(this.playable.uuid);
 		});
 
 		this.onDragStart.addHandler(async (c) => {
@@ -218,7 +218,7 @@ export default class PlayableItem extends Draggable {
 		if (Keys.equals(keys, this.playable.keys)) {
 			try {
 				const data = await window.actions.getPlayData(this.playable.uuid);
-				await MSR.instance.audioManager.play(data);
+				if (data) await MSR.instance.audioManager.play(data);
 			} catch (error) {
 				await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
 			}

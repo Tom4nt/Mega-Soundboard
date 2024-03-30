@@ -183,6 +183,13 @@ export default class PlayableContainer extends HTMLElement {
 		return this._containerDiv.offsetHeight;
 	}
 
+	sort(uuids: string[]): void {
+		const sorted = this._loadedItems.sort((a, b) => uuids.indexOf(a.id) - uuids.indexOf(b.id));
+		for (const item of sorted) {
+			this._containerDiv.append(item);
+		}
+	}
+
 	// --- // ---
 
 	private clear(): void {

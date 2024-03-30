@@ -52,10 +52,8 @@ export default class Actions {
 	}
 
 	static async editSoundboard(uuid: string): Promise<void> {
-		// TODO: Maybe include isLast in the soundboard data?
-		const isLast = (await window.actions.getSoundboards()).length <= 1;
-		const soundboard = await window.actions.getSoundboard(uuid);
-		const editModal = new SoundboardModal(soundboard, false, isLast);
+		const data = await window.actions.getSoundboard(uuid);
+		const editModal = new SoundboardModal(data.soundboard, false, data.isLast);
 		editModal.open();
 		editModal.onSaved.addHandler(s => {
 			window.actions.editSoundboard(s);

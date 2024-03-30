@@ -5,13 +5,12 @@ import SoundboardsCache from "./data/soundboardsCache";
 import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
-import { Settings } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
 import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
 import { actionBindings } from "./quickActionBindings";
-import { isAction } from "../shared/quickActions";
+import { ActionName, isAction } from "../shared/quickActions";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
 
@@ -41,16 +40,16 @@ export default class MS {
 		MS.instance = this;
 		keybindManager.onKeybindPressed.addHandler(async kb => {
 			const s = this.settingsCache.settings;
-			const keybindsEnabled = Settings.getActionState(s, "toggleKeybinds");
+			const keybindsEnabled = s.quickActionStates.get("toggleKeybinds")!;
 			if (keybindsEnabled) {
-				for (const k in s.quickActionKeys) {
-					const keybind = s.quickActionKeys[k];
+				for (const k in s.quickActionKeys.keys()) {
+					const keybind = s.quickActionKeys.get(k as ActionName);
 					if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
 						void actionBindings[k](k as never);
 					}
 				}
 			} else {
-				if (Keys.equals(kb, Settings.getActionKeys(s, "toggleKeybinds"))) {
+				if (Keys.equals(kb, s.quickActionKeys.get("toggleKeybinds")!)) {
 					void actionBindings["toggleKeybinds"]("toggleKeybinds");
 				}
 			}

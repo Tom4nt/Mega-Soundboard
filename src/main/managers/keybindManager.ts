@@ -1,7 +1,7 @@
 import { Event, ExposedEvent } from "../../shared/events";
 import { uIOhook } from "uiohook-napi";
 import { randomUUID } from "crypto";
-import KeyRecordingSession from "../../shared/models/keyRecordingSession";
+import KeyRecordingSession from "../data/models/keyRecordingSession";
 import EventSender from "../eventSender";
 
 export default class KeybindManager {

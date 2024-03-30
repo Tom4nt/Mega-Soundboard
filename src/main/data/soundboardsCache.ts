@@ -8,7 +8,8 @@ import { IPlayableData, ISoundData, ISoundboardData, PlayData } from "../../shar
 import { Sound } from "./models/sound";
 import { IPlayable, IPlayableContainer } from "./models/interfaces";
 import { getHierarchy } from "../utils/utils";
-import { ContainerSortedArgs } from "../../shared/interfaces";
+import { ContainerSortedArgs, PlayableAddedArgs } from "../../shared/interfaces";
+import { Group } from "./models/group";
 
 export default class SoundboardsCache {
 	constructor(public readonly soundboards: Soundboard[]) { }
@@ -151,15 +152,14 @@ export default class SoundboardsCache {
 		return soundboardIndex;
 	}
 
-	getPlayData(uuid: string): PlayData {
-		const playable = this.findPlayable(uuid);
-		if (!playable) throw new Error(`Playable with runtime UUID ${uuid} could not be found.`);
-		return {
-			mainUuid: uuid,
-			hierarchy: getHierarchy(playable),
-			path: playable.getAudioPath(),
-			volume: playable.getFinalVolume()
-		};
+	getPlayData(uuids: string[]): PlayData[] {
+		const playables = this.findPlayablesRecursive(p => uuids.includes(p.uuid));
+		return playables.map((p): PlayData => ({
+			mainUuid: p.uuid,
+			hierarchy: getHierarchy(p),
+			path: p.getAudioPath(),
+			volume: p.getFinalVolume()
+		}));
 	}
 
 	getAllSoundsInContainer(uuid: string): readonly Sound[] {
@@ -170,6 +170,29 @@ export default class SoundboardsCache {
 
 	getContainer(uuid: string): IPlayableContainer | null {
 		return this.findPlayableRecursive(p => p.isContainer && p.uuid == uuid) as IPlayableContainer | null;
+	}
+
+	async unGroupGroup(uuid: string): Promise<void> {
+		const container = this.getContainer(uuid);
+		if (!container?.isGroup) throw Error("Group not found.");
+
+		const group = container as Group;
+		const children = group.getPlayables();
+		if (!group.parent) return;
+
+		const parent = group.parent;
+		const startIndex = parent.getPlayables().indexOf(group);
+		parent.removePlayable(group);
+		EventSender.send("playableRemoved", group.asData());
+
+		for (const playable of children) {
+			parent.addPlayable(playable);
+		}
+		EventSender.send("playablesAdded", children.map((x, i): PlayableAddedArgs => ({
+			playable: x.asData(),
+			parentUuid: parent.uuid,
+			index: startIndex + i,
+		})));
 	}
 
 	// ---

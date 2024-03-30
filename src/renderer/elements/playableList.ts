@@ -48,7 +48,7 @@ export default class PlayableList extends HTMLElement {
 	}
 
 	sortItems(uuids: string[]): void {
-		void uuids; // TODO
+		this.containerElement?.sort(uuids);
 	}
 
 	filter(filter: string): void {

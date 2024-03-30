@@ -1,6 +1,5 @@
 import { NonOptional, UpdaterState } from "./interfaces";
-import { OptionalSettings, Settings } from "./models";
-import { IPlayableData, ISoundData, ISoundboardData, PlayData } from "./models/dataInterfaces";
+import { IPlayableData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings, PlayData } from "./models/dataInterfaces";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {
@@ -23,10 +22,12 @@ class ConcreteActions {
 	getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
 	getPlayable: ((uuid: string) => Promise<IPlayableData | undefined>) | null = null;
 	getContainerItems: ((uuid: string) => Promise<IPlayableData[]>) | null = null;
-	getPlayData: ((uuid: string) => Promise<PlayData>) | null = null;
+	getPlayData: ((uuid: string) => Promise<PlayData | undefined>) | null = null;
+	getPlayDataMultiple: ((uuids: string[]) => Promise<PlayData[]>) | null = null;
 	stopAllSounds: ((containerUuid: string) => Promise<void>) | null = null;
+	ungroupGroup: ((groupUuid: string) => void) | null = null;
 
-	getSoundboard: ((uuid: string) => Promise<ISoundboardData>) | null = null;
+	getSoundboard: ((uuid: string) => Promise<{ soundboard: ISoundboardData, isLast: boolean }>) | null = null;
 	getNewSoundboard: (() => Promise<ISoundboardData>) | null = null;
 	addSoundboard: ((soundboard: ISoundboardData) => void) | null = null;
 	moveSoundboard: ((uuid: string, destinationIndex: number) => void) | null = null;
@@ -45,7 +46,7 @@ class ConcreteActions {
 	setMainDevice: ((uuid?: string, volume?: number) => void) | null = null;
 	setSecondaryDevice: ((uuid?: string | null, volume?: number) => void) | null = null;
 
-	getSettings: (() => Promise<Settings>) | null = null;
+	getSettings: (() => Promise<ISettingsData>) | null = null;
 	saveSettings: ((settings: OptionalSettings) => void) | null = null;
 	shouldShowChangelog: (() => Promise<boolean>) | null = null;
 	executeQuickAction: ((name: ActionName) => Promise<void>) | null = null;

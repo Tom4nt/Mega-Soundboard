@@ -5,7 +5,6 @@ import { ISoundData } from "../../shared/models/dataInterfaces";
 
 type SaveEventArgs = { sound: ISoundData, moveRequested: boolean }
 
-// TODO: Create a Group modal or have a modal for all playables?
 export default class SoundModal extends Modal {
 	private nameElement!: TextField;
 	private moveElement!: Toggler;

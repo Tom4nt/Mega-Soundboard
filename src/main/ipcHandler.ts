@@ -30,7 +30,6 @@ export default class IPCHandler {
 	}
 }
 
-
 const implementer: Actions = {
 	minimize() {
 		MS.instance.windowManager.mainWindow.minimize();
@@ -70,7 +69,14 @@ const implementer: Actions = {
 		EventSender.send("zoomFactorChanged", wc.getZoomFactor());
 	},
 
-	async getPlayData(uuid) { return MS.instance.soundboardsCache.getPlayData(uuid); },
+	async getPlayData(uuid) {
+		const playables = MS.instance.soundboardsCache.getPlayData([uuid]);
+		return playables[0];
+	},
+
+	async getPlayDataMultiple(uuids) {
+		return MS.instance.soundboardsCache.getPlayData(uuids);
+	},
 
 	async addSounds(playables, destinationId, moveFile, startIndex) {
 		const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
@@ -129,10 +135,15 @@ const implementer: Actions = {
 		EventSender.send("stopMultiple", sounds.map(s => s.getAudioPath()));
 	},
 
+	ungroupGroup(groupUuid) {
+		void MS.instance.soundboardsCache.unGroupGroup(groupUuid);
+	},
+
 	getSoundboard(uuid) {
+		const lastUuid = MS.instance.soundboardsCache.soundboards.at(-1)?.uuid;
 		const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
 		if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
-		return Promise.resolve(sb.asData());
+		return Promise.resolve({ soundboard: sb.asData(), isLast: uuid === lastUuid });
 	},
 
 	async getNewSoundboard() {

@@ -1,7 +1,8 @@
-import { OptionalSettings, Settings } from "../../shared/models";
+import { ISettingsData, OptionalSettings } from "../../shared/models/dataInterfaces";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import DataAccess from "./dataAccess";
+import Settings from "./models/settings";
 
 export default class SettingsCache {
 	constructor(public readonly settings: Settings) { }
@@ -39,7 +40,7 @@ export default class SettingsCache {
 
 	/** Just to prevent repetition between sync and async saving methods. */
 	private preSave(values?: OptionalSettings): void {
-		let key: keyof Settings;
+		let key: keyof ISettingsData;
 		if (values) {
 			for (key in values) {
 				const proposed = values[key];

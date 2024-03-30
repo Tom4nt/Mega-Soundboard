@@ -1,4 +1,4 @@
-import { ActionName, actions } from "../../shared/quickActions";
+import { ActionName, actionFriendlyNames, actionNames } from "../../shared/quickActions";
 import { KeyRecorder, Toggler, FileSelector, Slider } from "../elements";
 import { Modal } from "../modals";
 
@@ -41,9 +41,8 @@ export default class SettingsModal extends Modal {
 
 	private getQuickActionContent(): HTMLElement[] {
 		const elements: HTMLElement[] = [];
-		let key: ActionName;
-		for (key in actions) {
-			const name = actions[key].name;
+		for (const key of actionNames) {
+			const name = actionFriendlyNames[key];
 			elements.push(Modal.getLabel(name));
 			const recorder = new KeyRecorder();
 			elements.push(recorder);
@@ -69,12 +68,11 @@ export default class SettingsModal extends Modal {
 		this.zoomSlider.onValueChange.addHandler(s => window.actions.zoomSet(s.value));
 	}
 
-	private loadQuickActions(actionKeys: { [name: string]: number[] }): void {
-		let key: ActionName;
-		for (key in actions) {
+	private loadQuickActions(actionKeys: Map<ActionName, number[]>): void {
+		for (const key of actionNames) {
 			const recorder = this.quickActionRecorders.get(key);
-			if (recorder && Object.keys(actionKeys).includes(key))
-				recorder.keys = actionKeys[key]!;
+			if (recorder && actionKeys.has(key))
+				recorder.keys = actionKeys.get(key)!;
 		}
 	}
 
@@ -128,15 +126,14 @@ export default class SettingsModal extends Modal {
 		this.close();
 	}
 
-	private getQuickActionKeys(): { [name: string]: number[] } {
-		const res: { [name: string]: number[] } = {};
-		let key: ActionName;
-		for (key in actions) {
+	private getQuickActionKeys(): Map<ActionName, number[]> {
+		const res = new Map<ActionName, number[]>();
+		for (const key of actionNames) {
 			const recorder = this.quickActionRecorders.get(key);
 			if (!recorder) continue;
 
-			if (recorder.keys.length === 0) delete res[key];
-			else res[key] = recorder.keys;
+			if (recorder.keys.length === 0) res.delete(key);
+			else res.set(key, recorder.keys);
 		}
 		return res;
 	}

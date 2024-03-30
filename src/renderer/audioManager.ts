@@ -1,9 +1,9 @@
 import { Event, ExposedEvent } from "../shared/events";
-import { Settings } from "../shared/models";
 import { AudioInstance, UISoundPath } from "./models";
 import { IDevice } from "../shared/interfaces";
-import { PlayData, UuidHierarchy } from "../shared/models/dataInterfaces";
+import { ISettingsData, PlayData, UuidHierarchy } from "../shared/models/dataInterfaces";
 
+// TODO: Manage audio on the main process instead, so we can always have access to the data. Audio will still play on the render process.
 export default class AudioManager {
 	overlapSounds = false;
 
@@ -23,7 +23,6 @@ export default class AudioManager {
 	/** Internal Media Element used for app sounds. */
 	private uiMediaElement = new Audio();
 
-	// TODO: Should provide a list of uuids of items that were involved in playing the sound.
 	get onPlay(): ExposedEvent<PlayData> { return this._onPlay.expose(); }
 	private readonly _onPlay = new Event<PlayData>();
 
@@ -36,17 +35,17 @@ export default class AudioManager {
 
 	playingInstances: AudioInstance[] = [];
 
-	constructor(settings: Settings) {
+	constructor(settings: ISettingsData) {
 		this.mainDevice = settings.mainDevice;
 		this.mainDeviceVolume = settings.mainDeviceVolume;
 		this.secondaryDevice = settings.secondaryDevice;
 		this.secondaryDeviceVolume = settings.secondaryDeviceVolume;
-		this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
-		this.loops = Settings.getActionState(settings, "toggleSoundLooping");
+		this.overlapSounds = settings.quickActionStates.get("toggleSoundOverlap")!;
+		this.loops = settings.quickActionStates.get("toggleSoundLooping")!;
 
 		window.events.settingsChanged.addHandler(settings => {
-			this.overlapSounds = Settings.getActionState(settings, "toggleSoundOverlap");
-			this.loops = Settings.getActionState(settings, "toggleSoundLooping");
+			this.overlapSounds = settings.quickActionStates.get("toggleSoundOverlap")!;
+			this.loops = settings.quickActionStates.get("toggleSoundLooping")!;
 			this.mainDevice = settings.mainDevice;
 			this.mainDeviceVolume = settings.mainDeviceVolume;
 			this.secondaryDevice = settings.secondaryDevice;
@@ -57,12 +56,12 @@ export default class AudioManager {
 			void this.playUISound(s ? UISoundPath.ON : UISoundPath.OFF);
 		});
 
-		window.events.playableRemoved.addHandler(s => {
-			this.stop(s.uuid);
+		window.events.playableRemoved.addHandler(async s => {
+			await this.stop(s.uuid);
 		});
 
-		window.events.stopAll.addHandler(() => {
-			this.stopAll();
+		window.events.stopAll.addHandler(async () => {
+			await this.stopAll();
 		});
 
 		window.events.playRequested.addHandler(async s => {
@@ -73,12 +72,12 @@ export default class AudioManager {
 			}
 		});
 
-		window.events.stopRequested.addHandler(uuid => {
-			this.stop(uuid);
+		window.events.stopRequested.addHandler(async uuid => {
+			await this.stop(uuid);
 		});
 	}
 
-	static parseDevices(settings: Settings): IDevice[] {
+	static parseDevices(settings: ISettingsData): IDevice[] {
 		const devices: IDevice[] = [
 			{ id: settings.mainDevice, volume: settings.mainDeviceVolume }
 		];
@@ -95,7 +94,7 @@ export default class AudioManager {
 	}
 
 	async play(data: PlayData): Promise<void> {
-		if (!this.overlapSounds) this.stopAllInternal(false);
+		if (!this.overlapSounds) await this.stopAllInternal(false);
 
 		// In the future, devices will be stored as an array and the user will be able to add/remove them.
 		const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
@@ -105,11 +104,12 @@ export default class AudioManager {
 			{ uuid: data.mainUuid, volume: data.volume, path: data.path },
 			devices, this.loops
 		);
-		instance.onEnd.addHandler(() => {
+		instance.onEnd.addHandler(async () => {
 			console.log(`Instance of ${data.mainUuid} finished playing.`);
 			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-			// TODO: The hierarchy may have changed. Request it from the main process.
-			this._onStop.raise(data.hierarchy);
+			const dataAfter = await window.actions.getPlayData(data.mainUuid);
+			if (!dataAfter) throw Error("Could not find PlayData onEnd.");
+			this._onStop.raise(dataAfter.hierarchy);
 			void this.updatePTTState();
 			this.raiseSingleInstanceCheckUpdate();
 		});
@@ -124,27 +124,30 @@ export default class AudioManager {
 
 		console.log(`Added and playing instance of sound at ${data.mainUuid}.`);
 		this.playingInstances.push(instance);
-		// TODO: Should be fired from the main process.
 		this._onPlay.raise(data);
 		void this.updatePTTState();
 		this.raiseSingleInstanceCheckUpdate();
 	}
 
 	/** Stops all instances of the specified Playable. */
-	stop(uuid: string): void {
-		this.stopInternal(uuid, true);
+	async stop(uuid: string): Promise<void> {
+		const data = await window.actions.getPlayData(uuid);
+		if (!data) throw Error("Could not stop sound. PlayData not found.");
+		this.stopInternal(data.mainUuid, data.hierarchy, true);
 	}
 
-	stopMultiple(uuids: Iterable<string>): void {
-		for (const id of uuids) {
-			this.stopInternal(id, false);
+	async stopMultiple(uuids: Iterable<string>): Promise<void> {
+		const uuidArray = Array.from(uuids);
+		const playDatas = await window.actions.getPlayDataMultiple(uuidArray);
+		for (const data of playDatas) {
+			this.stopInternal(data.mainUuid, data.hierarchy, false);
 		}
 		void this.updatePTTState();
 		this.raiseSingleInstanceCheckUpdate();
 	}
 
-	stopAll(): void {
-		this.stopAllInternal(true);
+	stopAll(): Promise<void> {
+		return this.stopAllInternal(true);
 	}
 
 	isPlaying(uuid: string): boolean {
@@ -181,26 +184,24 @@ export default class AudioManager {
 		}
 	}
 
-	private stopAllInternal(raiseUpdates: boolean): void {
-		const playingCopy = [...this.playingInstances];
-		for (const playing of playingCopy) {
-			const id = playing.uuid;
-			this.stopInternal(id, raiseUpdates);
+	private async stopAllInternal(raiseUpdates: boolean): Promise<void> {
+		const playDatas = await window.actions.getPlayDataMultiple(this.playingInstances.map(x => x.uuid));
+		for (const playing of playDatas) {
+			const id = playing.mainUuid;
+			this.stopInternal(id, playing.hierarchy, raiseUpdates);
 		}
 	}
 
-	private stopInternal(uuid: string, raiseUpdates: boolean): void {
-		const instances = this.playingInstances.filter(x => x.uuid == uuid);
+	private stopInternal(uuid: string, hierarchy: UuidHierarchy, raiseUpdates: boolean): void {
+		const instances = this.playingInstances.filter(x => x.uuid === uuid);
 		if (instances.length <= 0) return;
-		const instancesCopy = [...instances];
+		const instance = instances[0]!;
 
-		for (const instance of instancesCopy) {
-			instance.stop();
-			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-			// TODO: Request hierarchy from the main process.
-			//this._onStop.raise(uuid);
-			console.log(`Stopped an instance of the Playable with UUID ${uuid}.`);
-		}
+		instance.stop();
+		this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
+		this._onStop.raise(hierarchy);
+		console.log(`Stopped an instance of the Playable with UUID ${uuid}.`);
+
 		if (raiseUpdates) {
 			void this.updatePTTState();
 			this.raiseSingleInstanceCheckUpdate();

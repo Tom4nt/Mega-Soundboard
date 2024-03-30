@@ -1,11 +1,10 @@
 import { app } from "electron";
 import * as p from "path";
 import Utils from "../utils/utils";
-import { Settings } from "../../shared/models";
 import { promises as fs, constants as fsc } from "fs";
 import * as fsSync from "fs";
-import { convertSettings } from "../../shared/models/settings";
 import { Soundboard } from "./models/soundboard";
+import Settings from "./models/settings";
 
 type JSONObj = { [key: string]: unknown }
 
@@ -32,7 +31,7 @@ export default class DataAccess {
 			try {
 				const JSONtext = await fs.readFile(settingsPath, "utf-8");
 				const jsonObj = JSON.parse(JSONtext) as JSONObj;
-				settings = convertSettings(jsonObj);
+				settings = Settings.convert(jsonObj);
 			} catch (error) {
 				console.error(error);
 			}

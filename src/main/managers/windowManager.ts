@@ -1,15 +1,15 @@
 import { BrowserWindow, ipcMain, Menu, MenuItem, screen, shell } from "electron";
 import path = require("path");
-import InitialContent from "../../shared/models/initialContent";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import Utils from "../utils/utils";
+import { IInitialContent } from "src/shared/models/dataInterfaces";
 
 export default class WindowManager {
 	private _mainWindow: BrowserWindow;
 	private _loadingWindow: BrowserWindow;
 	private _initialMaximize: boolean;
-	private windowContentRequested?: () => InitialContent;
+	private windowContentRequested?: () => IInitialContent;
 	private _isMainWindowMaximized = false;
 
 	get mainWindow(): BrowserWindow { return this._mainWindow; }
@@ -33,7 +33,7 @@ export default class WindowManager {
 		this.loadingWindow.show();
 	}
 
-	async showMainWindow(contentRequested: () => InitialContent): Promise<void> {
+	async showMainWindow(contentRequested: () => IInitialContent): Promise<void> {
 		this.windowContentRequested = contentRequested;
 		await this.showMainWindowInternal();
 	}

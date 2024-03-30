@@ -5,9 +5,7 @@ import TrayManager from "./managers/trayManager";
 import SoundboardsCache from "./data/soundboardsCache";
 import SettingsCache from "./data/settingsCache";
 import DataAccess from "./data/dataAccess";
-import InitialContent from "../shared/models/initialContent";
 import KeybindManager from "./managers/keybindManager";
-import { Settings } from "../shared/models";
 import IPCHandler from "./ipcHandler";
 import Updater from "./updater";
 import { Soundboard } from "./data/models/soundboard";
@@ -51,19 +49,19 @@ async function init(): Promise<void> {
 	await windowManager.showLoadingWindow();
 	const s = settingsCache.settings;
 	const keybindManager = new KeybindManager();
-	keybindManager.raiseExternal = Settings.getActionState(s, "toggleKeybinds");
+	keybindManager.raiseExternal = s.quickActionStates.get("toggleKeybinds")!;
 	const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
 
 	new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
 	const sb = await selectInitialSoundboard(soundboardsCache, settingsCache.settings.selectedSoundboard);
 
 	windowManager.loadingWindow.close();
-	await windowManager.showMainWindow(() => new InitialContent(
-		settingsCache.settings,
-		soundboardsCache.soundboards.map(s => s.asData()),
-		sb.getPlayables().map<IPlayableData>(p => p.asData()),
-		settingsCache.shouldShowChangelog(),
-	));
+	await windowManager.showMainWindow(() => ({
+		settings: settingsCache.settings,
+		soundboards: soundboardsCache.soundboards.map(s => s.asData()),
+		initialPlayables: sb.getPlayables().map<IPlayableData>(p => p.asData()),
+		shouldShowChangelog: settingsCache.shouldShowChangelog(),
+	}));
 }
 
 async function selectInitialSoundboard(soundboardsCache: SoundboardsCache, selectedIndex: number): Promise<Soundboard> {

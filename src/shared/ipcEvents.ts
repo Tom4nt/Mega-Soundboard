@@ -8,15 +8,15 @@ import {
 	UpdaterState,
 	WindowState
 } from "./interfaces";
-import { Settings } from "./models";
-import { IPlayableData, ISoundboardData, PlayData } from "./models/dataInterfaces";
+import { IPlayableData, ISettingsData, ISoundboardData, PlayData } from "./models/dataInterfaces";
 
 class ConcreteEvents {
 	keybindsStateChanged: ExposedEvent<boolean> | null = null;
 	overlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
 	loopSoundsChanged: ExposedEvent<boolean> | null = null;
-	settingsChanged: ExposedEvent<Settings> | null = null;
+	settingsChanged: ExposedEvent<ISettingsData> | null = null;
 	playableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
+	playablesAdded: ExposedEvent<PlayableAddedArgs[]> | null = null;
 	playableChanged: ExposedEvent<IPlayableData> | null = null;
 	playableRemoved: ExposedEvent<IPlayableData> | null = null;
 	soundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;

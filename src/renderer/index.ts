@@ -1,14 +1,28 @@
 import Actions from "./util/actions";
-import { Toggler, Slider, SoundboardList, Dropdown, SearchBox, Seekbar, MessageHost, Tooltip, Draggable, FileDropArea, PlayableList, PlayableItem, } from "./elements";
+import {
+	Toggler,
+	Slider,
+	SoundboardList,
+	Dropdown,
+	SearchBox,
+	Seekbar,
+	MessageHost,
+	Tooltip,
+	Draggable,
+	FileDropArea,
+	PlayableList,
+	PlayableItem,
+} from "./elements";
 import { MSModal, NewsModal, SettingsModal } from "./modals";
 import MSR from "./msr";
-import { Message, Settings } from "../shared/models";
 import AudioManager from "./audioManager";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
 import { UpdaterState } from "../shared/interfaces";
 import { DropDownItem } from "./elements/dropdown";
 import { DropdownItem } from "./elements/dropdown/dropdownItem";
+import { ISettingsData } from "../shared/models/dataInterfaces";
+import Message from "../shared/models/message";
 
 //#region Elements
 
@@ -80,9 +94,9 @@ async function init(): Promise<void> {
 		soundboardList.addSoundboard(sb);
 	}
 
-	enabeKeybindsToggler.isOn = Settings.getActionState(content.settings, "toggleKeybinds");
-	overlapSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundOverlap");
-	loopSoundsToggler.isOn = Settings.getActionState(content.settings, "toggleSoundLooping");
+	enabeKeybindsToggler.isOn = content.settings.quickActionStates.get("toggleKeybinds")!;
+	overlapSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundOverlap")!;
+	loopSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundLooping")!;
 
 	window.events.keybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
 	window.events.overlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
@@ -113,13 +127,13 @@ function updatePlayableListButtons(isLinked: boolean): void {
 	openFolderButton.style.display = isLinked ? "" : "none";
 }
 
-function loadDevicesPanel(devices: MediaDeviceInfo[], settings: Settings): void {
+function loadDevicesPanel(devices: MediaDeviceInfo[], settings: ISettingsData): void {
 	loadDevices(devices);
 	selectDevices(settings);
 	setVolumes(settings);
 }
 
-function selectDevices(settings: Settings): void {
+function selectDevices(settings: ISettingsData): void {
 	const foundMain = mainDeviceDropdown.selectIfFound(item =>
 		item instanceof DropDownItem && item.value === settings.mainDevice);
 
@@ -135,7 +149,7 @@ function selectDevices(settings: Settings): void {
 		item instanceof DropDownItem && item.value === "");
 }
 
-function setVolumes(settings: Settings): void {
+function setVolumes(settings: ISettingsData): void {
 	mainDeviceVolumeSlider.value = settings.mainDeviceVolume;
 	secondaryDeviceVolumeSlider.value = settings.secondaryDeviceVolume;
 }
@@ -265,7 +279,7 @@ function addElementListeners(): void {
 	});
 
 	stopAllButton.addEventListener("click", () => {
-		MSR.instance.audioManager.stopAll();
+		void MSR.instance.audioManager.stopAll();
 	});
 
 	deviceSettingsButton.addEventListener("click", () => {
