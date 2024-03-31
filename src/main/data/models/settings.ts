@@ -1,6 +1,6 @@
-import Keys from "src/shared/keys";
-import { ISettingsData } from "src/shared/models/dataInterfaces";
-import { ActionName, actionDefaults, actionNames } from "src/shared/quickActions";
+import Keys from "../../../shared/keys";
+import { ISettingsData } from "../../../shared/models/dataInterfaces";
+import { ActionName, actionDefaults, actionNames } from "../../../shared/quickActions";
 import { JSONObject } from "./interfaces";
 
 export default class Settings {
@@ -27,6 +27,15 @@ export default class Settings {
 		return { ...this };
 	}
 
+	getSavable(): JSONObject {
+		const json = {
+			...this as object,
+			quickActionKeys: Object.fromEntries(this.quickActionKeys),
+			quickActionStates: Object.fromEntries(this.quickActionStates),
+		};
+		return json;
+	}
+
 	static getDefaultQuickActionStates(): Map<ActionName, boolean> {
 		const map = new Map<ActionName, boolean>();
 		for (const key of actionNames) {
@@ -38,21 +47,46 @@ export default class Settings {
 	static convert(data: JSONObject): Settings {
 		const settings = new Settings();
 
-		// TODO: Review
 		for (const iterator of Object.keys(new Settings()) as (keyof Settings)[]) {
 			const val = data[iterator];
 			const defaultType = typeof settings[iterator];
-			if (typeof val === defaultType && (Array.isArray(settings[iterator]) === Array.isArray(val))) {
+			if (iterator == "quickActionKeys" && typeof val === "object" && val) {
+				settings.quickActionKeys = Settings.convertQuickActionKeys(val as JSONObject);
+			}
+			else if (iterator == "quickActionStates" && typeof val === "object" && val) {
+				settings.quickActionStates = Settings.convertQuickActionStates(val as JSONObject);
+			}
+			else if (typeof val === defaultType && (Array.isArray(settings[iterator]) === Array.isArray(val))) {
 				settings[iterator] = val as never;
 			}
 		}
 
-		Settings.migrateQuickSettingsStates(settings.quickActionStates, data);
-		Settings.migrateQuickSettingsKeys(settings.quickActionKeys, data);
+		Settings.migrateQuickActionStates(settings.quickActionStates, data);
+		Settings.migrateQuickActionKeys(settings.quickActionKeys, data);
 		return settings;
 	}
 
-	private static migrateQuickSettingsStates(current: Map<ActionName, boolean>, data: { [key: string]: unknown }): void {
+	private static convertQuickActionKeys(data: JSONObject): Map<ActionName, number[]> {
+		const res = new Map<ActionName, number[]>();
+		for (const key of Object.keys(data)) {
+			if (!actionNames.includes(key as ActionName)) continue;
+			if (!Array.isArray(data[key])) continue;
+			res.set(key as ActionName, data[key] as number[]);
+		}
+		return res;
+	}
+
+	private static convertQuickActionStates(data: JSONObject): Map<ActionName, boolean> {
+		const res = new Map<ActionName, boolean>();
+		for (const key of Object.keys(data)) {
+			if (!actionNames.includes(key as ActionName)) continue;
+			if (typeof data[key] !== "boolean") continue;
+			res.set(key as ActionName, data[key] as boolean);
+		}
+		return res;
+	}
+
+	private static migrateQuickActionStates(current: Map<ActionName, boolean>, data: { [key: string]: unknown }): void {
 		const keys = ["enableKeybinds", "overlapSounds"];
 		const actionNames: ActionName[] = ["toggleKeybinds", "toggleSoundOverlap"];
 
@@ -64,7 +98,7 @@ export default class Settings {
 		}
 	}
 
-	private static migrateQuickSettingsKeys(current: Map<ActionName, number[]>, data: { [key: string]: unknown }): void {
+	private static migrateQuickActionKeys(current: Map<ActionName, number[]>, data: { [key: string]: unknown }): void {
 		const keys = ["enableKeybindsKeys", "stopSoundsKeys", "randomSoundKeys"];
 		const actionNames: ActionName[] = ["toggleKeybinds", "stopSounds", "playRandomSound"];
 

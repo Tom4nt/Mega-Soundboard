@@ -89,11 +89,6 @@ async function init(): Promise<void> {
 	const devices = await AudioManager.getAudioDevices();
 	loadDevicesPanel(devices, content.settings);
 
-	const soundboards = content.soundboards;
-	for (const sb of soundboards) {
-		soundboardList.addSoundboard(sb);
-	}
-
 	enabeKeybindsToggler.isOn = content.settings.quickActionStates.get("toggleKeybinds")!;
 	overlapSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundOverlap")!;
 	loopSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundLooping")!;
@@ -110,11 +105,15 @@ async function init(): Promise<void> {
 		window.actions.flagChangelogViewed();
 	}
 
-	const sb = soundboards[content.settings.selectedSoundboard];
-	if (sb) {
-		playableList.loadItems(content.initialPlayables, sb.uuid, sb.linkedFolder === null);
-		soundboardList.selectSoundboard(sb);
-		updatePlayableListButtons(sb.linkedFolder !== null);
+	const soundboards = content.soundboards;
+	const currentSb = soundboards[content.settings.selectedSoundboard];
+	for (const sb of soundboards) {
+		soundboardList.addSoundboard(sb, sb == currentSb);
+	}
+
+	if (currentSb) {
+		playableList.loadItems(content.initialPlayables, currentSb.uuid, currentSb.linkedFolder === null);
+		updatePlayableListButtons(currentSb.linkedFolder !== null);
 	}
 
 	MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {

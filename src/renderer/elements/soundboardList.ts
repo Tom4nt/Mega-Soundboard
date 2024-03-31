@@ -34,7 +34,7 @@ export default class SoundboardList extends HTMLElement {
 		});
 
 		window.events.soundboardAdded.addHandler(args => {
-			this.addSoundboard(args.soundboard, args.index);
+			this.addSoundboard(args.soundboard, args.isCurrent, args.index);
 		});
 
 		document.addEventListener("mousemove", e => {
@@ -49,8 +49,9 @@ export default class SoundboardList extends HTMLElement {
 		});
 	}
 
-	addSoundboard(soundboard: ISoundboardData, index?: number): void {
+	addSoundboard(soundboard: ISoundboardData, isSelected: boolean, index?: number): void {
 		const sbElement = new SoundboardItem(soundboard);
+		sbElement.isSelected = isSelected;
 
 		sbElement.onDragEnd.addHandler(() => {
 			this.handleDrop();

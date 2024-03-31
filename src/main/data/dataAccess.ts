@@ -40,14 +40,14 @@ export default class DataAccess {
 	}
 
 	static async saveSettings(settings: Settings): Promise<void> {
-		const json = JSON.stringify(settings, undefined, 4);
+		const json = JSON.stringify(settings.getSavable(), undefined, 4);
 		await fs.mkdir(savePath, { recursive: true });
 		await fs.writeFile(settingsPath, json);
 		console.log("Saved Settings.");
 	}
 
 	static saveSettingsSync(settings: Settings): void {
-		const json = JSON.stringify(settings, undefined, 4);
+		const json = JSON.stringify(settings.getSavable(), undefined, 4);
 		fsSync.mkdirSync(savePath, { recursive: true });
 		fsSync.writeFileSync(settingsPath, json);
 		console.log("Saved Settings.");

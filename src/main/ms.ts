@@ -10,7 +10,7 @@ import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
 import { actionBindings } from "./quickActionBindings";
-import { ActionName, isAction } from "../shared/quickActions";
+import { isAction } from "../shared/quickActions";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
 
@@ -38,31 +38,16 @@ export default class MS {
 		public readonly keybindManager: KeybindManager,
 	) {
 		MS.instance = this;
-		keybindManager.onKeybindPressed.addHandler(async kb => {
-			const s = this.settingsCache.settings;
-			const keybindsEnabled = s.quickActionStates.get("toggleKeybinds")!;
-			if (keybindsEnabled) {
-				for (const k in s.quickActionKeys.keys()) {
-					const keybind = s.quickActionKeys.get(k as ActionName);
-					if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
-						void actionBindings[k](k as never);
-					}
-				}
-			} else {
-				if (Keys.equals(kb, s.quickActionKeys.get("toggleKeybinds")!)) {
-					void actionBindings["toggleKeybinds"]("toggleKeybinds");
-				}
-			}
-		});
+		keybindManager.onKeybindPressed.addHandler(this.handleKeyPressed);
+	}
+
+	static stopAllSounds(): void {
+		EventSender.send("stopAll");
 	}
 
 	flagChangelogViewed(): void {
 		this.settingsCache.settings.latestLogViewed = MS.latestWithLog;
 		void DataAccess.saveSettings(this.settingsCache.settings);
-	}
-
-	static stopAllSounds(): void {
-		EventSender.send("stopAll");
 	}
 
 	getCurrentSoundboard(): Soundboard | undefined {
@@ -106,4 +91,24 @@ export default class MS {
 		}
 		EventSender.send("currentSoundboardChanged", soundboard.asData());
 	}
+
+	private handleKeyPressed = async (kb: number[]): Promise<void> => {
+		const s = this.settingsCache.settings;
+		const keybindsEnabled = s.quickActionStates.get("toggleKeybinds")!;
+		if (keybindsEnabled) {
+			for (const k of s.quickActionKeys.keys()) {
+				if (k === "toggleKeybinds") continue; // Special case below.
+				const keybind = s.quickActionKeys.get(k);
+				if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
+					await actionBindings[k](k as never);
+				}
+			}
+		}
+
+		// Special case. This action is toggled even when keybinds are disabled.
+		const keys = s.quickActionKeys.get("toggleKeybinds");
+		if (keys && Keys.equals(kb, keys)) {
+			await actionBindings["toggleKeybinds"]("toggleKeybinds");
+		}
+	};
 }

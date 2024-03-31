@@ -3,7 +3,7 @@ import { promises as fs, constants as fsConstants, PathLike } from "fs";
 import { IPlayable, JSONObject } from "../data/models/interfaces";
 import { Group } from "../data/models/group";
 import { Sound } from "../data/models/sound";
-import { UuidHierarchy } from "src/shared/models/dataInterfaces";
+import { UuidHierarchy } from "../../shared/models/dataInterfaces";
 
 export default class Utils {
 

@@ -1,4 +1,4 @@
-import { ISettingsData } from "src/shared/models/dataInterfaces";
+import { ISettingsData } from "../shared/models/dataInterfaces";
 import AudioManager from "./audioManager";
 import ModalManager from "./modalManager";
 import GlobalEvents from "./util/globalEvents";

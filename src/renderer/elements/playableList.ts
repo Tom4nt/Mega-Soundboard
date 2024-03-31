@@ -10,6 +10,7 @@ const SEARCH_EMPTY = "No sounds with the current filter";
 export default class PlayableList extends HTMLElement {
 	private currentSoundboardId?: string;
 	private containerElement?: PlayableContainer;
+	private currentFilter: string = "";
 
 	private _onItemDragStart = new Event<IPlayableData>();
 	public get onItemDragStart(): ExposedEvent<IPlayableData> { return this._onItemDragStart.expose(); }
@@ -42,7 +43,7 @@ export default class PlayableList extends HTMLElement {
 
 	loadItems(playables: IPlayableData[], soundboardUuid: string, allowImport: boolean): void {
 		this.currentSoundboardId = soundboardUuid;
-		const container = this.createContainer(soundboardUuid);
+		const container = this.createContainer(soundboardUuid, this.currentFilter);
 		container.allowFileImport = allowImport;
 		container.loadItems(playables);
 	}
@@ -52,15 +53,17 @@ export default class PlayableList extends HTMLElement {
 	}
 
 	filter(filter: string): void {
+		this.currentFilter = filter;
 		if (this.containerElement) this.containerElement.filter = filter;
 	}
 
 	// --- // ---
 
-	private createContainer(soundboardUuid: string): PlayableContainer {
+	private createContainer(soundboardUuid: string, filter: string): PlayableContainer {
 		if (this.containerElement) this.containerElement.remove();
 
 		const container = new PlayableContainer(soundboardUuid, () => this.getEmptyMessage());
+		container.filter = filter;
 		this.containerElement = container;
 		this.append(container);
 

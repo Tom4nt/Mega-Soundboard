@@ -16,6 +16,7 @@ export class Soundboard implements IPlayableContainer {
 		playables: IPlayable[],
 	) {
 		this.container = new Container(playables);
+		playables.forEach(p => p.parent = this);
 		this.uuid = baseProperties.uuid;
 		this.name = baseProperties.name;
 		this.keys = baseProperties.keys;

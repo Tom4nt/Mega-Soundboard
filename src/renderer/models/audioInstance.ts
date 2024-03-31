@@ -53,7 +53,7 @@ export default class AudioInstance {
 				}
 			});
 
-			audio.volume = Math.pow((device.volume / 100) * (sound.volume / 100), 2);
+			audio.volume = Math.pow((device.volume / 100) * sound.volume, 2);
 			audioElements.push(audio);
 			isFirst = false;
 		}

@@ -2,101 +2,106 @@
 <html>
 
 <head>
-    <title>Mega Soundboard</title>
-    <link rel="stylesheet" type="text/css" href="./css/main.css" />
-    <!-- <script type="module" src="index.js"></script> -->
-    <!-- <script src="../dist/app/elements/soundSearchbox.js"></script> -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
-    <script src="../renderer/bundle.js"></script>
+	<title>Mega Soundboard</title>
+	<link rel="stylesheet" type="text/css" href="./css/main.css" />
+	<!-- <script type="module" src="index.js"></script> -->
+	<!-- <script src="../dist/app/elements/soundSearchbox.js"></script> -->
+	<meta http-equiv="Content-Security-Policy" content="script-src 'self';">
+	<script src="../renderer/bundle.js"></script>
 </head>
 
 <body class="focused">
-    <ms-titlebar id="tb" main="Mega Soundboard"></ms-titlebar>
+	<ms-titlebar id="tb" main="Mega Soundboard"></ms-titlebar>
 
-    <!-- Main window body -->
-    <div id="content">
-        <div id="panel-left">
-            <div id="soundboardlistactions">
-                <div id="logo-container">
-                    <button id="logo">
-                        <span id="logo-indicator"></span>
-                    </button>
-                    <ms-iconbutton id="update-button" icon="download" tooltip-text="Restart and Update" tooltip-side="right"></ms-iconbutton>
-                </div>
-                <ms-filedroparea id="droparea-addSoundboard">
-                    <ms-iconbutton id="button-addSoundboard" icon="playlist_add" tooltip-text="Add Soundboard" tooltip-side="left"
-                        style="float: right;"></ms-iconbutton>
-                </ms-filedroparea>
-            </div>
-            <ms-soundboardlist id="soundboardlist"></ms-soundboardlist>
-        </div>
+	<!-- Main window body -->
+	<div id="content">
+		<div id="panel-left">
+			<div id="soundboardlistactions">
+				<div id="logo-container">
+					<button id="logo">
+						<span id="logo-indicator"></span>
+					</button>
+					<ms-iconbutton id="update-button" icon="download" tooltip-text="Restart and Update"
+						tooltip-side="right"></ms-iconbutton>
+				</div>
+				<ms-filedroparea id="droparea-addSoundboard">
+					<ms-iconbutton id="button-addSoundboard" icon="playlist_add" tooltip-text="Add Soundboard" tooltip-side="left"
+						style="float: right;"></ms-iconbutton>
+				</ms-filedroparea>
+			</div>
+			<ms-soundboardlist id="soundboardlist"></ms-soundboardlist>
+		</div>
 
-        <div id="panel-right">
-            <div id="soundlist-actions">
-                <ms-searchbox id="searchbox"></ms-searchbox>
-                <ms-iconbutton id="add-sound-button" icon="add" tooltip-text="Add Sounds" tooltip-side="left" style="float: right;"></ms-iconbutton>
-                <ms-iconbutton id="open-folder-button" icon="folder" tooltip-text="Open Folder" tooltip-side="left"
-                    style="float: right;"></ms-iconbutton>
-                <ms-iconbutton id="sort-button" icon="sort" tooltip-text="Sort" tooltip-side="left" style="float: right;"></ms-iconbutton>
-            </div>
+		<div id="panel-right">
+			<div id="soundlist-actions">
+				<ms-searchbox id="searchbox"></ms-searchbox>
+				<ms-iconbutton id="add-sound-button" icon="add" tooltip-text="Add Sounds" tooltip-side="left"
+					style="float: right;"></ms-iconbutton>
+				<ms-iconbutton id="open-folder-button" icon="folder" tooltip-text="Open Folder" tooltip-side="left"
+					style="float: right;"></ms-iconbutton>
+				<ms-iconbutton id="sort-button" icon="sort" tooltip-text="Sort" tooltip-side="left"
+					style="float: right;"></ms-iconbutton>
+			</div>
 
-            <ms-soundlist id="soundlist"></ms-soundlist>
+			<playable-container></playable-container>
+			<ms-soundlist id="soundlist"></ms-soundlist>
 
-            <div id="right-footer">
-                <div id="actionpanel">
-                    <ms-iconbutton id="btndevicesettings" icon="settings_input_svideo" tooltip-text="Audio Devices"></ms-iconbutton>
-                    <ms-iconbutton id="btnquicksettings" icon="tune" tooltip-text="Quick Settings"></ms-iconbutton>
-                    <div id="actionpanel-separator"></div>
-                    <ms-iconbutton id="btn-randomsound" icon="casino" tooltip-text="Play Random"></ms-iconbutton>
-                    <ms-iconbutton id="button-stopAll" icon="stop" tooltip-text="Stop All" class="red"></ms-iconbutton>
-                </div>
+			<div id="right-footer">
+				<div id="actionpanel">
+					<ms-iconbutton id="btndevicesettings" icon="settings_input_svideo"
+						tooltip-text="Audio Devices"></ms-iconbutton>
+					<ms-iconbutton id="btnquicksettings" icon="tune" tooltip-text="Quick Settings"></ms-iconbutton>
+					<div id="actionpanel-separator"></div>
+					<ms-iconbutton id="btn-randomsound" icon="casino" tooltip-text="Play Random"></ms-iconbutton>
+					<ms-iconbutton id="button-stopAll" icon="stop" tooltip-text="Stop All" class="red"></ms-iconbutton>
+				</div>
 
-                <ms-seekbar id="seekbar"></ms-seekbar>
-            </div>
+				<ms-seekbar id="seekbar"></ms-seekbar>
+			</div>
 
-            <div class="actionpanel-container closed" id="devicesettings" style="right: 160px; width: 300px;">
-                <div>
-                    <span class="label">Main device</span>
-                    <ms-dropdown id="dropdown-mainDevice"></ms-dropdown>
-                    <ms-slider id="slider-mainDeviceVolume" label="Volume"></ms-slider>
-                </div>
-                <div class="devicesettings-separator"></div>
-                <div>
-                    <span class="label">Secondary device</span>
-                    <ms-dropdown id="dropdown-secondaryDevice"></ms-dropdown>
-                    <ms-slider id="slider-secondaryDeviceVolume" label="Volume"></ms-slider>
-                </div>
-            </div>
+			<div class="actionpanel-container closed" id="devicesettings" style="right: 160px; width: 300px;">
+				<div>
+					<span class="label">Main device</span>
+					<ms-dropdown id="dropdown-mainDevice"></ms-dropdown>
+					<ms-slider id="slider-mainDeviceVolume" label="Volume"></ms-slider>
+				</div>
+				<div class="devicesettings-separator"></div>
+				<div>
+					<span class="label">Secondary device</span>
+					<ms-dropdown id="dropdown-secondaryDevice"></ms-dropdown>
+					<ms-slider id="slider-secondaryDeviceVolume" label="Volume"></ms-slider>
+				</div>
+			</div>
 
-            <div class="actionpanel-container closed" id="quicksettings" style="right: 117px;">
-                <div>
-                    <span class="label">Quick settings</span>
-                    <ms-toggler id="toggler-enableKeybinds" text="Keybinds usable"></ms-toggler>
-                    <ms-toggler id="toggler-overlapSounds" text="Overlap sounds"></ms-toggler>
-                    <ms-toggler id="toggler-loopSounds" text="Loop sounds"></ms-toggler>
-                    <button id="button-more-settings" class="icon-text-button">
-                        <i style="font-size: 20px;">settings</i>
-                        <span>More Settings</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+			<div class="actionpanel-container closed" id="quicksettings" style="right: 117px;">
+				<div>
+					<span class="label">Quick settings</span>
+					<ms-toggler id="toggler-enableKeybinds" text="Keybinds usable"></ms-toggler>
+					<ms-toggler id="toggler-overlapSounds" text="Overlap sounds"></ms-toggler>
+					<ms-toggler id="toggler-loopSounds" text="Loop sounds"></ms-toggler>
+					<button id="button-more-settings" class="icon-text-button">
+						<i style="font-size: 20px;">settings</i>
+						<span>More Settings</span>
+					</button>
+				</div>
+			</div>
+		</div>
 
-        <div id="tooltip-layer"></div>
+		<div id="tooltip-layer"></div>
 
-        <!-- Message host -->
-        <ms-message-host id="message-host"></ms-message-host>
+		<!-- Message host -->
+		<ms-message-host id="message-host"></ms-message-host>
 
-        <template id="message">
-            <div class="message hidden">
-                <div class="message-wrapper">
-                    <div class="message-content">Message test long message</div>
-                    <button class="message-close-button">close</button>
-                </div>
-                <div class="message-bar"></div>
-            </div>
-        </template>
-    </div>
+		<template id="message">
+			<div class="message hidden">
+				<div class="message-wrapper">
+					<div class="message-content">Message test long message</div>
+					<button class="message-close-button">close</button>
+				</div>
+				<div class="message-bar"></div>
+			</div>
+		</template>
+	</div>
 </body>
 
 </html>

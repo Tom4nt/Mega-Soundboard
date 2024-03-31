@@ -160,7 +160,8 @@ const implementer: Actions = {
 			const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
 			const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
 			if (!selected) throw new Error("Cannot move: Current selected soundboard index is out of bounds.");
-			await MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
+			const isCurrent = selected.uuid === soundboardId;
+			await MS.instance.soundboardsCache.moveSoundboard(soundboardId, isCurrent, destinationIndex);
 			const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
 			MS.instance.settingsCache.settings.selectedSoundboard = index; // Update the index because it changed.
 		})();

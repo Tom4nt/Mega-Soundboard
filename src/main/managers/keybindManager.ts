@@ -6,7 +6,6 @@ import EventSender from "../eventSender";
 
 export default class KeybindManager {
 	raiseExternal = true;
-	processKeysOnRelease = true;
 
 	get onKeybindPressed(): ExposedEvent<number[]> { return this._onKeybindPressed.expose(); }
 	private _onKeybindPressed = new Event<number[]>();
@@ -17,7 +16,7 @@ export default class KeybindManager {
 	/** Indicates whether a keybind was processed when a key was relased to avoid processing on the next key release. */
 	private processedKeybindOnRelease = true;
 
-	constructor() {
+	constructor(public processKeysOnRelease: boolean) {
 		uIOhook.on("keydown", e => {
 			if (!this.currentCombination.includes(e.keycode)) {
 				this.currentCombination.push(e.keycode);

@@ -34,6 +34,7 @@ export interface PlayableAddedArgs {
 export interface SoundboardAddedArgs {
 	soundboard: ISoundboardData,
 	index?: number,
+	isCurrent: boolean,
 }
 
 export interface ContainerSortedArgs {

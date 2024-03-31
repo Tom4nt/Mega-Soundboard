@@ -1,3 +1,4 @@
+import { stringContains } from "../../shared/sharedUtils";
 import { Event, ExposedEvent } from "../../shared/events";
 import { IPlayableData } from "../../shared/models/dataInterfaces";
 import { Draggable, FileDropArea, PlayableItem } from "../elements";
@@ -19,7 +20,7 @@ export default class PlayableContainer extends HTMLElement {
 	private _dragElement: PlayableItem | null = null;
 	private _dragDummyDiv!: HTMLDivElement;
 	private _containerDiv!: HTMLDivElement;
-	private _emptyMsgSpan!: HTMLSpanElement;
+	private _emptyMsgSpan?: HTMLSpanElement;
 	private _currSubContainer: PlayableContainer | null = null;
 
 	public allowFileImport = true;
@@ -107,7 +108,7 @@ export default class PlayableContainer extends HTMLElement {
 
 	filterItems(filter: string): void {
 		for (const item of this._loadedItems) {
-			let isValid = !filter || item.playable.name.contains(filter);
+			let isValid = !filter || stringContains(item.playable.name, filter);
 			const isCurrentDragElement = (!this._dragElement || item != this._dragElement);
 			isValid = isValid && isCurrentDragElement;
 			item.style.display = isValid ? "" : "none";
@@ -214,6 +215,7 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	private displayEmptyMessage(message: string): void {
+		if (!this._emptyMsgSpan) return;
 		if (!message) {
 			this._emptyMsgSpan.style.display = "none";
 		} else {
@@ -274,10 +276,9 @@ export default class PlayableContainer extends HTMLElement {
 	// Handlers
 
 	private handleDragOver = (e: MouseEvent): void => {
-		const targetElement = document.elementFromPoint(e.clientX, e.clientY);
-
+		const targetElements = document.elementsFromPoint(e.clientX, e.clientY);
+		const targetElement = targetElements.find(x => x instanceof PlayableItem);
 		if (!targetElement) return;
-		if (!(targetElement instanceof PlayableItem)) return;
 
 		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElement)) {
 			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);

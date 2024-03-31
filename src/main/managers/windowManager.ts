@@ -3,7 +3,7 @@ import path = require("path");
 import EventSender from "../eventSender";
 import MS from "../ms";
 import Utils from "../utils/utils";
-import { IInitialContent } from "src/shared/models/dataInterfaces";
+import { IInitialContent } from "../../shared/models/dataInterfaces";
 
 export default class WindowManager {
 	private _mainWindow: BrowserWindow;
