@@ -185,7 +185,8 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	sort(uuids: string[]): void {
-		const sorted = this._loadedItems.sort((a, b) => uuids.indexOf(a.id) - uuids.indexOf(b.id));
+		const sorted = this._loadedItems.sort(
+			(a, b) => uuids.indexOf(a.playable.uuid) - uuids.indexOf(b.playable.uuid));
 		for (const item of sorted) {
 			this._containerDiv.append(item);
 		}
