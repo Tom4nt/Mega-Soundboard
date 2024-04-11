@@ -100,22 +100,25 @@ export default class AudioManager {
 		const devices: IDevice[] = [{ id: this.mainDevice, volume: this.mainDeviceVolume }];
 		if (this.secondaryDevice) devices.push({ id: this.secondaryDevice, volume: this.secondaryDeviceVolume });
 
-		const instance = await AudioInstance.create(
-			{ uuid: data.mainUuid, volume: data.volume, path: data.path },
-			devices, this.loops
-		);
-		instance.onEnd.addHandler(async () => {
-			console.log(`Instance of ${data.mainUuid} finished playing.`);
-			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-			const dataAfter = await window.actions.getPlayData(data.mainUuid);
-			if (!dataAfter) throw Error("Could not find PlayData onEnd.");
-			this._onStop.raise(dataAfter.hierarchy);
-			void this.updatePTTState();
-			this.raiseSingleInstanceCheckUpdate();
-		});
-
 		try {
+			const instance = await AudioInstance.create(
+				{ uuid: data.mainUuid, volume: data.volume, path: data.path },
+				devices, this.loops
+			);
+
+			instance.onEnd.addHandler(async () => {
+				console.log(`Instance of ${data.mainUuid} finished playing.`);
+				this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
+				const dataAfter = await window.actions.getPlayData(data.mainUuid);
+				if (!dataAfter) throw Error("Could not find PlayData onEnd.");
+				this._onStop.raise(dataAfter.hierarchy);
+				void this.updatePTTState();
+				this.raiseSingleInstanceCheckUpdate();
+			});
+
 			await instance.play();
+			this.playingInstances.push(instance);
+
 		} catch (error) {
 			void this.updatePTTState();
 			this.raiseSingleInstanceCheckUpdate();
@@ -123,7 +126,7 @@ export default class AudioManager {
 		}
 
 		console.log(`Added and playing instance of sound at ${data.mainUuid}.`);
-		this.playingInstances.push(instance);
+
 		this._onPlay.raise(data);
 		void this.updatePTTState();
 		this.raiseSingleInstanceCheckUpdate();

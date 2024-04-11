@@ -31,8 +31,23 @@ export default class AudioInstance {
 
 		let isFirst = true;
 		for (const device of devices) {
-			const audio = new Audio(sound.path);
+			const audio = new Audio();
+			audio.src = sound.path;
 			audio.loop = loop;
+
+			if (isFirst) {
+				// Wait for metadata to load only if it's not ready. (otherwise loadedmetadata would never fire)
+				if (audio.readyState <= 0) {
+					await new Promise<void>((resolve, reject) => {
+						audio.addEventListener("loadedmetadata", () => {
+							resolve();
+						});
+						audio.addEventListener("error", () => {
+							reject(new Error(`Make sure the file exists at ${sound.path}.`));
+						});
+					});
+				}
+			}
 
 			try {
 				await audio.setSinkId(device.id);
@@ -62,13 +77,13 @@ export default class AudioInstance {
 		if (!firstAudioElement) throw new Error("No audio elements added.");
 
 		// Wait for metadata to load only if it's not ready. (otherwise loadedmetadata would never fire)
-		if (firstAudioElement.readyState <= 0) {
-			await new Promise<void>((resolve) => {
-				firstAudioElement.addEventListener("loadedmetadata", () => {
-					resolve();
-				});
-			});
-		}
+		// if (firstAudioElement.readyState <= 0) {
+		// 	await new Promise<void>((subResolve) => {
+		// 		firstAudioElement.addEventListener("loadedmetadata", () => {
+		// 			subResolve();
+		// 		});
+		// 	});
+		// }
 
 		firstAudioElement.addEventListener("pause", () => pauseEvent.raise());
 		firstAudioElement.addEventListener("play", () => playEvent.raise());
