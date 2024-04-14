@@ -117,10 +117,18 @@ export default class AudioInstance {
 	async play(): Promise<void> {
 		const playTasks: Promise<void>[] = [];
 		for (const audioElement of this.audioElements) {
-			const t = audioElement.play();
-			playTasks.push(t);
+			// Some audio files cause "PIPELINE_ERROR_READ: FFmpegDemuxer: demuxer seek failed" when seeked to the end.
+			// Cannot find a lot of info about this, but loading the audio again prevents it from being stuck forever.
+			if (audioElement.error) {
+				audioElement.load();
+			} else {
+				const t = audioElement.play();
+				playTasks.push(t);
+			}
 		}
+		console.log(`starting play promises. 0's current time: ${this.audioElements[0]?.currentTime}. 0's duration: ${this.audioElements[0]?.duration}`);
 		await Promise.all(playTasks);
+		console.log("play promises finished");
 	}
 
 	// Audio elements are always synced so we can get info from any of them.

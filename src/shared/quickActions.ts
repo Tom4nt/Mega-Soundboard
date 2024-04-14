@@ -18,7 +18,7 @@ export function isAction(name: string): name is ActionName {
 export const actionFriendlyNames: ActionNames = {
 	stopSounds: "Stop sounds",
 	playRandomSound: "Play random sound",
-	toggleKeybinds: "Keybinds usable",
+	toggleKeybinds: "Keybinds",
 	toggleSoundLooping: "Loop sounds",
 	toggleSoundOverlap: "Overlap sounds"
 };

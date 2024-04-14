@@ -131,8 +131,11 @@ const implementer: Actions = {
 	},
 
 	async stopAllSounds(containerUuid) {
-		const sounds = MS.instance.soundboardsCache.getAllSoundsInContainer(containerUuid);
-		EventSender.send("stopMultiple", sounds.map(s => s.getAudioPath()));
+		// const sounds = MS.instance.soundboardsCache.getAllSoundsInContainer(containerUuid);
+		// EventSender.send("stopMultiple", sounds.map(s => s.getAudioPath()));
+		// TODO: Rerwite when managing playing sounds in the main process.
+		void containerUuid;
+		EventSender.send("stopAll");
 	},
 
 	ungroupGroup(groupUuid) {

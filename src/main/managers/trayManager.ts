@@ -59,7 +59,7 @@ export default class TrayManager {
 	}
 
 	update(quickActionStates: Map<ActionName, boolean>): void {
-		for (const k in quickActionStates) {
+		for (const k of quickActionStates.keys()) {
 			if (!isAction(k)) return;
 			const keysItem = this.trayMenu.getMenuItemById(k);
 			if (keysItem) keysItem.checked = quickActionStates.get(k)!;

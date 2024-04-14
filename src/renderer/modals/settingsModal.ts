@@ -1,4 +1,4 @@
-import { ActionName, actionFriendlyNames, actionNames } from "../../shared/quickActions";
+import { ActionName, actionDefaults, actionFriendlyNames, actionNames } from "../../shared/quickActions";
 import { KeyRecorder, Toggler, FileSelector, Slider } from "../elements";
 import { Modal } from "../modals";
 
@@ -42,8 +42,10 @@ export default class SettingsModal extends Modal {
 	private getQuickActionContent(): HTMLElement[] {
 		const elements: HTMLElement[] = [];
 		for (const key of actionNames) {
+			const isToggle = actionDefaults[key] !== null;
 			const name = actionFriendlyNames[key];
-			elements.push(Modal.getLabel(name));
+			const finalName = isToggle ? `Toggle ${name}` : name;
+			elements.push(Modal.getLabel(finalName));
 			const recorder = new KeyRecorder();
 			elements.push(recorder);
 			this.quickActionRecorders.set(key, recorder);
@@ -114,7 +116,7 @@ export default class SettingsModal extends Modal {
 
 	private async save(): Promise<void> {
 		const soundsPath = await window.actions.parsePath(this.soundsLocationFileSelector.value);
-		if (! await this.validate(soundsPath) || soundsPath === null) return;
+		if (!await this.validate(soundsPath) || soundsPath === null) return;
 
 		window.actions.saveSettings({
 			quickActionKeys: this.getQuickActionKeys(),
