@@ -1,6 +1,7 @@
 import { ExposedEvent } from "./events";
 import {
 	ContainerSortedArgs,
+	IPlayArgs,
 	KeyRecordingArgs,
 	NonOptional,
 	PlayableAddedArgs,
@@ -8,7 +9,7 @@ import {
 	UpdaterState,
 	WindowState
 } from "./interfaces";
-import { IPlayableData, ISettingsData, ISoundboardData, PlayData } from "./models/dataInterfaces";
+import { IPlayableData, ISettingsData, ISoundboardData, PlayData, UuidHierarchyData } from "./models/dataInterfaces";
 
 class ConcreteEvents {
 	keybindsStateChanged: ExposedEvent<boolean> | null = null;
@@ -30,11 +31,13 @@ class ConcreteEvents {
 	currentSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
 	minToTrayChanged: ExposedEvent<boolean> | null = null;
 	updateStateChanged: ExposedEvent<UpdaterState> | null = null;
-	playRequested: ExposedEvent<PlayData> | null = null;
-	stopRequested: ExposedEvent<string> | null = null;
-	stopMultiple: ExposedEvent<string[]> | null = null;
-	stopAll: ExposedEvent<void> | null = null;
 	zoomFactorChanged: ExposedEvent<number> | null = null;
+
+	// Audio Manager
+	play: ExposedEvent<IPlayArgs> | null = null;
+	stop: ExposedEvent<PlayData> | null = null;
+	playing: ExposedEvent<UuidHierarchyData> | null = null; // TODO: Raise and listen to these
+	notPlaying: ExposedEvent<UuidHierarchyData> | null = null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

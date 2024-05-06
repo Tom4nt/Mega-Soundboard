@@ -1,7 +1,6 @@
 import Keys from "../../shared/keys";
-import { ISoundboardData, PlayData, UuidHierarchy } from "../../shared/models/dataInterfaces";
+import { ISoundboardData, UuidHierarchyData } from "../../shared/models/dataInterfaces";
 import { PlayableItem, Tooltip } from "../elements";
-import MSR from "../msr";
 import Actions from "../util/actions";
 import Draggable from "./draggable";
 
@@ -9,8 +8,6 @@ export default class SoundboardItem extends Draggable {
 	private iconElement!: HTMLSpanElement;
 	private titleElement!: HTMLSpanElement;
 	private descriptionElement!: HTMLSpanElement;
-
-	private playingSoundCount = 0;
 
 	get isSelected(): boolean {
 		return this.classList.contains("selected");
@@ -67,7 +64,7 @@ export default class SoundboardItem extends Draggable {
 	private addListeners(): void {
 		this.addEventListener("auxclick", async (e) => {
 			if (e.button === 1) {
-				await window.actions.stopAllSounds(this.soundboard.uuid);
+				window.actions.stop(this.soundboard.uuid);
 			}
 		});
 
@@ -110,15 +107,15 @@ export default class SoundboardItem extends Draggable {
 	private addGlobalListeners(): void {
 		window.events.soundboardChanged.addHandler(this.handleSoundboardChanged);
 		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
-		MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
-		MSR.instance.audioManager.onStop.addHandler(this.handleStop);
+		window.events.playing.addHandler(this.handlePlaying);
+		window.events.notPlaying.addHandler(this.handleNotPlaying);
 	}
 
 	private removeGlobalListeners(): void {
 		window.events.soundboardChanged.removeHandler(this.handleSoundboardChanged);
 		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
-		MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
-		MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
+		window.events.playing.removeHandler(this.handlePlaying);
+		window.events.notPlaying.removeHandler(this.handleNotPlaying);
 	}
 
 	// eslint-disable-next-line class-methods-use-this
@@ -138,12 +135,6 @@ export default class SoundboardItem extends Draggable {
 		this.iconElement.innerHTML = this.soundboard.linkedFolder ? "link" : "";
 	}
 
-	updatePlayingIndicator(playingSoundCountSum: number): void {
-		this.playingSoundCount += playingSoundCountSum;
-		if (this.playingSoundCount < 0) this.playingSoundCount = 0; // Not supposed to happen
-		this.setPlayingIndicatorState(this.playingSoundCount > 0);
-	}
-
 	setPlayingIndicatorState(state: boolean): void {
 		if (state) {
 			this.titleElement.style.fontWeight = "1000";
@@ -161,15 +152,15 @@ export default class SoundboardItem extends Draggable {
 		}
 	};
 
-	private handlePlay = (p: PlayData): void => {
-		if (p.hierarchy.includes(this.soundboard.uuid)) {
-			this.updatePlayingIndicator(1);
+	private handlePlaying = (h: UuidHierarchyData): void => {
+		if (h.includes(this.soundboard.uuid)) {
+			this.setPlayingIndicatorState(true);
 		}
 	};
 
-	private handleStop = (hierarchy: UuidHierarchy): void => {
-		if (hierarchy.includes(this.soundboard.uuid)) {
-			this.updatePlayingIndicator(-1);
+	private handleNotPlaying = (h: UuidHierarchyData): void => {
+		if (h.includes(this.soundboard.uuid)) {
+			this.setPlayingIndicatorState(false);
 		}
 	};
 

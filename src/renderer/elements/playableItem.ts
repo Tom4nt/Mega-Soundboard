@@ -1,13 +1,9 @@
 import Keys from "../../shared/keys";
-import { UISoundPath } from "../models";
-import { MessageModal } from "../modals";
-import MSR from "../msr";
 import Draggable from "./draggable";
-import Utils from "../util/utils";
 import Actions from "../util/actions";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
-import { IPlayableData, PlayData, UuidHierarchy } from "../../shared/models/dataInterfaces";
+import { IPlayableData, UuidHierarchyData } from "../../shared/models/dataInterfaces";
 
 type SimpleSoundboard = { uuid: string, name: string, isLinked: boolean };
 type DragSession = { sourceSoundboard: SimpleSoundboard, targetSoundboard: SimpleSoundboard | null };
@@ -18,7 +14,6 @@ export default class PlayableItem extends Draggable {
 	private indicatorElement!: HTMLDivElement;
 	private currentKeyStateListener: KeyStateListener | null = null;
 	private _draggingToNewSoundboard = false;
-	private playingSoundCount = 0;
 	private currentDragSession: DragSession | null = null;
 
 	public get draggingToNewSoundboard(): boolean { return this._draggingToNewSoundboard; }
@@ -36,15 +31,9 @@ export default class PlayableItem extends Draggable {
 		return "drag";
 	}
 
-	constructor(public playable: IPlayableData) {
+	constructor(public playable: IPlayableData, isPlaying: boolean = false) {
 		super();
-		this.init();
-	}
-
-	public updatePlayingIndicator(difference: number): void {
-		this.playingSoundCount += difference;
-		if (this.playingSoundCount < 0) this.playingSoundCount = 0; // Not supposed to happen
-		this.setPlayingState(this.playingSoundCount > 0);
+		this.init(isPlaying);
 	}
 
 	public setPlayingState(playingState: boolean): void {
@@ -89,7 +78,7 @@ export default class PlayableItem extends Draggable {
 		return newItem;
 	}
 
-	private init(): void {
+	private init(isPlaying: boolean): void {
 		this.classList.add("item");
 
 		const left = document.createElement("div");
@@ -110,6 +99,7 @@ export default class PlayableItem extends Draggable {
 
 		this.indicatorElement = document.createElement("div");
 		this.indicatorElement.classList.add("indicator");
+		this.setPlayingState(isPlaying);
 
 		const expandIcon = document.createElement("i");
 		expandIcon.style.fontSize = "24px";
@@ -126,13 +116,7 @@ export default class PlayableItem extends Draggable {
 
 		const handleClick = async (e: MouseEvent): Promise<void> => {
 			if (e.target === this.indicatorElement) return;
-			try {
-				const data = await window.actions.getPlayData(this.playable.uuid);
-				if (data) await MSR.instance.audioManager.play(data);
-			} catch (error) {
-				new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
-				await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
-			}
+			window.actions.play(this.playable.uuid);
 		};
 
 		left.addEventListener("click", e => void handleClick(e));
@@ -140,7 +124,7 @@ export default class PlayableItem extends Draggable {
 
 		this.addEventListener("auxclick", e => {
 			if (e.button === 1) {
-				void MSR.instance.audioManager.stop(this.playable.uuid);
+				window.actions.stop(this.playable.uuid);
 			}
 		});
 
@@ -149,7 +133,7 @@ export default class PlayableItem extends Draggable {
 		});
 
 		this.indicatorElement.addEventListener("click", () => {
-			void MSR.instance.audioManager.stop(this.playable.uuid);
+			window.actions.stop(this.playable.uuid);
 		});
 
 		this.onDragStart.addHandler(async (c) => {
@@ -175,15 +159,15 @@ export default class PlayableItem extends Draggable {
 	}
 
 	private addGlobalListeners(): void {
-		MSR.instance.audioManager.onPlay.addHandler(this.handlePlay);
-		MSR.instance.audioManager.onStop.addHandler(this.handleStop);
+		window.events.playing.addHandler(this.handlePlaying);
+		window.events.notPlaying.addHandler(this.handleNotPlaying);
 		window.events.playableChanged.addHandler(this.handlePlayableChanged);
 		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
 	}
 
 	private removeGlobalListeners(): void {
-		MSR.instance.audioManager.onPlay.removeHandler(this.handlePlay);
-		MSR.instance.audioManager.onStop.removeHandler(this.handleStop);
+		window.events.playing.removeHandler(this.handlePlaying);
+		window.events.notPlaying.removeHandler(this.handleNotPlaying);
 		window.events.playableChanged.removeHandler(this.handlePlayableChanged);
 		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
 	}
@@ -197,14 +181,14 @@ export default class PlayableItem extends Draggable {
 
 	// Handlers
 
-	private handlePlay = (playable: PlayData): void => {
-		if (playable.hierarchy.includes(this.playable.uuid))
-			this.updatePlayingIndicator(1);
+	private handlePlaying = (h: UuidHierarchyData): void => {
+		if (h.includes(this.playable.uuid))
+			this.setPlayingState(true);
 	};
 
-	private handleStop = (hierarchy: UuidHierarchy): void => {
-		if (hierarchy.includes(this.playable.uuid))
-			this.updatePlayingIndicator(-1);
+	private handleNotPlaying = (h: UuidHierarchyData): void => {
+		if (h.includes(this.playable.uuid))
+			this.setPlayingState(false);
 	};
 
 	private handlePlayableChanged = (playable: IPlayableData): void => {
@@ -215,12 +199,13 @@ export default class PlayableItem extends Draggable {
 	};
 
 	private handleKeybindPressed = async (keys: number[]): Promise<void> => {
+		// TODO: Handle keybind presses in the main process
 		if (Keys.equals(keys, this.playable.keys)) {
 			try {
-				const data = await window.actions.getPlayData(this.playable.uuid);
-				if (data) await MSR.instance.audioManager.play(data);
+				// const data = await window.actions.getPlayData(this.playable.uuid);
+				// if (data) await MSR.instance.audioManager.play(data);
 			} catch (error) {
-				await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
+				// await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
 			}
 		}
 	};

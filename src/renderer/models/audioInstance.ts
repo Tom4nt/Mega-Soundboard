@@ -19,8 +19,10 @@ export default class AudioInstance {
 	public readonly duration: number;
 
 	public static async create(
-		sound: { uuid: string, volume: number, path: string },
-		devices: IDevice[],
+		playableUuid: string,
+		volume: number,
+		path: string,
+		devices: readonly IDevice[],
 		loop: boolean,
 	): Promise<AudioInstance> {
 		const audioElements: HTMLAudioElement[] = [];
@@ -32,7 +34,7 @@ export default class AudioInstance {
 		let isFirst = true;
 		for (const device of devices) {
 			const audio = new Audio();
-			audio.src = sound.path;
+			audio.src = path;
 			audio.loop = loop;
 
 			if (isFirst) {
@@ -43,7 +45,7 @@ export default class AudioInstance {
 							resolve();
 						});
 						audio.addEventListener("error", () => {
-							reject(new Error(`Make sure the file exists at ${sound.path}.`));
+							reject(new Error(`Make sure the file exists at ${path}.`));
 						});
 					});
 				}
@@ -68,7 +70,7 @@ export default class AudioInstance {
 				}
 			});
 
-			audio.volume = Math.pow((device.volume / 100) * sound.volume, 2);
+			audio.volume = Math.pow((device.volume / 100) * volume, 2);
 			audioElements.push(audio);
 			isFirst = false;
 		}
@@ -76,26 +78,17 @@ export default class AudioInstance {
 		const firstAudioElement = audioElements[0];
 		if (!firstAudioElement) throw new Error("No audio elements added.");
 
-		// Wait for metadata to load only if it's not ready. (otherwise loadedmetadata would never fire)
-		// if (firstAudioElement.readyState <= 0) {
-		// 	await new Promise<void>((subResolve) => {
-		// 		firstAudioElement.addEventListener("loadedmetadata", () => {
-		// 			subResolve();
-		// 		});
-		// 	});
-		// }
-
 		firstAudioElement.addEventListener("pause", () => pauseEvent.raise());
 		firstAudioElement.addEventListener("play", () => playEvent.raise());
 		firstAudioElement.addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
 		return new AudioInstance(
-			sound.uuid, audioElements, stopEvent, pauseEvent, playEvent, timeUpdateEvent
+			playableUuid, audioElements, stopEvent, pauseEvent, playEvent, timeUpdateEvent
 		);
 	}
 
 	private constructor(
-		public readonly uuid: string,
+		public readonly playableUuid: string,
 		public readonly audioElements: HTMLAudioElement[],
 		private readonly stopEvent: Event<void>,
 		private readonly pauseEvent: Event<void>,
@@ -126,9 +119,7 @@ export default class AudioInstance {
 				playTasks.push(t);
 			}
 		}
-		console.log(`starting play promises. 0's current time: ${this.audioElements[0]?.currentTime}. 0's duration: ${this.audioElements[0]?.duration}`);
 		await Promise.all(playTasks);
-		console.log("play promises finished");
 	}
 
 	// Audio elements are always synced so we can get info from any of them.

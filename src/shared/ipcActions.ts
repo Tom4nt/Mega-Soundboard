@@ -1,5 +1,5 @@
 import { NonOptional, UpdaterState } from "./interfaces";
-import { IPlayableData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings, PlayData } from "./models/dataInterfaces";
+import { IPlayableData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings } from "./models/dataInterfaces";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {
@@ -22,12 +22,9 @@ class ConcreteActions {
 	getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
 	getPlayable: ((uuid: string) => Promise<IPlayableData | undefined>) | null = null;
 	getContainerItems: ((uuid: string) => Promise<IPlayableData[]>) | null = null;
-	getPlayData: ((uuid: string) => Promise<PlayData | undefined>) | null = null;
-	getPlayDataMultiple: ((uuids: string[]) => Promise<PlayData[]>) | null = null;
-	stopAllSounds: ((containerUuid: string) => Promise<void>) | null = null;
 	ungroupGroup: ((groupUuid: string) => void) | null = null;
 
-	getSoundboard: ((uuid: string) => Promise<{ soundboard: ISoundboardData, isLast: boolean }>) | null = null;
+	getSoundboard: ((uuid: string) => Promise<{ soundboard: ISoundboardData, isAlone: boolean }>) | null = null;
 	getNewSoundboard: (() => Promise<ISoundboardData>) | null = null;
 	addSoundboard: ((soundboard: ISoundboardData) => void) | null = null;
 	moveSoundboard: ((uuid: string, destinationIndex: number) => void) | null = null;
@@ -62,11 +59,15 @@ class ConcreteActions {
 
 	startKeyRecordingSession: (() => Promise<string>) | null = null;
 	stopKeyRecordingSession: ((uuid: string) => void) | null = null;
-	holdPTT: (() => Promise<string>) | null = null;
-	releasePTT: ((handle: string) => Promise<void>) | null = null;
 
 	getNewsHtml: (() => Promise<string>) | null = null;
 	getVersion: (() => Promise<string>) | null = null;
+
+	// Audio Manager
+	play: ((uuid: string) => void) | null = null;
+	stop: ((uuid: string) => void) | null = null;
+	stopAll: (() => void) | null = null;
+	soundEnd: ((uuid: string) => void) | null = null;
 }
 
 export type Actions = NonOptional<ConcreteActions>;

@@ -69,15 +69,6 @@ const implementer: Actions = {
 		EventSender.send("zoomFactorChanged", wc.getZoomFactor());
 	},
 
-	async getPlayData(uuid) {
-		const playables = MS.instance.soundboardsCache.getPlayData([uuid]);
-		return playables[0];
-	},
-
-	async getPlayDataMultiple(uuids) {
-		return MS.instance.soundboardsCache.getPlayData(uuids);
-	},
-
 	async addSounds(playables, destinationId, moveFile, startIndex) {
 		const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
 		return sb.uuid;
@@ -130,23 +121,15 @@ const implementer: Actions = {
 		return container.getPlayables().map(p => p.asData());
 	},
 
-	async stopAllSounds(containerUuid) {
-		// const sounds = MS.instance.soundboardsCache.getAllSoundsInContainer(containerUuid);
-		// EventSender.send("stopMultiple", sounds.map(s => s.getAudioPath()));
-		// TODO: Rerwite when managing playing sounds in the main process.
-		void containerUuid;
-		EventSender.send("stopAll");
-	},
-
 	ungroupGroup(groupUuid) {
 		void MS.instance.soundboardsCache.unGroupGroup(groupUuid);
 	},
 
 	getSoundboard(uuid) {
-		const lastUuid = MS.instance.soundboardsCache.soundboards.at(-1)?.uuid;
 		const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
+		const isAlone = MS.instance.soundboardsCache.soundboards.length === 1;
 		if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
-		return Promise.resolve({ soundboard: sb.asData(), isLast: uuid === lastUuid });
+		return Promise.resolve({ soundboard: sb.asData(), isAlone });
 	},
 
 	async getNewSoundboard() {
@@ -248,7 +231,7 @@ const implementer: Actions = {
 	},
 
 	async executeQuickAction(name) {
-		await actionBindings[name](name as never);
+		await actionBindings[name](name as never, false);
 	},
 
 	openRepo() {
@@ -297,19 +280,31 @@ const implementer: Actions = {
 		MS.instance.keybindManager.stopRecordingSession(id);
 	},
 
-	async holdPTT() {
-		return MS.instance.keybindManager.holdKeys(MS.instance.settingsCache.settings.pttKeys);
-	},
-
-	async releasePTT(handle) {
-		MS.instance.keybindManager.releaseKeys(handle);
-	},
-
 	async getNewsHtml() {
 		return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");
 	},
 
 	async getVersion() {
 		return app.getVersion();
+	},
+
+	// Audio Manager
+
+	play(uuid) {
+		MS.instance.audioManager.play(uuid, false);
+	},
+
+	stop(uuid) {
+		const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
+		const uuids = sounds.map(s => s.uuid);
+		MS.instance.audioManager.stopMultiple(uuids);
+	},
+
+	stopAll() {
+		MS.instance.audioManager.stopAll();
+	},
+
+	soundEnd(instanceUuid) {
+		MS.instance.audioManager.stopInstance(instanceUuid);
 	},
 };

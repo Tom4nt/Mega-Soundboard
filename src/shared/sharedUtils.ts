@@ -1,4 +1,5 @@
 export const validSoundExts = ["mp3", "wav", "ogg"];
+export const uiSounds = ["on", "off", "error"] as const;
 
 /** Tries to get a value from a map by checking the specified keys. filter is run for each value and filters them. */
 export function tryGetValue(data: { [key: string]: unknown }, keysToTry: string[], filter: (v: unknown) => boolean): unknown {

@@ -53,7 +53,7 @@ export default class Actions {
 
 	static async editSoundboard(uuid: string): Promise<void> {
 		const data = await window.actions.getSoundboard(uuid);
-		const editModal = new SoundboardModal(data.soundboard, false, data.isLast);
+		const editModal = new SoundboardModal(data.soundboard, false, data.isAlone);
 		editModal.open();
 		editModal.onSaved.addHandler(s => {
 			window.actions.editSoundboard(s);

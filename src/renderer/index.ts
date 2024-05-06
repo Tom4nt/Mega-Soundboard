@@ -5,7 +5,6 @@ import {
 	SoundboardList,
 	Dropdown,
 	SearchBox,
-	Seekbar,
 	MessageHost,
 	Tooltip,
 	Draggable,
@@ -14,8 +13,6 @@ import {
 	PlayableItem,
 } from "./elements";
 import { MSModal, NewsModal, SettingsModal } from "./modals";
-import MSR from "./msr";
-import AudioManager from "./audioManager";
 import * as MessageQueue from "./messageQueue";
 import Utils from "./util/utils";
 import { UpdaterState } from "../shared/interfaces";
@@ -23,6 +20,7 @@ import { DropDownItem } from "./elements/dropdown";
 import { DropdownItem } from "./elements/dropdown/dropdownItem";
 import { ISettingsData } from "../shared/models/dataInterfaces";
 import Message from "../shared/models/message";
+import AudioPlayer from "./audioPlayer";
 
 //#region Elements
 
@@ -50,7 +48,6 @@ let deviceSettingsButton!: HTMLButtonElement;
 let quickSettingsButton!: HTMLButtonElement;
 let randomSoundButton!: HTMLButtonElement;
 let stopAllButton!: HTMLButtonElement;
-let seekbar!: Seekbar;
 
 //#region Devices
 let mainDeviceDropdown!: Dropdown;
@@ -86,7 +83,7 @@ async function init(): Promise<void> {
 
 	MessageQueue.setHost(messageHost);
 
-	const devices = await AudioManager.getAudioDevices();
+	const devices = await AudioPlayer.getAudioDevices();
 	loadDevicesPanel(devices, content.settings);
 
 	enabeKeybindsToggler.isOn = content.settings.quickActionStates.get("toggleKeybinds")!;
@@ -115,10 +112,6 @@ async function init(): Promise<void> {
 		playableList.loadItems(content.initialPlayables, currentSb.uuid, currentSb.linkedFolder === null);
 		updatePlayableListButtons(currentSb.linkedFolder !== null);
 	}
-
-	MSR.instance.audioManager.onSingleInstanceChanged.addHandler(audioInst => {
-		seekbar.currentInstance = audioInst;
-	});
 }
 
 function updatePlayableListButtons(isLinked: boolean): void {
@@ -174,7 +167,6 @@ function getElementReferences(): void {
 	quickSettingsButton = document.getElementById("btnquicksettings") as HTMLButtonElement;
 	randomSoundButton = document.getElementById("btn-randomsound") as HTMLButtonElement;
 	stopAllButton = document.getElementById("button-stopAll") as HTMLButtonElement;
-	seekbar = document.getElementById("seekbar") as Seekbar;
 
 	mainDeviceDropdown = deviceSettings.querySelector("#dropdown-mainDevice") as Dropdown;
 	secondaryDeviceDropdown = deviceSettings.querySelector("#dropdown-secondaryDevice") as Dropdown;
@@ -278,7 +270,7 @@ function addElementListeners(): void {
 	});
 
 	stopAllButton.addEventListener("click", () => {
-		void MSR.instance.audioManager.stopAll();
+		window.actions.stopAll();
 	});
 
 	deviceSettingsButton.addEventListener("click", () => {

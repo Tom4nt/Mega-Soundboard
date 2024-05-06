@@ -18,10 +18,10 @@ export default class PlayableList extends HTMLElement {
 	protected connectedCallback(): void {
 		window.events.playableAdded.addHandler(e => {
 			if (e.parentUuid === this.currentSoundboardId) {
-				this.containerElement?.addItem(e.playable, e.index);
+				this.containerElement?.addItem(e.playable, e.index, e.isPlaying);
 			} else {
 				const targetContainer = this.containerElement?.getElementLocation(e.playable.uuid);
-				targetContainer?.addItem(e.playable);
+				targetContainer?.addItem(e.playable, undefined, e.isPlaying);
 			}
 		});
 
@@ -43,7 +43,7 @@ export default class PlayableList extends HTMLElement {
 
 	loadItems(playables: IPlayableData[], soundboardUuid: string, allowImport: boolean): void {
 		this.currentSoundboardId = soundboardUuid;
-		const container = this.createContainer(soundboardUuid, this.currentFilter);
+		const container = this.getContainer(soundboardUuid, this.currentFilter);
 		container.allowFileImport = allowImport;
 		container.loadItems(playables);
 	}
@@ -59,7 +59,8 @@ export default class PlayableList extends HTMLElement {
 
 	// --- // ---
 
-	private createContainer(soundboardUuid: string, filter: string): PlayableContainer {
+	private getContainer(soundboardUuid: string, filter: string): PlayableContainer {
+		// TODO: Should not create a new container every time to be able to preserve item being dragged.
 		if (this.containerElement) this.containerElement.remove();
 
 		const container = new PlayableContainer(soundboardUuid, () => this.getEmptyMessage());
@@ -95,12 +96,11 @@ export default class PlayableList extends HTMLElement {
 
 		if (!id) return;
 
-		let destinationUUID = e.item.draggingToNewSoundboard ? null : id;
+		const destinationUUID = e.item.draggingToNewSoundboard ? null : id;
 		if (e.item.dragMode === "copy") {
-			destinationUUID = await window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
+			await window.actions.copyPlayable(e.item.playable.uuid, destinationUUID, e.index);
 		} else {
-			destinationUUID = await window.actions.movePlayable(e.item.playable.uuid, destinationUUID, e.index);
+			await window.actions.movePlayable(e.item.playable.uuid, destinationUUID, e.index);
 		}
-		window.actions.setCurrentSoundboard(destinationUUID);
 	};
 }

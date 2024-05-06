@@ -9,7 +9,7 @@ type GroupMode = "sequence" | "random" | "first";
 
 export class Group implements IPlayableContainer {
 	constructor(
-		private readonly baseProperties: BaseProperties,
+		baseProperties: BaseProperties,
 		public mode: GroupMode,
 		public current: number = 0,
 		playables: IPlayable[],
@@ -84,7 +84,7 @@ export class Group implements IPlayableContainer {
 
 	getSavable(): JSONObject {
 		return {
-			...this.baseProperties.getSavable(),
+			...this.getSavable(),
 			playables: this.getPlayables().map(x => x.getSavable()),
 			mode: this.mode,
 		};
@@ -99,11 +99,11 @@ export class Group implements IPlayableContainer {
 	}
 
 	edit(data: IGroupData): void {
-		this.baseProperties.name = data.name;
-		this.baseProperties.volume = data.volume;
+		this.name = data.name;
+		this.volume = data.volume;
 
-		this.baseProperties.keys.length = 0;
-		this.baseProperties.keys.push(...data.keys);
+		this.keys.length = 0;
+		this.keys.push(...data.keys);
 
 		this.mode = data.mode;
 	}

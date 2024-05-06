@@ -27,7 +27,7 @@ export default class TrayManager {
 				label: actionName,
 				type: actionDefault === null ? "normal" : "checkbox",
 				click: (): void => {
-					void actionBindings[key](key as never);
+					void actionBindings[key](key as never, true);
 				}
 			});
 		}

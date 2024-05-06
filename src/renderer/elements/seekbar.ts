@@ -1,4 +1,5 @@
-import { AudioInstance } from "../models";
+import AudioInstance from "../models/audioInstance";
+import MSR from "../msr";
 import Utils from "../util/utils";
 import IconButton from "./iconButton";
 import Slider from "./slider";
@@ -50,6 +51,12 @@ export default class Seekbar extends HTMLElement {
 		this.append(this.buttonElement, this.timeElement, this.sliderElement);
 		this.style.display = "none";
 		this.didConnect = true;
+
+		MSR.instance.audioPlayer.seekbarUpdate.addHandler(this.handlePlayingInstanceChanged);
+	}
+
+	protected disconnectedCallback(): void {
+		MSR.instance.audioPlayer.seekbarUpdate.removeHandler(this.handlePlayingInstanceChanged);
 	}
 
 	private addInstanceListeners(instance: AudioInstance): void {
@@ -95,6 +102,10 @@ export default class Seekbar extends HTMLElement {
 	}
 
 	// Handlers
+
+	private handlePlayingInstanceChanged = (audioInstance: AudioInstance | null): void => {
+		this.currentInstance = audioInstance;
+	};
 
 	private handlePlayPauseClick = (): void => {
 		if (!this.currentInstance) return;

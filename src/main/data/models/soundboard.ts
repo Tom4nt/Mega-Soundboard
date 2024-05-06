@@ -11,7 +11,7 @@ import { ISoundboardData } from "../../../shared/models/dataInterfaces";
 
 export class Soundboard implements IPlayableContainer {
 	constructor(
-		private readonly baseProperties: BaseProperties,
+		baseProperties: BaseProperties,
 		public linkedFolder: string | null,
 		playables: IPlayable[],
 	) {
@@ -90,7 +90,7 @@ export class Soundboard implements IPlayableContainer {
 			volume: this.volume,
 			keys: this.keys,
 			linkedFolder: this.linkedFolder,
-			sounds: this.container.getPlayables().map(p => p.getSavable()),
+			sounds: this.getPlayables().map(p => p.getSavable()),
 		};
 	}
 
@@ -136,11 +136,11 @@ export class Soundboard implements IPlayableContainer {
 
 	asData(): ISoundboardData {
 		return {
-			keys: this.baseProperties.keys,
-			name: this.baseProperties.name,
+			keys: this.keys,
+			name: this.name,
 			linkedFolder: this.linkedFolder,
-			uuid: this.baseProperties.uuid,
-			volume: this.baseProperties.volume,
+			uuid: this.uuid,
+			volume: this.volume,
 			hasSounds: this.container.getPlayables().length > 0,
 			isGroup: this.isGroup,
 		};

@@ -1,4 +1,4 @@
-import { Optional } from "../interfaces";
+import { IDevice, Optional } from "../interfaces";
 import { ActionName } from "../quickActions";
 
 export interface IPlayableData {
@@ -24,13 +24,15 @@ export interface ISoundboardData extends IPlayableData {
 }
 
 /** The last uuid belongs to the deepest item. The first belongs to the root. */
-export type UuidHierarchy = string[];
+export type UuidHierarchyData = string[];
 
 export type PlayData = {
-	mainUuid: string,
-	hierarchy: UuidHierarchy,
+	mainPlayableUuid: string,
+	hierarchy: UuidHierarchyData,
 	path: string,
 	volume: number,
+	devices: readonly IDevice[],
+	loops: boolean,
 }
 
 export interface ISettingsData {

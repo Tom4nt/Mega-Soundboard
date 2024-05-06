@@ -13,6 +13,7 @@ import { actionBindings } from "./quickActionBindings";
 import { isAction } from "../shared/quickActions";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
+import AudioManager from "./managers/audioManager";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -36,13 +37,10 @@ export default class MS {
 		public readonly soundboardsCache: SoundboardsCache,
 		public readonly settingsCache: SettingsCache,
 		public readonly keybindManager: KeybindManager,
+		public readonly audioManager: AudioManager,
 	) {
 		MS.instance = this;
 		keybindManager.onKeybindPressed.addHandler(this.handleKeyPressed);
-	}
-
-	static stopAllSounds(): void {
-		EventSender.send("stopAll");
 	}
 
 	flagChangelogViewed(): void {
@@ -100,7 +98,7 @@ export default class MS {
 				if (k === "toggleKeybinds") continue; // Special case below.
 				const keybind = s.quickActionKeys.get(k);
 				if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
-					await actionBindings[k](k as never);
+					await actionBindings[k](k as never, true);
 				}
 			}
 		}
@@ -108,7 +106,7 @@ export default class MS {
 		// Special case. This action is toggled even when keybinds are disabled.
 		const keys = s.quickActionKeys.get("toggleKeybinds");
 		if (keys && Keys.equals(kb, keys)) {
-			await actionBindings["toggleKeybinds"]("toggleKeybinds");
+			await actionBindings["toggleKeybinds"]("toggleKeybinds", true);
 		}
 	};
 }

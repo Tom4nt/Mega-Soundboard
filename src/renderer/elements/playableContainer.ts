@@ -117,8 +117,8 @@ export default class PlayableContainer extends HTMLElement {
 		this.updateMessage();
 	}
 
-	addItem(playable: IPlayableData, index?: number): void {
-		const item = new PlayableItem(playable);
+	addItem(playable: IPlayableData, index?: number, isPlaying?: boolean): void {
+		const item = new PlayableItem(playable, isPlaying);
 
 		item.onExpandRequested.addHandler(() => {
 			if (this._currSubContainer?.parentUuid === playable.uuid) {

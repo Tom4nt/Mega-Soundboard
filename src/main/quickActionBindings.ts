@@ -3,23 +3,22 @@ import EventSender from "./eventSender";
 import MS from "./ms";
 
 type QuickActionBindings = {
-	[T in ActionName]: (key: T) => Promise<void>
+	[T in ActionName]: (key: T, softError: boolean) => Promise<void>
 }
 
 export const actionBindings: QuickActionBindings = {
 	async stopSounds() {
-		EventSender.send("stopAll");
+		MS.instance.audioManager.stopAll();
 	},
 
-	async playRandomSound() {
+	async playRandomSound(_key, softError) {
 		const ms = MS.instance;
 		const sb = ms.soundboardsCache.soundboards[ms.settingsCache.settings.selectedSoundboard];
 		if (!sb) throw new Error("Could not find the current soundboard.");
 		const items = sb.getPlayables();
 		if (items.length <= 0) return;
 		const index = Math.floor(Math.random() * items.length);
-		const playData = ms.soundboardsCache.getPlayData([items[index]!.uuid]);
-		EventSender.send("playRequested", playData[0]);
+		ms.audioManager.play(items[index]!.uuid, softError);
 	},
 
 	async toggleKeybinds(key) {

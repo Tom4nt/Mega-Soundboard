@@ -1,14 +1,8 @@
-import AudioInstance from "./models/audioInstance";
-
-export enum UISoundPath {
-    ON = "audio/on.wav",
-    OFF = "audio/off.wav",
-    ERROR = "audio/error.wav"
-}
+export const UISoundPath = {
+	"on": "audio/on.wav",
+	"off": "audio/off.wav",
+	"error": "audio/error.wav"
+};
 
 export const sides = ["top", "bottom", "left", "right"] as const;
 export type Side = typeof sides[number];
-
-export {
-    AudioInstance
-};

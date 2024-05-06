@@ -10,6 +10,7 @@ import IPCHandler from "./ipcHandler";
 import Updater from "./updater";
 import { Soundboard } from "./data/models/soundboard";
 import { IPlayableData } from "../shared/models/dataInterfaces";
+import AudioManager from "./managers/audioManager";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -51,8 +52,9 @@ async function init(): Promise<void> {
 	const keybindManager = new KeybindManager(settings.processKeysOnRelease);
 	keybindManager.raiseExternal = s.quickActionStates.get("toggleKeybinds")!;
 	const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
+	const audioManager = new AudioManager();
 
-	new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager);
+	new MS(windowManager, trayManager, soundboardsCache, settingsCache, keybindManager, audioManager);
 	const sb = await selectInitialSoundboard(soundboardsCache, settingsCache.settings.selectedSoundboard);
 
 	windowManager.loadingWindow.close();

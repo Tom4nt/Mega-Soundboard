@@ -10,6 +10,7 @@ import { IPlayable, IPlayableContainer } from "./models/interfaces";
 import { getHierarchy } from "../utils/utils";
 import { ContainerSortedArgs, PlayableAddedArgs } from "../../shared/interfaces";
 import { Group } from "./models/group";
+import UuidHierarchy from "./models/uuidHierarchy";
 
 export default class SoundboardsCache {
 	constructor(public readonly soundboards: Soundboard[]) { }
@@ -31,7 +32,12 @@ export default class SoundboardsCache {
 				moveTasks.push(fs.rename(sound.path, soundDestination));
 				sound.path = soundDestination;
 			}
-			EventSender.send("playableAdded", { parentUuid: targetContainer.uuid, playable: soundData, index });
+			EventSender.send("playableAdded", {
+				parentUuid: targetContainer.uuid,
+				playable: soundData,
+				index,
+				isPlaying: false,
+			});
 			index += 1;
 		}
 
@@ -68,7 +74,12 @@ export default class SoundboardsCache {
 		}
 
 		destination.addPlayable(playable, destinationIndex);
-		EventSender.send("playableAdded", { parentUuid: destinationId, playable: data, index: destinationIndex });
+		EventSender.send("playableAdded", {
+			parentUuid: destinationId,
+			playable: data,
+			index: destinationIndex,
+			isPlaying: MS.instance.audioManager.getPlayingInstanceCount(playableId) > 0,
+		});
 
 		await DataAccess.saveSoundboards(this.soundboards);
 		return destination;
@@ -156,20 +167,32 @@ export default class SoundboardsCache {
 		return soundboardIndex;
 	}
 
+	getHierarchies(uuids: string[]): UuidHierarchy[] {
+		const playables = this.findPlayablesRecursive(p => uuids.includes(p.uuid));
+		return playables.map((p) => getHierarchy(p));
+	}
+
 	getPlayData(uuids: string[]): PlayData[] {
 		const playables = this.findPlayablesRecursive(p => uuids.includes(p.uuid));
 		return playables.map((p): PlayData => ({
-			mainUuid: p.uuid,
+			mainPlayableUuid: p.uuid,
 			hierarchy: getHierarchy(p),
 			path: p.getAudioPath(),
-			volume: p.getFinalVolume()
+			volume: p.getFinalVolume(),
+			devices: MS.instance.settingsCache.getDevices(),
+			loops: MS.instance.settingsCache.settings.quickActionStates.get("toggleSoundLooping")!
 		}));
 	}
 
-	getAllSoundsInContainer(uuid: string): readonly Sound[] {
-		const container = this.getContainer(uuid);
-		if (!container) throw Error("Container not found.");
-		return container.findPlayablesRecursive(p => p.isSound) as readonly Sound[];
+	/** If the playable is a container, returns all sounds inside recursively. If it's a sound, returns it. */
+	getAllSounds(uuid: string): readonly Sound[] {
+		const playable = this.findPlayable(uuid);
+		if (!playable) throw Error("Playable not found.");
+		if (playable.isContainer) {
+			return (playable as IPlayableContainer).findPlayablesRecursive(p => p.isSound) as readonly Sound[];
+		} else {
+			return [playable as Sound];
+		}
 	}
 
 	getContainer(uuid: string): IPlayableContainer | null {
@@ -196,6 +219,7 @@ export default class SoundboardsCache {
 			playable: x.asData(),
 			parentUuid: parent.uuid,
 			index: startIndex + i,
+			isPlaying: MS.instance.audioManager.getPlayingInstanceCount(uuid) > 0,
 		})));
 	}
 

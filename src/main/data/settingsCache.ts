@@ -1,3 +1,4 @@
+import { IDevice } from "src/shared/interfaces";
 import { ISettingsData, OptionalSettings } from "../../shared/models/dataInterfaces";
 import EventSender from "../eventSender";
 import MS from "../ms";
@@ -34,6 +35,17 @@ export default class SettingsCache {
 
 	shouldShowChangelog(): boolean {
 		return this.settings.latestLogViewed < MS.latestWithLog;
+	}
+
+	getDevices(): readonly IDevice[] {
+		return [{
+			id: this.settings.mainDevice,
+			volume: this.settings.mainDeviceVolume,
+		},
+		...this.settings.secondaryDevice ? [{
+			id: this.settings.secondaryDevice,
+			volume: this.settings.secondaryDeviceVolume
+		}] : []];
 	}
 
 	// ----

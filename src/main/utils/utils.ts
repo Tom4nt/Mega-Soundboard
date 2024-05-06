@@ -3,7 +3,7 @@ import { promises as fs, constants as fsConstants, PathLike } from "fs";
 import { IPlayable, JSONObject } from "../data/models/interfaces";
 import { Group } from "../data/models/group";
 import { Sound } from "../data/models/sound";
-import { UuidHierarchy } from "../../shared/models/dataInterfaces";
+import UuidHierarchy from "../data/models/uuidHierarchy";
 
 export default class Utils {
 
@@ -81,8 +81,8 @@ export function convertPlayables(data: JSONObject[]): IPlayable[] {
 
 export function getHierarchy(playable: IPlayable): UuidHierarchy {
 	if (playable.parent) {
-		return [...getHierarchy(playable.parent), playable.uuid];
+		return new UuidHierarchy(...getHierarchy(playable.parent), playable.uuid);
 	} else {
-		return [playable.uuid];
+		return new UuidHierarchy(playable.uuid);
 	}
 }

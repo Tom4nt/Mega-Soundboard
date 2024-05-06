@@ -9,7 +9,7 @@ import { ISoundData } from "../../../shared/models/dataInterfaces";
 
 export class Sound implements IPlayable {
 	constructor(
-		private readonly baseProperties: BaseProperties,
+		baseProperties: BaseProperties,
 		public path: string,
 	) {
 		this.uuid = baseProperties.uuid;
@@ -39,7 +39,9 @@ export class Sound implements IPlayable {
 
 	getSavable(): JSONObject {
 		return {
-			...this.baseProperties.getSavable(),
+			name: this.name,
+			volume: this.volume,
+			keys: this.keys,
 			path: this.path,
 		};
 	}
@@ -57,8 +59,8 @@ export class Sound implements IPlayable {
 		this.volume = data.volume;
 		this.path = data.path;
 
-		this.baseProperties.keys.length = 0;
-		this.baseProperties.keys.push(...data.keys);
+		this.keys.length = 0;
+		this.keys.push(...data.keys);
 	}
 
 	asData(): ISoundData {

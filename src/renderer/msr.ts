@@ -1,20 +1,19 @@
-import { ISettingsData } from "../shared/models/dataInterfaces";
-import AudioManager from "./audioManager";
+import AudioPlayer from "./audioPlayer";
 import ModalManager from "./modalManager";
 import GlobalEvents from "./util/globalEvents";
 
 /** MegaSoundboardRenderer - Represents an instance of the main renderer process. */
 export default class MSR {
-	private static _instance = new MSR(window.getInitialContent().settings);
+	private static _instance = new MSR();
 	public static get instance(): MSR { return this._instance; }
 
-	readonly audioManager: AudioManager;
 	readonly modalManager: ModalManager;
+	readonly audioPlayer: AudioPlayer;
 
-	private constructor(settings: ISettingsData) {
+	private constructor() {
 		GlobalEvents.registerEvents();
 		this.modalManager = new ModalManager();
-		this.audioManager = new AudioManager(settings);
+		this.audioPlayer = new AudioPlayer();
 		MSR._instance = this;
 	}
 }
