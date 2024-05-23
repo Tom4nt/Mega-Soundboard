@@ -1,0 +1,68 @@
+ms-sound {
+	display: flex;
+	list-style: none;
+	flex-grow: 1;
+	border-radius: 4px;
+	background-color: var(--color-normalL);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+	margin: 4px;
+	box-sizing: border-box;
+	font-size: 16px;
+	transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0s, background-position 0.2s, transform 0.2s;
+	vertical-align: middle;
+	position: relative;
+	overflow: hidden;
+	font-family: Roboto;
+	color: var(--color-white);
+}
+
+ms-sound>div:hover {
+	background-color: var(--color-light);
+}
+
+ms-sound ms-iconbutton:hover {
+	background-color: var(--color-lightL);
+}
+
+ms-sound:hover:not(.dragdummy) {
+	box-shadow: 0 10px 16px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+ms-sound:active:not(.dragdummy):not(.drag) {
+	background-color: var(--color-lightL);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+ms-sound.drag {
+	transform: rotate(4deg) scale(1.1);
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 12px 10px rgba(0, 0, 0, 0.23);
+}
+
+ms-sound span {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+ms-sound .desc {
+	font-size: 12px;
+	color: var(--color-grayL);
+	margin-top: 4px;
+}
+
+ms-sound .indicator {
+	top: -22px;
+	right: -22px;
+	width: 22px;
+	height: 22px;
+	display: block;
+	position: absolute;
+	background-color: var(--color-green);
+	transform: rotate(45deg);
+	transition: all 0.3s cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+ms-sound .indicator:hover {
+	background-color: var(--color-greenL);
+}

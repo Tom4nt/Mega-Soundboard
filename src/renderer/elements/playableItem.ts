@@ -36,6 +36,14 @@ export default class PlayableItem extends Draggable {
 		this.init(isPlaying);
 	}
 
+	protected connectedCallback(): void {
+		this.addGlobalListeners();
+	}
+
+	protected disconnectedCallback(): void {
+		this.removeGlobalListeners();
+	}
+
 	public setPlayingState(playingState: boolean): void {
 		if (playingState) {
 			this.indicatorElement.style.top = "-11px";
@@ -68,19 +76,12 @@ export default class PlayableItem extends Draggable {
 		this.detailsElement.innerHTML = Keys.toKeyString(this.playable.keys);
 	}
 
-	public destroy(): void {
-		this.removeGlobalListeners();
-		this.remove();
-	}
-
 	public clone(): PlayableItem {
 		const newItem = new PlayableItem(this.playable);
 		return newItem;
 	}
 
 	private init(isPlaying: boolean): void {
-		this.classList.add("item");
-
 		const left = document.createElement("div");
 		left.style.minWidth = "0";
 		left.style.padding = "8px";
@@ -154,8 +155,6 @@ export default class PlayableItem extends Draggable {
 			this.currentKeyStateListener?.finish();
 			this.currentKeyStateListener = null;
 		});
-
-		this.addGlobalListeners();
 	}
 
 	private addGlobalListeners(): void {

@@ -79,7 +79,10 @@ const implementer: Actions = {
 	},
 
 	async movePlayable(id, destinationId, destinationIndex) {
+		const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
 		const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, false);
+		const treeAfter = MS.instance.soundboardsCache.getGeneralTree();
+		MS.instance.audioManager.notifyMove(treeBefore, treeAfter);
 		return sb.uuid;
 	},
 

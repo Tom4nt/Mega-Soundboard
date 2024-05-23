@@ -1,5 +1,6 @@
 import { ExposedEvent, Event } from "../../shared/events";
 import { IPlayable } from "../data/models/interfaces";
+import UuidTree from "../data/models/uuidTree";
 import EventSender from "../eventSender";
 import MS from "../ms";
 
@@ -55,15 +56,18 @@ export default class AudioManager {
 	stopInstance(uuid: string): void {
 		const instanceIndex = this.playingInstances.findIndex(i => i === uuid);
 		if (instanceIndex < 0) return; // Already stopped.
-		const instanceCount = this.getPlayingInstanceCount(uuid);
-		if (instanceCount === 1) { // It's going to stop.
-			this.notifyNotPlaying(uuid);
-		}
+
+		const soundboard = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		if (!soundboard) throw Error("Could not find soundboard of playable to stop.");
+		const tree = new UuidTree(soundboard);
+		const playingBefore = [...this.playingInstances];
 
 		this.playingInstances.splice(instanceIndex, 1);
 		console.log(`Removed instance of Playable with UUID ${uuid}.`);
 
-		if (instanceCount === 1) { // Was one. It's now 0.
+		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
+
+		if (this.getPlayingInstanceCount(uuid) === 0) {
 			const data = MS.instance.soundboardsCache.getPlayData([uuid])[0];
 			if (!data) throw Error("Play data not found for playable that ended.");
 			EventSender.send("stop", data);
@@ -74,21 +78,26 @@ export default class AudioManager {
 
 	/** Stops all instances of the specified Playable. */
 	stop(uuid: string): void {
-		const playData = MS.instance.soundboardsCache.getPlayData([uuid])[0];
-		if (!playData) throw Error("Could not stop sound. PlayData not found.");
+		const sb = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		if (!sb) throw Error("Could not find soundboard of playable to stop.");
+		const tree = new UuidTree(sb);
+		const playingBefore = [...this.playingInstances];
 
-		this.stopInstancesOf(playData.mainPlayableUuid);
+		this.stopInstancesOf(uuid);
+
 		this.updatePTTState();
+		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 	}
 
 	/** Stops all instances of the specified Playables. */
 	stopMultiple(uuids: Iterable<string>): void {
-		const uuidArray = Array.from(uuids);
-		const playData = MS.instance.soundboardsCache.getPlayData(uuidArray);
-		for (const data of playData) {
-			this.stopInstancesOf(data.mainPlayableUuid);
+		const tree = MS.instance.soundboardsCache.getGeneralTree();
+		const playingBefore = [...this.playingInstances];
+		for (const uuid of uuids) {
+			this.stopInstancesOf(uuid);
 		}
 		this.updatePTTState();
+		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 	}
 
 	stopAll(): void {
@@ -105,6 +114,34 @@ export default class AudioManager {
 		return this.playingInstances.length > 0;
 	}
 
+	/** Sends the appropriate notifications to the renderer process when a playing playable is moved. */
+	notifyMove(treeBefore: UuidTree, treeAfter: UuidTree): void {
+		this.notifyChanges(treeBefore, treeAfter, this.playingInstances, this.playingInstances);
+	}
+
+	private notifyPlaying(uuids: string[]): void {
+		const hierarchies = MS.instance.soundboardsCache.getHierarchies(uuids);
+		const playingUuids = hierarchies.flat(1);
+		EventSender.send("playing", playingUuids);
+	}
+
+	// private notifyNotPlaying(uuid: string): void {
+	// 	/** If a sound is the only one playing in a container, the container must be notified that it stopped playing
+	// 	 * (its playing indicator is hidden). However, if the container has other playing sounds that are not stopped,
+	// 	 * it must not be notified, because it should keep displaying its playing indicator.
+	// 	 * This function calculates the playables that should be notified when a playable is no longer playing. */
+
+	// 	const playingUuids = this.getPlayingFusedUuids();
+	// 	const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
+	// 	const notPlayingHierarchies = MS.instance.soundboardsCache.getHierarchies(sounds.map(s => s.uuid));
+	// 	const notPlayingUuids = ([] as string[]).concat(...notPlayingHierarchies);
+
+	// 	this.removeUUIDs(playingUuids, notPlayingUuids);
+	// 	const res = notPlayingUuids.filter(x => !playingUuids.find(y => y === x));
+
+	// 	EventSender.send("notPlaying", res);
+	// }
+
 	private updatePTTState(): void {
 		const playing = this.isAnyPlaying();
 		if (playing && !this.currentKeyHoldHandle) {
@@ -118,10 +155,13 @@ export default class AudioManager {
 	}
 
 	private stopAllInternal(): void {
+		const tree = MS.instance.soundboardsCache.getGeneralTree();
+		const playingBefore = [...this.playingInstances];
 		const playData = MS.instance.soundboardsCache.getPlayData(this.playingInstances);
 		for (const playing of playData) {
 			this.stopInstancesOf(playing.mainPlayableUuid);
 		}
+		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 	}
 
 	/** Stops all instances of the specified Playable. */
@@ -129,8 +169,6 @@ export default class AudioManager {
 		const instances = this.playingInstances.filter(x => x === playableUuid);
 		if (instances.length <= 0) return;
 		const instancesCopy = [...instances];
-
-		this.notifyNotPlaying(playableUuid);
 
 		for (const instance of instancesCopy) {
 			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
@@ -140,29 +178,6 @@ export default class AudioManager {
 		if (!data) throw Error(`Cannot find PlayData of Playable with UUID ${playableUuid} to send to renderer process.`);
 		EventSender.send("stop", data);
 		console.log(`Stopped all instances of the Playable with UUID ${data.mainPlayableUuid}.`);
-	}
-
-	private notifyPlaying(uuids: string[]): void {
-		const hierarchies = MS.instance.soundboardsCache.getHierarchies(uuids);
-		const playingUuids = hierarchies.flat(1);
-		EventSender.send("playing", playingUuids);
-	}
-
-	private notifyNotPlaying(uuid: string): void {
-		/** If a sound is the only one playing in a container, the container must be notified that it stopped playing
-		 * (its playing indicator is hidden). However, if the container has other playing sounds that are not stopped,
-		 * it must not be notified, because it should keep displaying its playing indicator.
-		 * This function calculates the playables that should be notified when a playable is no longer playing. */
-
-		const playingUuids = this.getPlayingFusedUuids();
-		const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
-		const notPlayingHierarchies = MS.instance.soundboardsCache.getHierarchies(sounds.map(s => s.uuid));
-		const notPlayingUuids = ([] as string[]).concat(...notPlayingHierarchies);
-
-		this.removeUUIDs(playingUuids, notPlayingUuids);
-		const res = notPlayingUuids.filter(x => !playingUuids.find(y => y === x));
-
-		EventSender.send("notPlaying", res);
 	}
 
 	/** Fuses the hierarchies of currently playing sounds into a single list of UUIDs. */
@@ -178,5 +193,33 @@ export default class AudioManager {
 				source.splice(index, 1);
 			}
 		}
+	}
+
+	private getChanges(
+		treeBefore: UuidTree,
+		treeAfter: UuidTree,
+		playingBefore: string[],
+		playingAfter: string[],
+	): { added: string[], removed: string[] } {
+		const totalPlayingBefore = treeBefore.nodes.filter(n => playingBefore.includes(n.uuid));
+		const beforeWithAncestors = totalPlayingBefore.flatMap(n => n.getHierarchy()).map(n => n.uuid);
+
+		const totalPlayingAfter = treeAfter.nodes.filter(n => playingAfter.includes(n.uuid));
+		const afterWithAncestors = totalPlayingAfter.flatMap(n => n.getHierarchy()).map(n => n.uuid);
+
+		const added = afterWithAncestors.filter(n => !beforeWithAncestors.includes(n));
+		const removed = beforeWithAncestors.filter(n => !afterWithAncestors.includes(n));
+		return { added, removed };
+	}
+
+	private notifyChanges(
+		treeBefore: UuidTree,
+		treeAfter: UuidTree,
+		playingBefore: string[],
+		playingAfter: string[],
+	): void {
+		const changes = this.getChanges(treeBefore, treeAfter, playingBefore, playingAfter);
+		if (changes.removed.length > 0) EventSender.send("notPlaying", changes.removed);
+		if (changes.added.length > 0) EventSender.send("playing", changes.added);
 	}
 }

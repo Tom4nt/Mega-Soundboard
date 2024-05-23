@@ -1,4 +1,14 @@
 ms-soundcontainer ms-soundcontainer {
-    background-color: var(--color-dark);
-    margin: 4px;
+	background-color: var(--color-dark);
+	margin: 4px;
+}
+
+.dragdummy {
+	display: none;
+	background-color: var(--color-normal);
+	box-shadow: none;
+	height: 53px;
+	box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
+	margin: 4px;
+	border-radius: 4px;
 }

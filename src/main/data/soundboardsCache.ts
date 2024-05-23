@@ -11,6 +11,7 @@ import { getHierarchy } from "../utils/utils";
 import { ContainerSortedArgs, PlayableAddedArgs } from "../../shared/interfaces";
 import { Group } from "./models/group";
 import UuidHierarchy from "./models/uuidHierarchy";
+import UuidTree from "./models/uuidTree";
 
 export default class SoundboardsCache {
 	constructor(public readonly soundboards: Soundboard[]) { }
@@ -197,6 +198,16 @@ export default class SoundboardsCache {
 
 	getContainer(uuid: string): IPlayableContainer | null {
 		return this.findPlayableRecursive(p => p.isContainer && p.uuid == uuid) as IPlayableContainer | null;
+	}
+
+	getGeneralTree(): UuidTree {
+		const root = {
+			uuid: "",
+			getPlayables: (): readonly IPlayable[] => {
+				return this.soundboards;
+			}
+		};
+		return new UuidTree(root);
 	}
 
 	async unGroupGroup(uuid: string): Promise<void> {

@@ -6,6 +6,8 @@ const START_DIST = 5;
 type Mode = "move" | "copy";
 
 export default abstract class Draggable extends HTMLElement {
+	// TODO: Extract statics to a manager object.
+
 	static get currentElement(): Draggable | null { return Draggable._currentElement; }
 	private static _currentElement: Draggable | null = null;
 
@@ -17,12 +19,15 @@ export default abstract class Draggable extends HTMLElement {
 	private hintIcon: Mode | null = null;
 	private dragClone: Draggable | null = null;
 	private _dragMode: Mode = "move";
-	private _onDragEnd = new Event<void>;
 	private _onDragStart = new Event<{ cancel: boolean }>;
+	private _onDragEnd = new Event<Draggable>;
 
 	get onDragStart(): ExposedEvent<{ cancel: boolean }> { return this._onDragStart.expose(); }
-	get onDragEnd(): ExposedEvent<void> { return this._onDragEnd.expose(); }
 	get isBeingDragged(): boolean { return this.isDragging; }
+	get onDragEnd(): ExposedEvent<Draggable> { return this._onDragEnd.expose(); }
+
+	private static _onGlobalDragEnd = new Event<Draggable>;
+	static get onGlobalDragEnd(): ExposedEvent<Draggable> { return this._onGlobalDragEnd.expose(); }
 
 	set dragMode(val: Mode) {
 		if (val === this._dragMode) return;
@@ -77,7 +82,8 @@ export default abstract class Draggable extends HTMLElement {
 			this.isDragging = false;
 			Draggable._currentElement = null;
 			this.endDrag();
-			this._onDragEnd.raise();
+			this._onDragEnd.raise(this);
+			Draggable._onGlobalDragEnd.raise(this);
 		});
 	}
 
@@ -149,6 +155,7 @@ export default abstract class Draggable extends HTMLElement {
 		this.addStyles(this._dragMode === "move" ? this : this.dragClone!);
 
 		this.currentDragHint = this.getDragHint();
+		document.body.append(this);
 		document.body.append(this.currentDragHint);
 	}
 
