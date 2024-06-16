@@ -66,18 +66,17 @@ export default class SoundboardsCache {
 		if (destination.isSoundboard && (destination as Soundboard).linkedFolder !== null)
 			throw Error(`Cannot ${copies ? "copy" : "move"} a sound to a linked Soundboard.`);
 
-		const data = playable.asData();
 		if (copies) {
 			playable = playable.copy();
 		} else {
 			playable.parent?.removePlayable(playable);
-			EventSender.send("playableRemoved", data);
+			EventSender.send("playableRemoved", playable.asData());
 		}
 
 		destination.addPlayable(playable, destinationIndex);
 		EventSender.send("playableAdded", {
 			parentUuid: destinationId,
-			playable: data,
+			playable: playable.asData(),
 			index: destinationIndex,
 			isPlaying: MS.instance.audioManager.getPlayingInstanceCount(playableId) > 0,
 		});

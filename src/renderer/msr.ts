@@ -1,4 +1,5 @@
 import AudioPlayer from "./audioPlayer";
+import DraggableManager from "./draggableManager";
 import ModalManager from "./modalManager";
 import GlobalEvents from "./util/globalEvents";
 
@@ -9,11 +10,13 @@ export default class MSR {
 
 	readonly modalManager: ModalManager;
 	readonly audioPlayer: AudioPlayer;
+	readonly draggableManager: DraggableManager;
 
 	private constructor() {
 		GlobalEvents.registerEvents();
 		this.modalManager = new ModalManager();
 		this.audioPlayer = new AudioPlayer();
+		this.draggableManager = new DraggableManager();
 		MSR._instance = this;
 	}
 }

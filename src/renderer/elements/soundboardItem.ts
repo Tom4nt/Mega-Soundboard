@@ -1,6 +1,7 @@
 import Keys from "../../shared/keys";
 import { ISoundboardData, UuidHierarchyData } from "../../shared/models/dataInterfaces";
 import { PlayableItem, Tooltip } from "../elements";
+import MSR from "../msr";
 import Actions from "../util/actions";
 import Draggable from "./draggable";
 
@@ -28,7 +29,7 @@ export default class SoundboardItem extends Draggable {
 		this.remove();
 	}
 
-	protected clone(): Draggable {
+	protected createGhost(): Draggable {
 		const newItem = new SoundboardItem(this.soundboard);
 		return newItem;
 	}
@@ -76,17 +77,19 @@ export default class SoundboardItem extends Draggable {
 			if (!this.isSelected) this.select();
 		});
 
+		// TODO: Change to drag update handler
 		this.addEventListener("mousemove", async () => {
 			const isLinked = this.soundboard.linkedFolder !== null;
-			if (Draggable.currentElement && !isLinked) {
-				const d = Draggable.currentElement;
+			if (MSR.instance.draggableManager.currentGhost && !isLinked) {
+				const d = MSR.instance.draggableManager.currentGhost;
 				if (!(d instanceof PlayableItem)) return;
-				d.updateHint({
-					uuid: this.soundboard.uuid,
-					name: this.soundboard.name,
-					isLinked: this.soundboard.linkedFolder !== null,
-				});
-				this.safeSelect(true);
+				// d.updateHint({
+				// 	uuid: this.soundboard.uuid,
+				// 	name: this.soundboard.name,
+				// 	isLinked: this.soundboard.linkedFolder !== null,
+				// });
+				// d.canAddToNewLocation = this.soundboard.linkedFolder !== null;
+				if (!this.isSelected) this.select();
 			}
 		});
 

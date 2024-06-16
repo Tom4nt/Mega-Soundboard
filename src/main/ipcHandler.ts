@@ -78,17 +78,17 @@ const implementer: Actions = {
 		void MS.instance.soundboardsCache.editPlayable(data);
 	},
 
-	async movePlayable(id, destinationId, destinationIndex) {
-		const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
-		const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, false);
-		const treeAfter = MS.instance.soundboardsCache.getGeneralTree();
-		MS.instance.audioManager.notifyMove(treeBefore, treeAfter);
-		return sb.uuid;
+	movePlayable(id, destinationId, destinationIndex) {
+		void (async (): Promise<void> => {
+			const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
+			await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, false);
+			const treeAfter = MS.instance.soundboardsCache.getGeneralTree();
+			MS.instance.audioManager.notifyMove(treeBefore, treeAfter);
+		})();
 	},
 
-	async copyPlayable(id, destinationId, destinationIndex) {
-		const sb = await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, true);
-		return sb.uuid;
+	copyPlayable(id, destinationId, destinationIndex) {
+		void MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, true);
 	},
 
 	deletePlayable(id) {

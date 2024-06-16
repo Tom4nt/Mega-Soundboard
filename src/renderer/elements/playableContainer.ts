@@ -1,9 +1,11 @@
 import { stringContains } from "../../shared/sharedUtils";
 import { IPlayableData } from "../../shared/models/dataInterfaces";
-import { Draggable, FileDropArea, PlayableItem } from "../elements";
+import { FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import { ContainerSortedArgs, PlayableAddedArgs } from "../../shared/interfaces";
+import { ContainerSortedArgs, PlayableAddedArgs, Point } from "../../shared/interfaces";
+import MSR from "../msr";
+import { DragEventArgs } from "../draggableManager";
 
 export default class PlayableContainer extends HTMLElement {
 	private _loadedItems: PlayableItem[] = [];
@@ -11,6 +13,13 @@ export default class PlayableContainer extends HTMLElement {
 	private _containerDiv!: HTMLDivElement;
 	private _emptyMsgSpan?: HTMLSpanElement;
 	private _currSubContainer: PlayableContainer | null = null;
+	private _isDraggingInside: boolean = false;
+
+	/** The item that corresponds to the current playable being dragged.
+	 * Since containers can be loaded and unloaded while dragging,
+	 * we need to check if we load the item that is being dragged, 
+	 * and store it here, to change its visibility in handleDragMove when needed. */
+	private _loadedDraggedItem: PlayableItem | null = null;
 
 	public allowFileImport = true;
 
@@ -28,6 +37,7 @@ export default class PlayableContainer extends HTMLElement {
 
 	protected connectedCallback(): void {
 		const dropArea = new FileDropArea(() => this.allowFileImport);
+		dropArea.style.flexGrow = "1";
 
 		const emptyMsgSpan = document.createElement("span");
 		emptyMsgSpan.classList.add("info");
@@ -46,11 +56,9 @@ export default class PlayableContainer extends HTMLElement {
 		dropArea.append(emptyMsgSpan, itemsContainer);
 		this.append(dropArea);
 
-		document.addEventListener("mousemove", this.handleMouseMove);
-
 		dropArea.onOver.addHandler(e => {
 			this.showDragDummy();
-			this.handleDragOver(e);
+			this.updateDragDummyPosition({ x: e.clientX, y: e.clientY });
 		});
 		dropArea.onLeave.addHandler(() => {
 			this.hideDragDummy();
@@ -59,45 +67,36 @@ export default class PlayableContainer extends HTMLElement {
 			void this.finishFileDrag(e);
 		});
 
+		if (MSR.instance.draggableManager.currentGhost) {
+			this.showDragDummy();
+		}
+
 		window.events.playableAdded.addHandler(this.handlePlayableAdded);
 		window.events.playableRemoved.addHandler(this.handlePlayableRemoved);
 		window.events.containerSorted.addHandler(this.handleContainerSorted);
-		Draggable.onGlobalDragEnd.addHandler(this.handleDragEnd);
+		MSR.instance.draggableManager.onDragStart.addHandler(this.handleDragStart);
 	}
 
 	protected disconnectedCallback(): void {
-		document.removeEventListener("mousemove", this.handleMouseMove);
-
 		window.events.playableAdded.removeHandler(this.handlePlayableAdded);
 		window.events.playableRemoved.removeHandler(this.handlePlayableRemoved);
 		window.events.containerSorted.removeHandler(this.handleContainerSorted);
-		Draggable.onGlobalDragEnd.removeHandler(this.handleDragEnd);
+		MSR.instance.draggableManager.onDragStart.removeHandler(this.handleDragStart);
 	}
 
 	loadItems(playables: IPlayableData[]): void {
 		this.clear();
-		const d = Draggable.currentElement instanceof PlayableItem ? Draggable.currentElement : null;
 		for (const playable of playables) {
-			if (!d || d.playable.uuid !== playable.uuid)
-				this.addItem(playable);
+			this.addItem(playable);
 		}
 		this.filterItems(this._filter);
 	}
 
-	showDragDummy(): void {
-		this._dragDummyDiv.style.display = "inline-block";
-	}
-
-	hideDragDummy(): void {
-		this.removeEventListener("mousemove", this.handleDragOver);
-		this._dragDummyDiv.style.display = "";
-	}
-
 	filterItems(filter: string): void {
 		for (const item of this._loadedItems) {
-			let isValid = !filter || stringContains(item.playable.name, filter);
-			const isCurrentDragElement = item === Draggable.currentElement;
-			isValid = isValid || isCurrentDragElement;
+			const isValid = !filter || stringContains(item.playable.name, filter);
+			// const isCurrentDragElement = item === MSR.instance.draggableManager.currentElement;
+			//isValid = isValid || isCurrentDragElement;
 			item.style.display = isValid ? "" : "none";
 		}
 		this.updateCurrentContainer();
@@ -130,6 +129,12 @@ export default class PlayableContainer extends HTMLElement {
 				this._loadedItems.push(item);
 			}
 		}
+
+		const d = MSR.instance.draggableManager.currentGhost;
+		if (d instanceof PlayableItem && d.playable.uuid === playable.uuid) {
+			this._loadedDraggedItem = item;
+			this.updateLoadedDraggedItem();
+		}
 		this.updateMessage();
 	}
 
@@ -137,6 +142,7 @@ export default class PlayableContainer extends HTMLElement {
 		let i = 0;
 		for (const item of this._loadedItems) {
 			if (item.playable.uuid === uuid) {
+				if (item === this._loadedDraggedItem) this._loadedDraggedItem = null;
 				item.remove();
 				this._loadedItems.splice(i, 1);
 				this.updateMessage();
@@ -159,13 +165,67 @@ export default class PlayableContainer extends HTMLElement {
 		}
 	}
 
-	// --- // ---
+	dragItem(pos: Point): void {
+		this._isDraggingInside = true;
+		this.updateLoadedDraggedItem();
+		this.showDragDummy();
+		this.updateDragDummyPosition(pos);
+	}
+
+	dragItemOutside(): void {
+		this._isDraggingInside = false;
+		this.updateLoadedDraggedItem();
+		this.hideDragDummy();
+	}
+
+	dropItem(dragElement: PlayableItem): void {
+		const newIndex = this.getDragDummyIndex();
+		this.hideDragDummy();
+		if (this._loadedDraggedItem) {
+			this._loadedDraggedItem.hidden = false;
+			this._loadedDraggedItem = null;
+		}
+
+		const destinationUUID = this.parentUuid;
+		if (dragElement.inCopyMode) {
+			window.actions.copyPlayable(dragElement.playable.uuid, destinationUUID, newIndex);
+		} else {
+			window.actions.movePlayable(dragElement.playable.uuid, destinationUUID, newIndex);
+		}
+	}
+
+	// ---
+
+	private showDragDummy(): void {
+		this._dragDummyDiv.style.display = "inline-block";
+		if (this._emptyMsgSpan) this._emptyMsgSpan.style.display = "none";
+		this.updateMessageSpanVisibility();
+	}
+
+	private hideDragDummy(): void {
+		this._dragDummyDiv.style.display = "";
+		if (this._emptyMsgSpan) this._emptyMsgSpan.style.display = "";
+		this.updateMessageSpanVisibility();
+	}
+
+	private updateDragDummyPosition(pos: Point): void {
+		const targetElements = document.elementsFromPoint(pos.x, pos.y);
+		const targetElement = targetElements.find(x => x instanceof PlayableItem);
+		if (!targetElement) return;
+
+		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElement)) {
+			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);
+		} else {
+			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement.nextElementSibling);
+		}
+	}
 
 	private clear(): void {
 		for (const item of this._loadedItems) {
 			item.remove();
 		}
 		this._loadedItems = [];
+		this._loadedDraggedItem = null;
 		this.updateMessage();
 	}
 
@@ -173,8 +233,9 @@ export default class PlayableContainer extends HTMLElement {
 		return this._loadedItems.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
 	}
 
-	private getDragDummyIndex(dragElement: PlayableItem | null): number {
-		return Utils.getElementIndex(this._dragDummyDiv, (e) => e != dragElement);
+	private getDragDummyIndex(): number {
+		const dragItemHidden = this._loadedDraggedItem?.hidden ?? true;
+		return Utils.getElementIndex(this._dragDummyDiv, (e) => !dragItemHidden || e != this._loadedDraggedItem);
 	}
 
 	private updateMessage(): void {
@@ -184,16 +245,18 @@ export default class PlayableContainer extends HTMLElement {
 
 	private displayEmptyMessage(message: string): void {
 		if (!this._emptyMsgSpan) return;
-		if (!message) {
-			this._emptyMsgSpan.style.display = "none";
-		} else {
-			this._emptyMsgSpan.style.display = "";
-			this._emptyMsgSpan.innerHTML = message;
-		}
+		this._emptyMsgSpan.innerHTML = message;
+		this.updateMessageSpanVisibility();
+	}
+
+	private updateMessageSpanVisibility(): void {
+		if (!this._emptyMsgSpan) return;
+		const visible = this._emptyMsgSpan.innerHTML != "" && window.getComputedStyle(this._dragDummyDiv).display == "none";
+		this._emptyMsgSpan.style.display = visible ? "" : "none";
 	}
 
 	private async finishFileDrag(e: DragEvent): Promise<void> {
-		const index = this.getDragDummyIndex(null);
+		const index = this.getDragDummyIndex();
 		this.hideDragDummy();
 		const paths = await Utils.getValidSoundPaths(e);
 		if (paths)
@@ -242,37 +305,18 @@ export default class PlayableContainer extends HTMLElement {
 		return this._loadedItems.find(x => x.playable.uuid === id);
 	}
 
+	private updateLoadedDraggedItem(): void {
+		const d = MSR.instance.draggableManager.currentGhost;
+		if (this._loadedDraggedItem && d instanceof PlayableItem) {
+			this._loadedDraggedItem.hidden = !d.inCopyMode || !this._isDraggingInside;
+		}
+	}
+
 	// Handlers
 
-	private handleDragOver = (e: MouseEvent): void => {
-		const targetElements = document.elementsFromPoint(e.clientX, e.clientY);
-		const targetElement = targetElements.find(x => x instanceof PlayableItem);
-		if (!targetElement) return;
-
-		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElement)) {
-			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);
-		} else {
-			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement.nextElementSibling);
-		}
-	};
-
-	private handleItemDrop = async (dragElement: PlayableItem): Promise<void> => {
-		const newIndex = this.getDragDummyIndex(dragElement);
-		this.hideDragDummy();
-
-		const id = this.parentUuid;
-		const destinationUUID = dragElement.draggingToNewSoundboard ? null : id;
-		if (dragElement.dragMode === "copy") {
-			await window.actions.copyPlayable(dragElement.playable.uuid, destinationUUID, newIndex);
-		} else {
-			await window.actions.movePlayable(dragElement.playable.uuid, destinationUUID, newIndex);
-		}
-	};
-
-	private handleMouseMove = (e: MouseEvent): void => {
-		if (Draggable.currentElement && Draggable.currentElement instanceof PlayableItem) {
-			this.showDragDummy();
-			this.handleDragOver(e);
+	private handleDragStart = (e: DragEventArgs): void => {
+		if (e.ghost instanceof PlayableItem && !this._loadedDraggedItem) {
+			this._loadedDraggedItem = this.findItem(e.ghost.playable.uuid) ?? null;
 		}
 	};
 
@@ -290,9 +334,5 @@ export default class PlayableContainer extends HTMLElement {
 		if (this.parentUuid === c.containerUuid) {
 			this.sort(c.itemsUuids);
 		}
-	};
-
-	private handleDragEnd = (d: Draggable): void => {
-		if (d instanceof PlayableItem) void this.handleItemDrop(d);
 	};
 }

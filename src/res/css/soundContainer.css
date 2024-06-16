@@ -1,3 +1,9 @@
+ms-soundcontainer {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
 ms-soundcontainer ms-soundcontainer {
 	background-color: var(--color-dark);
 	margin: 4px;

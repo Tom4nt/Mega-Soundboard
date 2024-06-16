@@ -1,10 +1,12 @@
 import { ISoundboardData } from "../../shared/models/dataInterfaces";
 import { SoundboardItem } from "../elements";
+import MSR from "../msr";
 import Utils from "../util/utils";
-import Draggable from "./draggable";
 
 export default class SoundboardList extends HTMLElement {
-	private selectedItem?: SoundboardItem;
+	private _selectedItem: SoundboardItem | undefined;
+	get selectedItem(): SoundboardItem | undefined { return this._selectedItem; }
+
 	private dragElement: SoundboardItem | null = null;
 	private dragDummy!: HTMLDivElement;
 
@@ -37,26 +39,25 @@ export default class SoundboardList extends HTMLElement {
 			this.addSoundboard(args.soundboard, args.isCurrent, args.index);
 		});
 
-		document.addEventListener("mousemove", e => {
-			if (Draggable.currentElement instanceof SoundboardItem) {
-				const d = Draggable.currentElement;
+		MSR.instance.draggableManager.onDragUpdate.addHandler(args => {
+			if (args.ghost instanceof SoundboardItem) {
 				if (!this.dragElement) {
 					this.showDragDummy();
-					this.dragElement = d;
+					this.dragElement = args.ghost;
 				}
-				this.handleDragOver(e.clientY);
+				this.handleDragOver(args.pos.y);
 			}
+		});
+
+		MSR.instance.draggableManager.onDragEnd.addHandler(() => {
+			this.handleDrop();
+			this.dragElement = null;
 		});
 	}
 
 	addSoundboard(soundboard: ISoundboardData, isSelected: boolean, index?: number): void {
 		const sbElement = new SoundboardItem(soundboard);
 		sbElement.isSelected = isSelected;
-
-		sbElement.onDragEnd.addHandler(() => {
-			this.handleDrop();
-			this.dragElement = null;
-		});
 
 		let beforeElement: HTMLElement | undefined = undefined;
 		if (index !== undefined) {
@@ -74,7 +75,7 @@ export default class SoundboardList extends HTMLElement {
 			if (item.soundboard.uuid === sb.uuid) {
 				item.soundboard = sb;
 				item.isSelected = true;
-				this.selectedItem = item;
+				this._selectedItem = item;
 			}
 		}
 	}
@@ -135,6 +136,7 @@ export default class SoundboardList extends HTMLElement {
 	private handleDrop = (): void => {
 		if (!this.dragElement) return;
 
+		// TODO: Drag ghost is not to be inserted.
 		this.insertBefore(this.dragElement, this.dragDummy.nextElementSibling);
 		const newIndex = this.getItemIndex(this.dragElement);
 		window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);

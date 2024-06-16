@@ -7,7 +7,6 @@ import {
 	SearchBox,
 	MessageHost,
 	Tooltip,
-	Draggable,
 	FileDropArea,
 	PlayableList,
 	PlayableItem,
@@ -21,6 +20,8 @@ import { DropdownItem } from "./elements/dropdown/dropdownItem";
 import { ISettingsData } from "../shared/models/dataInterfaces";
 import Message from "../shared/models/message";
 import AudioPlayer from "./audioPlayer";
+import MSR from "./msr";
+import { DragEventArgs } from "./draggableManager";
 
 //#region Elements
 
@@ -95,6 +96,9 @@ async function init(): Promise<void> {
 	window.events.loopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
 	window.events.currentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));
 
+	MSR.instance.draggableManager.onDragUpdate.addHandler(handleDragMove);
+	MSR.instance.draggableManager.onDragEnd.addHandler(handleDragEnd);
+
 	const shouldShowChangelog = content.shouldShowChangelog;
 	if (shouldShowChangelog) {
 		const modal = await NewsModal.load();
@@ -109,7 +113,7 @@ async function init(): Promise<void> {
 	}
 
 	if (currentSb) {
-		playableList.loadItems(content.initialPlayables, currentSb.uuid, currentSb.linkedFolder === null);
+		playableList.loadItems(content.initialPlayables, currentSb);
 		updatePlayableListButtons(currentSb.linkedFolder !== null);
 	}
 }
@@ -205,14 +209,16 @@ function addElementListeners(): void {
 	});
 
 	addSoundboardButton.addEventListener("mouseenter", () => {
-		if (Draggable.currentElement instanceof PlayableItem) {
-			Draggable.currentElement.draggingToNewSoundboard = true;
+		const d = MSR.instance.draggableManager.currentGhost;
+		if (d instanceof PlayableItem) {
+			d.canAddToNewLocation = true;
 		}
 	});
 
 	addSoundboardButton.addEventListener("mouseleave", () => {
-		if (Draggable.currentElement instanceof PlayableItem) {
-			Draggable.currentElement.draggingToNewSoundboard = false;
+		const d = MSR.instance.draggableManager.currentGhost;
+		if (d instanceof PlayableItem) {
+			d.canAddToNewLocation = false;
 		}
 	});
 
@@ -376,6 +382,41 @@ function showPlayableDragTutorial(): void {
 		tt.hide();
 	});
 }
+
+//#endregion
+
+//#region Handlers
+
+const handleDragMove = (e: DragEventArgs): void => {
+	const g = e.ghost;
+	if (!(g instanceof PlayableItem)) return;
+
+	const pointElements = document.elementsFromPoint(e.pos.x, e.pos.y);
+	if (pointElements.includes(addSoundboardButton)) {
+		g.canAddToNewLocation = true;
+		g.isMovingToNewLocation = true;
+		g.newLocationName = "New Soundboard";
+		playableList.dragItemOutside();
+	} else {
+		playableList.dragItem(e.pos, g);
+	}
+};
+
+const handleDragEnd = (e: DragEventArgs): void => {
+	const g = e.ghost;
+	if (!(g instanceof PlayableItem)) return;
+
+	const pointElements = document.elementsFromPoint(e.pos.x, e.pos.y);
+	if (pointElements.includes(addSoundboardButton)) {
+		if (g.inCopyMode) {
+			window.actions.copyPlayable(g.playable.uuid, null, 0);
+		} else {
+			window.actions.movePlayable(g.playable.uuid, null, 0);
+		}
+	} else {
+		playableList.dropItem(g);
+	}
+};
 
 //#endregion
 

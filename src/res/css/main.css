@@ -21,6 +21,7 @@
 @import 'messageHost.css';
 @import 'soundContainer.css';
 @import 'playable.css';
+@import 'draggableHint.css';
 
 body,
 html {

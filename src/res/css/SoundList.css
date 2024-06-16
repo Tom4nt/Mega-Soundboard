@@ -8,7 +8,7 @@ ms-soundlist {
 	box-sizing: border-box;
 	font-size: 0;
 	display: block;
-	max-height: calc(100% - 46px);
+	height: calc(100% - 46px);
 	overflow-y: overlay;
 	overflow-x: hidden;
 	padding-bottom: 78px;
