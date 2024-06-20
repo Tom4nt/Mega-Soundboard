@@ -4,20 +4,12 @@ import MSR from "../msr";
 import Utils from "../util/utils";
 
 export default class SoundboardList extends HTMLElement {
+	private _loadedItems: SoundboardItem[] = [];
 	private _selectedItem: SoundboardItem | undefined;
 	get selectedItem(): SoundboardItem | undefined { return this._selectedItem; }
 
 	private dragElement: SoundboardItem | null = null;
 	private dragDummy!: HTMLDivElement;
-
-	private *getItems(): Generator<SoundboardItem> {
-		for (let i = 0; i < this.childElementCount; i++) {
-			const element = this.childNodes[i];
-			if (element instanceof SoundboardItem) {
-				yield element;
-			}
-		}
-	}
 
 	protected connectedCallback(): void {
 		// Add drag dummy item
@@ -31,8 +23,10 @@ export default class SoundboardList extends HTMLElement {
 		});
 
 		window.events.soundboardRemoved.addHandler(sb => {
-			const elem = this.getSoundboardElement(sb.uuid);
-			elem?.destroy();
+			const elem = this._loadedItems.findIndex(x => x.soundboard.uuid === sb.uuid);
+			if (elem < 0) return;
+			this._loadedItems[elem]?.remove();
+			this._loadedItems.splice(elem, 1);
 		});
 
 		window.events.soundboardAdded.addHandler(args => {
@@ -43,14 +37,22 @@ export default class SoundboardList extends HTMLElement {
 			if (args.ghost instanceof SoundboardItem) {
 				if (!this.dragElement) {
 					this.showDragDummy();
-					this.dragElement = args.ghost;
+					const uuid = args.ghost.soundboard.uuid;
+					this.dragElement = this._loadedItems.find(x => x.soundboard.uuid === uuid) ?? null;
+					if (this.dragElement) this.dragElement.style.display = "none";
 				}
-				this.handleDragOver(args.pos.y);
+				this.updateDragDummyPosition(args.pos.y);
 			}
 		});
 
 		MSR.instance.draggableManager.onDragEnd.addHandler(() => {
-			this.handleDrop();
+			if (!this.dragElement) return;
+
+			const newIndex = this.getDragDummyIndex();
+			window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);
+
+			this.hideDragDummy();
+			this.dragElement.style.display = "";
 			this.dragElement = null;
 		});
 	}
@@ -60,28 +62,36 @@ export default class SoundboardList extends HTMLElement {
 		sbElement.isSelected = isSelected;
 
 		let beforeElement: HTMLElement | undefined = undefined;
-		if (index !== undefined) {
-			const items = Array.from(this.getItems());
-			if (index >= 0 && index < items.length) beforeElement = items[index];
+		if (index !== undefined && index >= 0 && index < this._loadedItems.length) {
+			beforeElement = this._loadedItems[index];
 		}
 
-		if (beforeElement) this.insertBefore(sbElement, beforeElement);
-		else this.appendChild(sbElement);
+		if (beforeElement) {
+			this.insertBefore(sbElement, beforeElement);
+			this._loadedItems.splice(index!, 0, sbElement);
+		}
+		else {
+			this.appendChild(sbElement);
+			this._loadedItems.push(sbElement);
+		}
 	}
 
 	selectSoundboard(sb: ISoundboardData): void {
 		this.unselectAll();
-		for (const item of this.getItems()) {
-			if (item.soundboard.uuid === sb.uuid) {
-				item.soundboard = sb;
-				item.isSelected = true;
-				this._selectedItem = item;
-			}
+		const item = this._loadedItems.find(x => x.soundboard.uuid === sb.uuid);
+		if (item) {
+			item.soundboard = sb;
+			item.isSelected = true;
+			this._selectedItem = item;
 		}
 	}
 
+	private getDragDummyIndex(): number {
+		return Utils.getElementIndex(this.dragDummy, (e) => e != this.dragElement);
+	}
+
 	private unselectAll(): void {
-		for (const item of this.getItems()) {
+		for (const item of this._loadedItems) {
 			item.isSelected = false;
 		}
 	}
@@ -91,15 +101,7 @@ export default class SoundboardList extends HTMLElement {
 	}
 
 	private showDragDummy(): void {
-		this.dragDummy.style.display = "inline-block";
-	}
-
-	/** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
-	private getSoundboardElement(soundboardUuid: string): SoundboardItem | null {
-		for (const item of this.getItems()) {
-			if (item.soundboard.uuid === soundboardUuid) return item;
-		}
-		return null;
+		this.dragDummy.style.display = "block";
 	}
 
 	private getItemAtPosition(y: number, x?: number): SoundboardItem | undefined {
@@ -111,18 +113,7 @@ export default class SoundboardList extends HTMLElement {
 		return target;
 	}
 
-	private getItemIndex(item: SoundboardItem): number {
-		let i = 0;
-		for (const curr of this.getItems()) {
-			if (curr === item) return i;
-			i++;
-		}
-		return i;
-	}
-
-	// Handlers
-
-	private handleDragOver = (yPos: number): void => {
+	private updateDragDummyPosition(yPos: number): void {
 		const target = this.getItemAtPosition(yPos);
 		if (!target || !this.dragElement) return;
 
@@ -131,16 +122,5 @@ export default class SoundboardList extends HTMLElement {
 		} else {
 			this.insertBefore(this.dragDummy, target.nextElementSibling);
 		}
-	};
-
-	private handleDrop = (): void => {
-		if (!this.dragElement) return;
-
-		// TODO: Drag ghost is not to be inserted.
-		this.insertBefore(this.dragElement, this.dragDummy.nextElementSibling);
-		const newIndex = this.getItemIndex(this.dragElement);
-		window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);
-
-		this.hideDragDummy();
-	};
+	}
 }

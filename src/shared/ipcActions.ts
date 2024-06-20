@@ -17,7 +17,7 @@ class ConcreteActions {
 	movePlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => void) | null = null;
 	copyPlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => void) | null = null;
 	deletePlayable: ((uuid: string) => void) | null = null;
-	getNewSoundsFromPaths: ((paths: string[]) => Promise<ISoundData[]>) | null = null;
+	getSoundDataFromPaths: ((paths: string[]) => Promise<ISoundData[]>) | null = null;
 	getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
 	getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
 	getPlayable: ((uuid: string) => Promise<IPlayableData | undefined>) | null = null;

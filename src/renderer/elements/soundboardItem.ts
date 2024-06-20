@@ -21,17 +21,38 @@ export default class SoundboardItem extends Draggable {
 	constructor(public soundboard: ISoundboardData) {
 		super();
 		this.lockHorizontal = true;
+	}
+
+	protected connectedCallback(): void {
+		super.connectedCallback();
+
+		this.addEventListener("auxclick", this.handleAuxClick);
+		this.addEventListener("contextmenu", this.handleContextMenu);
+		this.addEventListener("click", this.handleClick);
+		this.addEventListener("mousemove", this.handleMouseMove);
+		this.addEventListener("dragover", this.handleDragOver);
+
+		window.events.soundboardChanged.addHandler(this.handleSoundboardChanged);
+		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
+		window.events.playing.addHandler(this.handlePlaying);
+		window.events.notPlaying.addHandler(this.handleNotPlaying);
+
 		this.init();
 	}
 
-	public destroy(): void {
-		this.removeGlobalListeners();
-		this.remove();
+	protected disconnectedCallback(): void {
+		super.disconnectedCallback();
+
+		window.events.soundboardChanged.removeHandler(this.handleSoundboardChanged);
+		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
+		window.events.playing.removeHandler(this.handlePlaying);
+		window.events.notPlaying.removeHandler(this.handleNotPlaying);
 	}
 
 	protected createGhost(): Draggable {
-		const newItem = new SoundboardItem(this.soundboard);
-		return newItem;
+		const ghost = new SoundboardItem(this.soundboard);
+		ghost.style.width = this.clientWidth + "px";
+		return ghost;
 	}
 
 	private init(): void {
@@ -58,72 +79,13 @@ export default class SoundboardItem extends Draggable {
 
 		this.append(indicator, title, desc, icon);
 
-		this.addListeners();
 		this.updateElements();
-	}
-
-	private addListeners(): void {
-		this.addEventListener("auxclick", async (e) => {
-			if (e.button === 1) {
-				window.actions.stop(this.soundboard.uuid);
-			}
-		});
-
-		this.addEventListener("contextmenu", async () => {
-			await Actions.editSoundboard(this.soundboard.uuid);
-		});
-
-		this.addEventListener("click", () => {
-			if (!this.isSelected) this.select();
-		});
-
-		// TODO: Change to drag update handler
-		this.addEventListener("mousemove", async () => {
-			const isLinked = this.soundboard.linkedFolder !== null;
-			if (MSR.instance.draggableManager.currentGhost && !isLinked) {
-				const d = MSR.instance.draggableManager.currentGhost;
-				if (!(d instanceof PlayableItem)) return;
-				// d.updateHint({
-				// 	uuid: this.soundboard.uuid,
-				// 	name: this.soundboard.name,
-				// 	isLinked: this.soundboard.linkedFolder !== null,
-				// });
-				// d.canAddToNewLocation = this.soundboard.linkedFolder !== null;
-				if (!this.isSelected) this.select();
-			}
-		});
-
-		this.addEventListener("dragover", e => {
-			e.preventDefault();
-			this.safeSelect(true);
-		});
-
-		this.addGlobalListeners();
 	}
 
 	private safeSelect(ignoreLinked: boolean): void {
 		const isLinked = this.soundboard.linkedFolder !== null;
 		if (!this.isSelected && (!ignoreLinked || !isLinked))
 			this.select();
-	}
-
-	private addGlobalListeners(): void {
-		window.events.soundboardChanged.addHandler(this.handleSoundboardChanged);
-		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
-		window.events.playing.addHandler(this.handlePlaying);
-		window.events.notPlaying.addHandler(this.handleNotPlaying);
-	}
-
-	private removeGlobalListeners(): void {
-		window.events.soundboardChanged.removeHandler(this.handleSoundboardChanged);
-		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
-		window.events.playing.removeHandler(this.handlePlaying);
-		window.events.notPlaying.removeHandler(this.handleNotPlaying);
-	}
-
-	// eslint-disable-next-line class-methods-use-this
-	protected get classDuringDrag(): string {
-		return "drag";
 	}
 
 	select(): void {
@@ -171,5 +133,33 @@ export default class SoundboardItem extends Draggable {
 		if (Keys.equals(keybind, this.soundboard.keys)) {
 			window.actions.setCurrentSoundboard(this.soundboard.uuid);
 		}
+	};
+
+	private handleAuxClick = (e: MouseEvent): void => {
+		if (e.button === 1) {
+			window.actions.stop(this.soundboard.uuid);
+		}
+	};
+
+	private handleContextMenu = (): void => {
+		void Actions.editSoundboard(this.soundboard.uuid);
+	};
+
+	private handleClick = (): void => {
+		if (!this.isSelected) this.select();
+	};
+
+	private handleMouseMove = (): void => {
+		const isLinked = this.soundboard.linkedFolder !== null;
+		if (MSR.instance.draggableManager.currentGhost && !isLinked) {
+			const d = MSR.instance.draggableManager.currentGhost;
+			if (!(d instanceof PlayableItem)) return;
+			if (!this.isSelected) this.select();
+		}
+	};
+
+	private handleDragOver = (e: DragEvent): void => {
+		e.preventDefault();
+		this.safeSelect(true);
 	};
 }

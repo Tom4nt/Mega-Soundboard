@@ -9,7 +9,7 @@ ms-soundcontainer ms-soundcontainer {
 	margin: 4px;
 }
 
-.dragdummy {
+ms-soundcontainer .dragdummy {
 	display: none;
 	background-color: var(--color-normal);
 	box-shadow: none;

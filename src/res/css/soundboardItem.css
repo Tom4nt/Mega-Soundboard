@@ -1,0 +1,66 @@
+ms-soundboard {
+	display: flex;
+	color: var(--color-white);
+	font-family: Roboto;
+	padding: 12px 16px 12px 16px;
+	position: relative;
+	transition: background-color 0.1s;
+	font-size: 14px;
+	width: 100%;
+	box-sizing: border-box;
+	align-items: center;
+	height: 42px;
+}
+
+ms-soundboard:hover {
+	background-color: var(--color-light);
+}
+
+ms-soundboard.selected {
+	background-color: var(--color-normal);
+}
+
+ms-soundboard.selected .title,
+.item.drag .title {
+	padding-left: 22px;
+}
+
+ms-soundboard.selected .indicator {
+	opacity: 1;
+}
+
+ms-soundboard.linked .desc {
+	margin-right: 8px;
+}
+
+ms-soundboard .title {
+	transition: all 0.2s;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	flex-grow: 1;
+	margin-left: -10px;
+	margin-right: 6px;
+}
+
+ms-soundboard .indicator {
+	opacity: 0;
+	width: 10px;
+	height: 10px;
+	background-color: var(--color-white);
+	border-radius: 5px;
+	box-shadow: 0 0 6px var(--color-white);
+	transition: all 0.2s;
+	flex-shrink: 0;
+}
+
+ms-soundboard .desc {
+	color: var(--color-gray);
+	float: right;
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
+ms-soundboard .icon {
+	color: var(--color-white);
+}

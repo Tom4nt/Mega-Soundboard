@@ -239,9 +239,10 @@ export default class SoundboardsCache {
 		this.soundboards.splice(0, 0, soundboard);
 		EventSender.send("soundboardAdded", {
 			soundboard: soundboard.asData(),
-			isCurrent: false,
+			isCurrent: true,
 			index: 0
 		});
+		EventSender.send("currentSoundboardChanged", soundboard.asData());
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 

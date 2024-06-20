@@ -95,11 +95,8 @@ const implementer: Actions = {
 		void MS.instance.soundboardsCache.removePlayable(id);
 	},
 
-	getNewSoundsFromPaths(paths) {
-		const currentSoundboard = MS.instance.getCurrentSoundboard();
-		if (!currentSoundboard) throw new Error("Cannot find current soundboard.");
+	getSoundDataFromPaths(paths) {
 		const sounds = Sound.getNewSoundsFromPaths(paths);
-		sounds.forEach(s => currentSoundboard.addPlayable(s));
 		return Promise.resolve(sounds.map(s => s.asData()));
 	},
 

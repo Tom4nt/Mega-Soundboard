@@ -22,6 +22,7 @@
 @import 'soundContainer.css';
 @import 'playable.css';
 @import 'draggableHint.css';
+@import 'soundboardItem.css';
 
 body,
 html {

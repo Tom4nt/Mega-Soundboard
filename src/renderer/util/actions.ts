@@ -3,18 +3,18 @@ import { MultiSoundModal, SoundboardModal, SoundModal } from "../modals";
 
 export default class Actions {
 
-	/** Creates sounds for the paths and opens the dialog to add them to the specified soundboard.
-	 * If null, creates a new soundboard. Returns the soundboard uuid when the dialog is closed. */
-	static async addSounds(paths: string[], soundboardId: string | null, index?: number): Promise<string> {
+	/** Creates sounds for the paths and opens the dialog to add them to the specified container.
+	 * If null, creates a new soundboard. Returns the container uuid when the dialog is closed. */
+	static async addSounds(paths: string[], containerUuid: string | null, index?: number): Promise<string> {
 		if (paths.length <= 0) return "";
-		const newSounds = await window.actions.getNewSoundsFromPaths(paths);
+		const newSounds = await window.actions.getSoundDataFromPaths(paths);
 
 		if (paths.length == 1) {
 			const modal = new SoundModal(newSounds[0]!, true, false);
 			modal.open();
 			return await new Promise<string>(r => {
 				modal.onSave.addHandler(e => {
-					r(window.actions.addSounds([e.sound], soundboardId, e.moveRequested, index));
+					r(window.actions.addSounds([e.sound], containerUuid, e.moveRequested, index));
 				});
 			});
 		} else {
@@ -22,7 +22,7 @@ export default class Actions {
 			multiSoundModal.open();
 			return await new Promise<string>(r => {
 				multiSoundModal.onConfirmed.addHandler(e => {
-					r(window.actions.addSounds(newSounds, soundboardId, e.moveRequested, index));
+					r(window.actions.addSounds(newSounds, containerUuid, e.moveRequested, index));
 				});
 			});
 		}

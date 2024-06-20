@@ -1,81 +1,15 @@
 ms-soundboardlist {
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    display: block;
-    max-height: calc(100% - 50px);
-    overflow-y: auto;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	display: block;
+	max-height: calc(100% - 50px);
+	overflow-y: auto;
 }
 
-ms-soundboardlist .item {
-    display: flex;
-    color: var(--color-white);
-    font-family: Roboto;
-    padding: 12px 16px 12px 16px;
-    position: relative;
-    transition: background-color 0.1s;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-    align-items: center;
-    height: 42px;
-}
-
-ms-soundboardlist .item:hover {
-    background-color: var(--color-light);
-}
-
-ms-soundboardlist .item.selected {
-    background-color: var(--color-normal);
-}
-
-ms-soundboardlist .item.selected .title,
-.item.drag .title {
-    padding-left: 22px;
-}
-
-ms-soundboardlist .item.selected .indicator {
-    opacity: 1;
-}
-
-ms-soundboardlist .item.dragdummy {
-    display: none;
-    background-color: var(--color-normal);
-    box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
-}
-
-ms-soundboardlist .item .title {
-    transition: all 0.2s;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-    margin-left: -10px;
-    margin-right: 6px;
-}
-
-ms-soundboardlist .item .indicator {
-    opacity: 0;
-    width: 10px;
-    height: 10px;
-    background-color: var(--color-white);
-    border-radius: 5px;
-    box-shadow: 0 0 6px var(--color-white);
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-ms-soundboardlist .item .desc {
-    color: var(--color-gray);
-    float: right;
-    font-size: 12px;
-    flex-shrink: 0;
-}
-
-ms-soundboardlist .item.linked .desc {
-    margin-right: 8px;
-}
-
-ms-soundboardlist .item .icon {
-    color: var(--color-white);
+ms-soundboardlist .dragdummy {
+	display: none;
+	height: 42px;
+	background-color: var(--color-normal);
+	box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
 }
