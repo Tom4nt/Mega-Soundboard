@@ -12,6 +12,7 @@ import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
+import UuidTree from "./data/models/uuidTree";
 
 export default class IPCHandler {
 	public static register(): void {
@@ -92,6 +93,7 @@ const implementer: Actions = {
 	},
 
 	deletePlayable(id) {
+		MS.instance.audioManager.stop(id);
 		void MS.instance.soundboardsCache.removePlayable(id);
 	},
 
@@ -112,13 +114,27 @@ const implementer: Actions = {
 
 	async getPlayable(uuid) {
 		const sound = MS.instance.soundboardsCache.findPlayable(uuid);
-		return sound?.asData();
+		const playingUuids = MS.instance.audioManager.playingInstances;
+		const tree = MS.instance.soundboardsCache.getGeneralTree();
+		const nodes = tree.nodes.find(n => n.uuid === uuid)?.getFlatChildren();
+		if (!nodes || !sound) return undefined;
+
+		const uuids = nodes.map(n => n.uuid);
+		return { data: sound.asData(), isPlaying: playingUuids.some(p => uuids.includes(p)) };
 	},
 
 	async getContainerItems(uuid) {
 		const container = MS.instance.soundboardsCache.getContainer(uuid);
 		if (!container) return [];
-		return container.getPlayables().map(p => p.asData());
+
+		const tree = new UuidTree(container);
+		const playingUuids = MS.instance.audioManager.playingInstances;
+		return container.getPlayables().map(p => {
+			const node = tree.nodes.find(n => n.uuid === p.uuid);
+			const nodes = node?.getFlatChildren();
+			const uuids = nodes?.map(n => n.uuid);
+			return { data: p.asData(), isPlaying: playingUuids.some(x => uuids?.includes(x)) };
+		});
 	},
 
 	ungroupGroup(groupUuid) {

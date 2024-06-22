@@ -9,8 +9,8 @@ import KeybindManager from "./managers/keybindManager";
 import IPCHandler from "./ipcHandler";
 import Updater from "./updater";
 import { Soundboard } from "./data/models/soundboard";
-import { IPlayableData } from "../shared/models/dataInterfaces";
 import AudioManager from "./managers/audioManager";
+import { IPlayableArgs } from "../shared/interfaces";
 
 app.setAppUserModelId("com.tom4nt.megasoundboard");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
@@ -61,7 +61,7 @@ async function init(): Promise<void> {
 	await windowManager.showMainWindow(() => ({
 		settings: settingsCache.settings,
 		soundboards: soundboardsCache.soundboards.map(s => s.asData()),
-		initialPlayables: sb.getPlayables().map<IPlayableData>(p => p.asData()),
+		initialPlayables: sb.getPlayables().map<IPlayableArgs>(p => ({ data: p.asData(), isPlaying: false })),
 		shouldShowChangelog: settingsCache.shouldShowChangelog(),
 	}));
 }

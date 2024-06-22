@@ -52,4 +52,9 @@ export class UuidNode {
 			return [this];
 		}
 	}
+
+	/** Recursively returns all children in a flat array. Includes itself. */
+	getFlatChildren(): UuidNode[] {
+		return [this, ...this.children.flatMap(c => c.getFlatChildren())];
+	}
 }

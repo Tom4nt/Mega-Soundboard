@@ -31,8 +31,8 @@ export default class Actions {
 	static async editPlayable(uuid: string): Promise<void> {
 		const root = await window.actions.getPlayableRoot(uuid);
 		const playable = await window.actions.getPlayable(uuid);
-		if (!playable || playable.isGroup) return;
-		const editModal = new SoundModal(playable as ISoundData, false, root?.linkedFolder != null);
+		if (!playable || playable.data.isGroup) return;
+		const editModal = new SoundModal(playable.data as ISoundData, false, root?.linkedFolder != null);
 		editModal.open();
 		editModal.onSave.addHandler(e => {
 			window.actions.editPlayable(e.sound);

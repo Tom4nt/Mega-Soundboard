@@ -1,6 +1,6 @@
-import { Point } from "../../shared/interfaces";
+import { IPlayableArgs, Point } from "../../shared/interfaces";
 import { Event, ExposedEvent } from "../../shared/events";
-import { IPlayableData, ISoundboardData } from "../../shared/models/dataInterfaces";
+import { ISoundboardData } from "../../shared/models/dataInterfaces";
 import MSR from "../msr";
 import PlayableContainer from "./playableContainer";
 import PlayableItem from "./playableItem";
@@ -35,7 +35,7 @@ export default class PlayableList extends HTMLElement {
 		});
 	}
 
-	loadItems(playables: IPlayableData[], soundboard: ISoundboardData): void {
+	loadItems(playables: IPlayableArgs[], soundboard: ISoundboardData): void {
 		this.currentSoundboard = soundboard;
 		const container = this.getContainer(soundboard.uuid, this.currentFilter);
 		container.allowFileImport = soundboard.linkedFolder === null;

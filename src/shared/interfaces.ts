@@ -50,6 +50,11 @@ export interface KeyRecordingArgs {
 	combination: number[],
 }
 
+export interface IPlayableArgs {
+	data: IPlayableData,
+	isPlaying: boolean
+}
+
 export interface IPlayArgs {
 	data: PlayData,
 	softError: boolean,

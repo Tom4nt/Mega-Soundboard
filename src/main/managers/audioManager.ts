@@ -4,8 +4,6 @@ import UuidTree from "../data/models/uuidTree";
 import EventSender from "../eventSender";
 import MS from "../ms";
 
-// TODO: Review
-
 // The audio is actually played on the renderer process using HTMLAudioElement.
 // The audio manager is in the main process to have access to all the data.
 // Otherwise, we would have to send current playing sounds to the main process before loading a soundboard.
@@ -125,23 +123,6 @@ export default class AudioManager {
 		EventSender.send("playing", playingUuids);
 	}
 
-	// private notifyNotPlaying(uuid: string): void {
-	// 	/** If a sound is the only one playing in a container, the container must be notified that it stopped playing
-	// 	 * (its playing indicator is hidden). However, if the container has other playing sounds that are not stopped,
-	// 	 * it must not be notified, because it should keep displaying its playing indicator.
-	// 	 * This function calculates the playables that should be notified when a playable is no longer playing. */
-
-	// 	const playingUuids = this.getPlayingFusedUuids();
-	// 	const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
-	// 	const notPlayingHierarchies = MS.instance.soundboardsCache.getHierarchies(sounds.map(s => s.uuid));
-	// 	const notPlayingUuids = ([] as string[]).concat(...notPlayingHierarchies);
-
-	// 	this.removeUUIDs(playingUuids, notPlayingUuids);
-	// 	const res = notPlayingUuids.filter(x => !playingUuids.find(y => y === x));
-
-	// 	EventSender.send("notPlaying", res);
-	// }
-
 	private updatePTTState(): void {
 		const playing = this.isAnyPlaying();
 		if (playing && !this.currentKeyHoldHandle) {
@@ -178,21 +159,6 @@ export default class AudioManager {
 		if (!data) throw Error(`Cannot find PlayData of Playable with UUID ${playableUuid} to send to renderer process.`);
 		EventSender.send("stop", data);
 		console.log(`Stopped all instances of the Playable with UUID ${data.mainPlayableUuid}.`);
-	}
-
-	/** Fuses the hierarchies of currently playing sounds into a single list of UUIDs. */
-	private getPlayingFusedUuids(): string[] {
-		const hierarchies = MS.instance.soundboardsCache.getHierarchies(this.playingInstances);
-		return ([] as string[]).concat(...hierarchies);
-	}
-
-	private removeUUIDs(source: string[], toRemove: string[]): void {
-		for (const uuid of toRemove) {
-			const index = source.indexOf(uuid);
-			if (index >= 0) {
-				source.splice(index, 1);
-			}
-		}
 	}
 
 	private getChanges(

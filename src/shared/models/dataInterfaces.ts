@@ -1,4 +1,4 @@
-import { IDevice, Optional } from "../interfaces";
+import { IDevice, IPlayableArgs, Optional } from "../interfaces";
 import { ActionName } from "../quickActions";
 
 export interface IPlayableData {
@@ -59,6 +59,6 @@ export type OptionalSettings = Optional<ISettingsData>;
 export interface IInitialContent {
 	readonly settings: ISettingsData,
 	readonly soundboards: ISoundboardData[],
-	readonly initialPlayables: IPlayableData[],
+	readonly initialPlayables: IPlayableArgs[],
 	readonly shouldShowChangelog: boolean,
 }

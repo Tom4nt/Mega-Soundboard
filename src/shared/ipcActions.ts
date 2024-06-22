@@ -1,4 +1,4 @@
-import { NonOptional, UpdaterState } from "./interfaces";
+import { IPlayableArgs, NonOptional, UpdaterState } from "./interfaces";
 import { IPlayableData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings } from "./models/dataInterfaces";
 import { ActionName } from "./quickActions";
 
@@ -20,8 +20,8 @@ class ConcreteActions {
 	getSoundDataFromPaths: ((paths: string[]) => Promise<ISoundData[]>) | null = null;
 	getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
 	getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
-	getPlayable: ((uuid: string) => Promise<IPlayableData | undefined>) | null = null;
-	getContainerItems: ((uuid: string) => Promise<IPlayableData[]>) | null = null;
+	getPlayable: ((uuid: string) => Promise<IPlayableArgs | undefined>) | null = null;
+	getContainerItems: ((uuid: string) => Promise<IPlayableArgs[]>) | null = null;
 	ungroupGroup: ((groupUuid: string) => void) | null = null;
 
 	getSoundboard: ((uuid: string) => Promise<{ soundboard: ISoundboardData, isAlone: boolean }>) | null = null;

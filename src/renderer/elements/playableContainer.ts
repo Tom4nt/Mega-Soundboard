@@ -3,7 +3,7 @@ import { IPlayableData } from "../../shared/models/dataInterfaces";
 import { FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import { ContainerSortedArgs, PlayableAddedArgs, Point } from "../../shared/interfaces";
+import { ContainerSortedArgs, IPlayableArgs, PlayableAddedArgs, Point } from "../../shared/interfaces";
 import MSR from "../msr";
 import { DragEventArgs } from "../draggableManager";
 
@@ -84,10 +84,10 @@ export default class PlayableContainer extends HTMLElement {
 		MSR.instance.draggableManager.onDragStart.removeHandler(this.handleDragStart);
 	}
 
-	loadItems(playables: IPlayableData[]): void {
+	loadItems(playables: IPlayableArgs[]): void {
 		this.clear();
 		for (const playable of playables) {
-			this.addItem(playable);
+			this.addItem(playable.data, undefined, playable.isPlaying);
 		}
 		this.filterItems(this._filter);
 	}
