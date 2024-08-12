@@ -1,33 +1,62 @@
-import { IPlayableData } from "../../../shared/models/dataInterfaces";
+import { IBaseData } from "../../../shared/models/dataInterfaces";
 
 export type JSONObject = { [key: string]: unknown };
 
+export interface IBase {
+	getUuid(): string;
+	getName(): string;
+	getKeys(): number[];
+	getVolume(): number;
+	compare(other: IBase): number;
+	edit(data: IBaseData): void;
+	asData(): IBaseData;
+	getSavable(): JSONObject;
+}
+
 export interface IContainer {
-	getPlayables(): readonly IPlayable[];
-	addPlayable(playable: IPlayable, index?: number): void;
-	removePlayable(playable: IPlayable): void;
-	containsPlayable(playable: IPlayable): boolean;
-	findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[];
-	sortPlayables(): void;
+	getChildren(): readonly IBaseChild[];
+	addChild(child: IBaseChild, index?: number): void;
+	removeChild(child: IBaseChild): void;
+	contains(child: IBaseChild): boolean;
+	findChildrenRecursive(predicate: (p: IBaseChild) => boolean): readonly IBaseChild[];
+	sortChildren(): void;
 }
 
 export interface IPlayable {
-	readonly isGroup: boolean;
-	readonly isSound: boolean;
-	readonly isSoundboard: boolean;
-	readonly isContainer: boolean;
-	readonly uuid: string;
-	name: string;
-	volume: number;
-	keys: number[];
-	parent: IPlayableContainer | null;
-	getFinalVolume(): number;
-	compare(other: IPlayable): number;
-	getAudioPath(): string;
-	getSavable(): JSONObject;
-	copy(): IPlayable;
-	edit(data: IPlayableData): void;
-	asData(): IPlayableData;
+	getDirectPlayables(): IDirectPlayableChild[];
 }
 
-export interface IPlayableContainer extends IPlayable, IContainer { }
+export interface IChild {
+	parent?: IBaseContainer;
+}
+
+export interface IDirectPlayable {
+	getAudioPath(): string;
+}
+
+export interface IBaseContainer extends IBase, IContainer { }
+export interface IBaseChild extends IBase, IChild, IPlayable {
+	copy(): IBaseChild;
+}
+
+export type IDirectPlayableChild = IDirectPlayable & IBaseChild;
+
+export function isIBase(obj: object): obj is IBase {
+	return "getUuid" in obj;
+}
+
+export function isIContainer(obj: object): obj is IContainer {
+	return "getChildren" in obj;
+}
+
+export function isIChild(obj: object): obj is IChild {
+	return "parent" in obj;
+}
+
+export function isIBaseChild(obj: object): obj is IBaseChild {
+	return isIBase(obj) && isIChild(obj) && "getDirectPlayables" in obj && "copy" in obj;
+}
+
+export function isIDirectPlayable(obj: object): obj is IDirectPlayable {
+	return "getAudioPath" in obj;
+}

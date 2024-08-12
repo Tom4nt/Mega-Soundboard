@@ -1,10 +1,10 @@
-import { IPlayArgs, UISound } from "../shared/interfaces";
+import { IDevice, IPlayArgs, UISound } from "../shared/interfaces";
 import { Event, ExposedEvent } from "../shared/events";
 import AudioInstance from "./models/audioInstance";
 import { UISoundPath } from "./models";
-import { PlayData } from "../shared/models/dataInterfaces";
 import { MessageModal } from "./modals";
 import Utils from "./util/utils";
+import { Audio } from "../shared/models/dataInterfaces";
 
 export default class AudioPlayer {
 	private readonly _seekbarUpdate = new Event<AudioInstance | null>();
@@ -15,6 +15,7 @@ export default class AudioPlayer {
 	constructor() {
 		window.events.play.addHandler(this.handlePlay);
 		window.events.stop.addHandler(this.handleStop);
+		window.events.playError.addHandler(this.handlePlayError);
 	}
 
 	get seekbarUpdate(): ExposedEvent<AudioInstance | null> { return this._seekbarUpdate.expose(); }
@@ -40,34 +41,47 @@ export default class AudioPlayer {
 	}
 
 	handlePlay = async (e: IPlayArgs): Promise<void> => {
-		try {
-			const d = e.data;
-			const instance = await AudioInstance.create(
-				d.mainPlayableUuid, d.volume, d.path, d.devices, d.loops
-			);
-			this.playingInstances.push(instance);
-			this.updateSeekbar();
+		const d = e.data;
+		const instances = await this.createInstances(d.sounds, d.devices, d.loops);
+		this.playingInstances.push(...instances);
+		this.updateSeekbar();
+		const showsErrorMessage = !e.softError && d.sounds.length === 1;
 
-			instance.onEnd.addHandler(() => {
-				this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
-				this.updateSeekbar();
+		for (const instance of instances) {
+			try {
+				await instance.play();
+			} catch (error) {
 				window.actions.soundEnd(instance.playableUuid);
-			});
-			await instance.play();
-		} catch (error) {
-			window.actions.soundEnd(e.data.mainPlayableUuid);
-			void this.playUI("error");
-			if (!e.softError)
-				new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
+				void this.playUI("error");
+				if (showsErrorMessage)
+					void new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
+			}
 		}
 	};
 
-	handleStop = async (data: PlayData): Promise<void> => {
-		const instances = this.playingInstances.filter(i => i.playableUuid === data.mainPlayableUuid);
+	handleStop = async (uuid: string): Promise<void> => {
+		const instances = this.playingInstances.filter(i => i.playableUuid === uuid);
 		for (const instance of instances) {
 			instance.stop();
 			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
 		}
 		this.updateSeekbar();
 	};
+
+	handlePlayError = (error: string): void => {
+		const errorModal = new MessageModal("Could not Play", error, true);
+		void errorModal.open();
+	};
+
+	private async createInstances(sounds: Audio[], devices: readonly IDevice[], loop: boolean): Promise<readonly AudioInstance[]> {
+		return await Promise.all(sounds.map(async s => {
+			const instance = await AudioInstance.create(s.uuid, s.volume, s.path, devices, loop);
+			instance.onEnd.addHandler(() => {
+				this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
+				this.updateSeekbar();
+				window.actions.soundEnd(instance.playableUuid);
+			});
+			return instance;
+		}));
+	}
 }

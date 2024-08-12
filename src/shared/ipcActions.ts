@@ -1,5 +1,5 @@
 import { IPlayableArgs, NonOptional, UpdaterState } from "./interfaces";
-import { IPlayableData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings } from "./models/dataInterfaces";
+import { IBaseData, ISettingsData, ISoundData, ISoundboardData, OptionalSettings } from "./models/dataInterfaces";
 import { ActionName } from "./quickActions";
 
 class ConcreteActions {
@@ -13,15 +13,15 @@ class ConcreteActions {
 	zoomReset: (() => void) | null = null;
 
 	addSounds: ((sounds: ISoundData[], destinationId: string | null, moveFile: boolean, startIndex?: number) => Promise<string>) | null = null;
-	editPlayable: ((data: IPlayableData) => void) | null = null;
-	movePlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => void) | null = null;
-	copyPlayable: ((uuid: string, destinationId: string | null, destinationIndex: number) => void) | null = null;
+	editPlayable: ((data: IBaseData) => void) | null = null;
+	copyOrMovePlayable: ((uuid: string, destinationId: string | null, move: boolean, destinationIndex: number) => void) | null = null;
 	deletePlayable: ((uuid: string) => void) | null = null;
 	getSoundDataFromPaths: ((paths: string[]) => Promise<ISoundData[]>) | null = null;
 	getValidSoundPaths: ((paths: string[]) => Promise<string[]>) | null = null;
 	getPlayableRoot: ((uuid: string) => Promise<ISoundboardData | undefined>) | null = null;
 	getPlayable: ((uuid: string) => Promise<IPlayableArgs | undefined>) | null = null;
 	getContainerItems: ((uuid: string) => Promise<IPlayableArgs[]>) | null = null;
+	createGroup: ((mainUuid: string, secondUuid: string, copy: boolean) => void) | null = null;
 	ungroupGroup: ((groupUuid: string) => void) | null = null;
 
 	getSoundboard: ((uuid: string) => Promise<{ soundboard: ISoundboardData, isAlone: boolean }>) | null = null;

@@ -3,10 +3,10 @@ import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import path = require("path");
-import { Soundboard } from "./models/soundboard";
-import { IPlayableData, ISoundData, ISoundboardData, PlayData } from "../../shared/models/dataInterfaces";
+import { isSoundboard, Soundboard } from "./models/soundboard";
+import { IBaseData, ISoundData, ISoundboardData } from "../../shared/models/dataInterfaces";
 import { Sound } from "./models/sound";
-import { IPlayable, IPlayableContainer } from "./models/interfaces";
+import { IBase, IBaseChild, IBaseContainer, IContainer, isIBaseChild, isIContainer } from "./models/interfaces";
 import { getHierarchy } from "../utils/utils";
 import { ContainerSortedArgs, PlayableAddedArgs } from "../../shared/interfaces";
 import { Group } from "./models/group";
@@ -18,26 +18,25 @@ export default class SoundboardsCache {
 
 	async addSounds(
 		sounds: ISoundData[], destinationId: string | null, move: boolean, startIndex?: number
-	): Promise<IPlayableContainer> {
+	): Promise<IBase & IContainer> {
 		const targetContainer = await this.getOrCreateContainer(destinationId);
 		if (!targetContainer) throw new Error("Destination container not found.");
 		const destinationPath = MS.instance.settingsCache.settings.soundsLocation;
 		const moveTasks: Promise<void>[] = [];
-		let index = startIndex ?? targetContainer.getPlayables().length + 1;
+		let index = startIndex ?? targetContainer.getChildren().length + 1;
 		for (const soundData of sounds) {
 			const sound = Sound.fromData(soundData);
-			targetContainer.addPlayable(sound, index);
+			targetContainer.addChild(sound, index);
 			if (move && destinationPath) {
 				const basename = path.basename(sound.path);
 				const soundDestination = path.join(destinationPath, basename);
 				moveTasks.push(fs.rename(sound.path, soundDestination));
 				sound.path = soundDestination;
 			}
-			EventSender.send("playableAdded", {
-				parentUuid: targetContainer.uuid,
-				playable: soundData,
+			EventSender.send("playablesAdded", {
+				parentUuid: targetContainer.getUuid(),
+				playables: [{ playable: soundData, isPlaying: false }],
 				index,
-				isPlaying: false,
 			});
 			index += 1;
 		}
@@ -46,51 +45,59 @@ export default class SoundboardsCache {
 		return targetContainer;
 	}
 
-	async editPlayable(data: IPlayableData): Promise<void> {
-		const playable = this.findPlayable(data.uuid);
+	async editPlayable(data: IBaseData): Promise<void> {
+		const playable = this.find(data.uuid);
 		if (!playable) throw new Error(`Playable with runtime UUID ${data.uuid} could not be found.`);
 		playable.edit(data);
 		EventSender.send("playableChanged", data);
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
-	async movePlayable(
-		playableId: string, destinationId: string | null, destinationIndex: number, copies: boolean
-	): Promise<IPlayable> {
-		let playable = this.findPlayable(playableId);
-		if (!playable) throw new Error(`Playable with runtime UUID ${playableId} could not be found.`);
+	async copyOrMove(
+		playableId: string, destinationId: string | null, destinationIndex: number, move: boolean
+	): Promise<IBaseContainer> {
+		let playable = this.find(playableId);
+		if (!playable) throw new Error(`Object with runtime UUID ${playableId} could not be found.`);
+		if (!isIBaseChild(playable)) throw Error("Object cannot be moved because it is not an IBaseChild.");
 		const destination = await this.getOrCreateContainer(destinationId);
 		if (!destination) throw new Error("Destination container not found.");
-		destinationId = destination.uuid;
+		destinationId = destination.getUuid();
 
-		if (destination.isSoundboard && (destination as Soundboard).linkedFolder !== null)
-			throw Error(`Cannot ${copies ? "copy" : "move"} a sound to a linked Soundboard.`);
+		if (isSoundboard(destination) && destination.linkedFolder !== null)
+			throw Error(`Cannot ${move ? "move" : "copy"} a sound to a linked Soundboard.`);
 
-		if (copies) {
-			playable = playable.copy();
-		} else {
-			playable.parent?.removePlayable(playable);
+		const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
+
+		if (move) {
+			playable.parent?.removeChild(playable);
 			EventSender.send("playableRemoved", playable.asData());
+		} else {
+			playable = playable.copy();
 		}
 
-		destination.addPlayable(playable, destinationIndex);
-		EventSender.send("playableAdded", {
+		destination.addChild(playable as IBaseChild, destinationIndex);
+		const isPlaying = MS.instance.audioManager.getPlayingInstanceCount(playableId) > 0;
+		EventSender.send("playablesAdded", {
 			parentUuid: destinationId,
-			playable: playable.asData(),
+			playables: [{ playable: playable.asData(), isPlaying }],
 			index: destinationIndex,
-			isPlaying: MS.instance.audioManager.getPlayingInstanceCount(playableId) > 0,
 		});
+
+		if (move) {
+			const treeAfter = MS.instance.soundboardsCache.getGeneralTree();
+			MS.instance.audioManager.notifyMove(treeBefore, treeAfter);
+		}
 
 		await DataAccess.saveSoundboards(this.soundboards);
 		return destination;
 	}
 
 	async removePlayable(uuid: string): Promise<void> {
-		const playable = this.findPlayable(uuid);
-		if (!playable) throw new Error(`Playable with runtime UUID ${uuid} could not be found.`);
-		if (playable.parent == null) return; // Cannot be removed because it's not in a parent.
-		playable.parent.removePlayable(playable);
-		EventSender.send("playableRemoved", playable.asData());
+		const object = this.find(uuid);
+		if (!object) throw new Error(`Object with runtime UUID ${uuid} could not be found.`);
+		if (!isIBaseChild(object) || !object.parent) return; // Cannot be removed because it's not in a parent.
+		object.parent.removeChild(object);
+		EventSender.send("playableRemoved", object.asData());
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
@@ -106,7 +113,7 @@ export default class SoundboardsCache {
 	}
 
 	async editSoundboard(soundboardData: ISoundboardData): Promise<void> {
-		const soundboard = this.findPlayable(soundboardData.uuid) as Soundboard | null;
+		const soundboard = this.find(soundboardData.uuid) as Soundboard | null;
 		if (!soundboard) throw new Error("Soundboard not found.");
 		soundboard.edit(soundboardData);
 		await soundboard.syncSounds();
@@ -139,23 +146,23 @@ export default class SoundboardsCache {
 	async sortContainer(uuid: string): Promise<void> {
 		const container = await this.getOrCreateContainer(uuid);
 		if (!container) throw new Error("Destination container not found.");
-		container.sortPlayables();
+		container.sortChildren();
 		const args: ContainerSortedArgs = {
 			containerUuid: uuid,
-			itemsUuids: container.getPlayables().map(p => p.uuid),
+			itemsUuids: container.getChildren().map(p => p.getUuid()),
 		};
 		EventSender.send("containerSorted", args);
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
-	findPlayable(uuid: string): IPlayable | null {
-		return this.findPlayableRecursive(p => p.uuid == uuid);
+	find(uuid: string): IBase | null {
+		return this.findRecursive(p => p.getUuid() == uuid);
 	}
 
 	/** Finds the Soundboard where the playable whith the specified uuid is. */
 	findSoundboardOf(playableUuid: string): Soundboard | undefined {
 		for (const soundboard of this.soundboards) {
-			const result = soundboard.findPlayablesRecursive(p => p.uuid === playableUuid);
+			const result = soundboard.findChildrenRecursive(p => p.getUuid() === playableUuid);
 			if (result.length > 0) return soundboard;
 		}
 		return undefined;
@@ -168,69 +175,96 @@ export default class SoundboardsCache {
 	}
 
 	getHierarchies(uuids: string[]): UuidHierarchy[] {
-		const playables = this.findPlayablesRecursive(p => uuids.includes(p.uuid));
-		return playables.map((p) => getHierarchy(p));
+		const bases = this.findPlayablesRecursive(p => uuids.includes(p.getUuid()));
+		return bases.map((p) => getHierarchy(p));
 	}
 
-	getPlayData(uuids: string[]): PlayData[] {
-		const playables = this.findPlayablesRecursive(p => uuids.includes(p.uuid));
-		return playables.map((p): PlayData => ({
-			mainPlayableUuid: p.uuid,
-			hierarchy: getHierarchy(p),
-			path: p.getAudioPath(),
-			volume: p.getFinalVolume(),
-			devices: MS.instance.settingsCache.getDevices(),
-			loops: MS.instance.settingsCache.settings.quickActionStates.get("toggleSoundLooping")!
-		}));
-	}
-
-	/** If the playable is a container, returns all sounds inside recursively. If it's a sound, returns it. */
+	/** If the object is a container, returns all children inside recursively. If it's a sound, returns it. */
 	getAllSounds(uuid: string): readonly Sound[] {
-		const playable = this.findPlayable(uuid);
-		if (!playable) throw Error("Playable not found.");
-		if (playable.isContainer) {
-			return (playable as IPlayableContainer).findPlayablesRecursive(p => p.isSound) as readonly Sound[];
+		const base = this.find(uuid);
+		if (!base) throw Error("Object not found.");
+		if (isIContainer(base)) {
+			return base.findChildrenRecursive(p => !isIContainer(p)) as readonly Sound[];
 		} else {
-			return [playable as Sound];
+			return [base as Sound];
 		}
 	}
 
-	getContainer(uuid: string): IPlayableContainer | null {
-		return this.findPlayableRecursive(p => p.isContainer && p.uuid == uuid) as IPlayableContainer | null;
+	getContainer(uuid: string): IBaseContainer | null {
+		return this.findRecursive(p => isIContainer(p) && p.getUuid() == uuid) as IBaseContainer | null;
 	}
 
 	getGeneralTree(): UuidTree {
 		const root = {
-			uuid: "",
-			getPlayables: (): readonly IPlayable[] => {
+			getUuid: () => "",
+			getChildren: (): readonly Soundboard[] => {
 				return this.soundboards;
 			}
 		};
 		return new UuidTree(root);
 	}
 
+	async createGroup(mainUuid: string, secondUuid: string, copy: boolean): Promise<Group> {
+		const mainObject = this.find(mainUuid);
+		if (!mainObject) throw Error("Main object for the group could not be found.");
+		if (!isIBaseChild(mainObject) || !mainObject.parent)
+			throw Error("Could not get the parent of the main object where to create the group.");
+
+		const parent = mainObject.parent;
+
+		const secondObject = this.find(secondUuid);
+		if (!secondObject || !isIBaseChild(secondObject))
+			throw Error("Second object for the group could not be found.");
+
+		parent.removeChild(secondObject);
+		const index = parent.getChildren().indexOf(mainObject);
+		parent.removeChild(mainObject);
+		const group = Group.getWithName(mainObject.getName());
+		group.addChild(mainObject);
+		group.addChild(secondObject);
+
+		EventSender.send("playableRemoved", mainObject.asData());
+		EventSender.send("playableRemoved", secondObject.asData());
+
+		void copy;
+		// TODO: Handle copy
+
+		parent.addChild(group, index);
+		EventSender.send("playablesAdded", {
+			playables: [{ playable: group.asData(), isPlaying: false }],
+			parentUuid: parent.getUuid(),
+			index: index,
+		});
+		await DataAccess.saveSoundboards(this.soundboards);
+		return group;
+	}
+
 	async unGroupGroup(uuid: string): Promise<void> {
 		const container = this.getContainer(uuid);
-		if (!container?.isGroup) throw Error("Group not found.");
+		if (!container || !isIBaseChild(container)) throw Error("Group not found.");
 
-		const group = container as Group;
-		const children = group.getPlayables();
-		if (!group.parent) return;
+		const children = container.getChildren();
+		if (!container.parent) return;
 
-		const parent = group.parent;
-		const startIndex = parent.getPlayables().indexOf(group);
-		parent.removePlayable(group);
-		EventSender.send("playableRemoved", group.asData());
+		const parent = container.parent;
+		const startIndex = parent.getChildren().indexOf(container);
+		parent.removeChild(container);
+		EventSender.send("playableRemoved", container.asData());
 
+		let index = startIndex;
 		for (const playable of children) {
-			parent.addPlayable(playable);
+			parent.addChild(playable, index);
+			index += 1;
 		}
-		EventSender.send("playablesAdded", children.map((x, i): PlayableAddedArgs => ({
-			playable: x.asData(),
-			parentUuid: parent.uuid,
-			index: startIndex + i,
-			isPlaying: MS.instance.audioManager.getPlayingInstanceCount(uuid) > 0,
-		})));
+
+		EventSender.send("playablesAdded", {
+			parentUuid: parent.getUuid(),
+			index: startIndex,
+			playables: children.map((x): PlayableAddedArgs => ({
+				playable: x.asData(),
+				isPlaying: MS.instance.audioManager.getPlayingInstanceCount(uuid) > 0,
+			}))
+		});
 	}
 
 	// ---
@@ -246,23 +280,23 @@ export default class SoundboardsCache {
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
-	private async getOrCreateContainer(uuid: string | null): Promise<IPlayableContainer | null> {
+	private async getOrCreateContainer(uuid: string | null): Promise<IBaseContainer | null> {
 		if (uuid) {
-			return this.findPlayableRecursive(p => p.isContainer && p.uuid == uuid) as IPlayableContainer | null;
+			return this.findRecursive(p => isIContainer(p) && p.getUuid() == uuid) as IBaseContainer | null;
 		}
 		return await this.addQuickSoundboard();
 	}
 
-	private findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
-		const result: IPlayable[] = [];
-		for (const playable of this.soundboards) {
-			if (predicate(playable)) result.push(playable);
-			result.push(...(playable as IPlayableContainer).findPlayablesRecursive(predicate));
+	private findPlayablesRecursive(predicate: (p: IBase) => boolean): readonly IBase[] {
+		const result: IBase[] = [];
+		for (const sb of this.soundboards) {
+			if (predicate(sb)) result.push(sb);
+			result.push(...sb.findChildrenRecursive(predicate));
 		}
 		return result;
 	}
 
-	private findPlayableRecursive(predicate: (p: IPlayable) => boolean): IPlayable | null {
+	private findRecursive(predicate: (p: IBase) => boolean): IBase | null {
 		const playables = this.findPlayablesRecursive(predicate);
 		return playables.length > 0 ? playables[0]! : null;
 	}

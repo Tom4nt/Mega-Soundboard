@@ -1,8 +1,11 @@
 import { ExposedEvent, Event } from "../../shared/events";
-import { IPlayable } from "../data/models/interfaces";
+import { IDirectPlayable, isIBaseChild } from "../data/models/interfaces";
 import UuidTree from "../data/models/uuidTree";
 import EventSender from "../eventSender";
 import MS from "../ms";
+import { getHierarchy } from "../utils/utils";
+
+// TODO: Let the audio manager do the unpacking of groups, instead of doing it outside.
 
 // The audio is actually played on the renderer process using HTMLAudioElement.
 // The audio manager is in the main process to have access to all the data.
@@ -17,8 +20,8 @@ export default class AudioManager {
 	private currentKeyHoldHandle: string | null = null;
 
 	/** Used when sounds do not overlap. */
-	private readonly _onSingleInstanceChanged = new Event<IPlayable | null>();
-	get onSingleInstanceChanged(): ExposedEvent<IPlayable | null> { return this._onSingleInstanceChanged.expose(); }
+	private readonly _onSingleInstanceChanged = new Event<IDirectPlayable | null>();
+	get onSingleInstanceChanged(): ExposedEvent<IDirectPlayable | null> { return this._onSingleInstanceChanged.expose(); }
 
 	/** Uuids of currently playing instances. */
 	playingInstances: string[] = [];
@@ -36,17 +39,26 @@ export default class AudioManager {
 	}
 
 	play(uuid: string, softError: boolean): void {
-		const playData = MS.instance.soundboardsCache.getPlayData([uuid])[0];
-		if (!playData) throw Error(`Playable with UUID ${uuid} not found.`);
-
 		const overlap = MS.instance.settingsCache.settings.quickActionStates.get("toggleSoundOverlap")!;
 		if (!overlap) this.stopAllInternal();
 
-		this.playingInstances.push(uuid);
-		console.log(`Added instance of Playable with UUID ${uuid}.`);
+		const base = MS.instance.soundboardsCache.find(uuid);
+		if (!base || !isIBaseChild(base)) throw Error("IBaseChild not found.");
+		const hierarchy = getHierarchy(base);
+
+		const playables = base.getDirectPlayables();
+		const allUuids = [...hierarchy, ...playables.map(x => x.getUuid())];
+
+		const playData = {
+			sounds: playables.map(p => ({ uuid: p.getUuid(), path: p.getAudioPath(), volume: p.getVolume() })),
+			devices: MS.instance.settingsCache.getDevices(),
+			loops: MS.instance.settingsCache.settings.quickActionStates.get("toggleSoundLooping")!
+		};
+
+		this.playingInstances.push(...playData.sounds.map(x => x.uuid));
 
 		EventSender.send("play", { data: playData, softError });
-		this.notifyPlaying([uuid]); // No problem notifying multiple times for the same sound.
+		EventSender.send("playing", allUuids); // No problem notifying multiple times for the same sound.
 		this.updatePTTState();
 	}
 
@@ -61,15 +73,11 @@ export default class AudioManager {
 		const playingBefore = [...this.playingInstances];
 
 		this.playingInstances.splice(instanceIndex, 1);
-		console.log(`Removed instance of Playable with UUID ${uuid}.`);
 
 		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 
 		if (this.getPlayingInstanceCount(uuid) === 0) {
-			const data = MS.instance.soundboardsCache.getPlayData([uuid])[0];
-			if (!data) throw Error("Play data not found for playable that ended.");
-			EventSender.send("stop", data);
-			console.log(`Stopped all instances of the Playable with UUID ${data.mainPlayableUuid}.`);
+			EventSender.send("stop", uuid);
 		}
 		this.updatePTTState();
 	}
@@ -117,12 +125,6 @@ export default class AudioManager {
 		this.notifyChanges(treeBefore, treeAfter, this.playingInstances, this.playingInstances);
 	}
 
-	private notifyPlaying(uuids: string[]): void {
-		const hierarchies = MS.instance.soundboardsCache.getHierarchies(uuids);
-		const playingUuids = hierarchies.flat(1);
-		EventSender.send("playing", playingUuids);
-	}
-
 	private updatePTTState(): void {
 		const playing = this.isAnyPlaying();
 		if (playing && !this.currentKeyHoldHandle) {
@@ -138,9 +140,8 @@ export default class AudioManager {
 	private stopAllInternal(): void {
 		const tree = MS.instance.soundboardsCache.getGeneralTree();
 		const playingBefore = [...this.playingInstances];
-		const playData = MS.instance.soundboardsCache.getPlayData(this.playingInstances);
-		for (const playing of playData) {
-			this.stopInstancesOf(playing.mainPlayableUuid);
+		for (const playing of playingBefore) {
+			this.stopInstancesOf(playing);
 		}
 		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 	}
@@ -155,10 +156,7 @@ export default class AudioManager {
 			this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);
 		}
 
-		const data = MS.instance.soundboardsCache.getPlayData([playableUuid])[0];
-		if (!data) throw Error(`Cannot find PlayData of Playable with UUID ${playableUuid} to send to renderer process.`);
-		EventSender.send("stop", data);
-		console.log(`Stopped all instances of the Playable with UUID ${data.mainPlayableUuid}.`);
+		EventSender.send("stop", playableUuid);
 	}
 
 	private getChanges(

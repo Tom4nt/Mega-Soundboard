@@ -1,4 +1,4 @@
-import { IPlayableData, ISoundboardData, PlayData } from "./models/dataInterfaces";
+import { IBaseData, ISoundboardData, PlayData } from "./models/dataInterfaces";
 import { uiSounds } from "./sharedUtils";
 
 export type WindowState = "minimized" | "restored" | "maximized";
@@ -28,10 +28,14 @@ export interface IDevice {
 }
 
 export interface PlayableAddedArgs {
-	playable: IPlayableData,
+	playable: IBaseData,
+	isPlaying: boolean,
+}
+
+export interface PlayablesAddedArgs {
+	playables: PlayableAddedArgs[],
 	parentUuid: string,
 	index?: number,
-	isPlaying: boolean,
 }
 
 export interface SoundboardAddedArgs {
@@ -51,8 +55,9 @@ export interface KeyRecordingArgs {
 }
 
 export interface IPlayableArgs {
-	data: IPlayableData,
-	isPlaying: boolean
+	data: IBaseData,
+	isPlaying: boolean,
+	isInLinkedSoundboard: boolean,
 }
 
 export interface IPlayArgs {

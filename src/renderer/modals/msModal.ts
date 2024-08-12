@@ -60,7 +60,7 @@ export default class MSModal extends Modal {
 			this.close();
 			if (!this.parentElement) return;
 			const newsModal = await NewsModal.load();
-			newsModal.open();
+			void newsModal.open();
 		};
 
 		this.updateInfoElement = document.createElement("p");

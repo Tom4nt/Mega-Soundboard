@@ -14,6 +14,7 @@ import { isAction } from "../shared/quickActions";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
 import AudioManager from "./managers/audioManager";
+import { isIDirectPlayable } from "./data/models/interfaces";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -75,9 +76,9 @@ export default class MS {
 		});
 
 		watcher.onSoundRemoved.addHandler(path => {
-			const sounds = soundboard.findPlayablesRecursive(p => p.isSound && p.getAudioPath() == path);
+			const sounds = soundboard.findChildrenRecursive(p => isIDirectPlayable(p) && p.getAudioPath() == path);
 			if (sounds.length > 0) {
-				void MS.instance.soundboardsCache.removePlayable(sounds[0]!.uuid);
+				void MS.instance.soundboardsCache.removePlayable(sounds[0]!.getUuid());
 			}
 		});
 

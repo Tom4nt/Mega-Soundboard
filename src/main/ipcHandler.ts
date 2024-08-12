@@ -72,24 +72,15 @@ const implementer: Actions = {
 
 	async addSounds(playables, destinationId, moveFile, startIndex) {
 		const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
-		return sb.uuid;
+		return sb.getUuid();
 	},
 
 	editPlayable(data) {
 		void MS.instance.soundboardsCache.editPlayable(data);
 	},
 
-	movePlayable(id, destinationId, destinationIndex) {
-		void (async (): Promise<void> => {
-			const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
-			await MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, false);
-			const treeAfter = MS.instance.soundboardsCache.getGeneralTree();
-			MS.instance.audioManager.notifyMove(treeBefore, treeAfter);
-		})();
-	},
-
-	copyPlayable(id, destinationId, destinationIndex) {
-		void MS.instance.soundboardsCache.movePlayable(id, destinationId, destinationIndex, true);
+	copyOrMovePlayable(id, destinationId, move, destinationIndex) {
+		void MS.instance.soundboardsCache.copyOrMove(id, destinationId, destinationIndex, move);
 	},
 
 	deletePlayable(id) {
@@ -113,28 +104,42 @@ const implementer: Actions = {
 	},
 
 	async getPlayable(uuid) {
-		const sound = MS.instance.soundboardsCache.findPlayable(uuid);
+		const soundboard = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		const playable = MS.instance.soundboardsCache.find(uuid);
 		const playingUuids = MS.instance.audioManager.playingInstances;
 		const tree = MS.instance.soundboardsCache.getGeneralTree();
 		const nodes = tree.nodes.find(n => n.uuid === uuid)?.getFlatChildren();
-		if (!nodes || !sound) return undefined;
+		if (!nodes || !playable) return undefined;
 
 		const uuids = nodes.map(n => n.uuid);
-		return { data: sound.asData(), isPlaying: playingUuids.some(p => uuids.includes(p)) };
+		return {
+			data: playable.asData(),
+			isPlaying: playingUuids.some(p => uuids.includes(p)),
+			isInLinkedSoundboard: soundboard?.linkedFolder !== null,
+		};
 	},
 
 	async getContainerItems(uuid) {
+		const soundboard = MS.instance.soundboardsCache.findSoundboardOf(uuid);
 		const container = MS.instance.soundboardsCache.getContainer(uuid);
 		if (!container) return [];
 
 		const tree = new UuidTree(container);
 		const playingUuids = MS.instance.audioManager.playingInstances;
-		return container.getPlayables().map(p => {
-			const node = tree.nodes.find(n => n.uuid === p.uuid);
+		return container.getChildren().map(p => {
+			const node = tree.nodes.find(n => n.uuid === p.getUuid());
 			const nodes = node?.getFlatChildren();
 			const uuids = nodes?.map(n => n.uuid);
-			return { data: p.asData(), isPlaying: playingUuids.some(x => uuids?.includes(x)) };
+			return {
+				data: p.asData(),
+				isPlaying: playingUuids.some(x => uuids?.includes(x)),
+				isInLinkedSoundboard: soundboard?.linkedFolder !== null,
+			};
 		});
+	},
+
+	createGroup(mainUuid, secondUuid, copy) {
+		void MS.instance.soundboardsCache.createGroup(mainUuid, secondUuid, copy);
 	},
 
 	ungroupGroup(groupUuid) {

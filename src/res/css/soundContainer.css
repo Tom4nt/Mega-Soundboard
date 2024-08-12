@@ -1,12 +1,12 @@
 ms-soundcontainer {
 	display: flex;
 	flex-direction: column;
-	min-height: 100%;
 }
 
 ms-soundcontainer ms-soundcontainer {
 	background-color: var(--color-dark);
 	margin: 4px;
+	border-radius: 4px;
 }
 
 ms-soundcontainer .dragdummy {
@@ -17,4 +17,8 @@ ms-soundcontainer .dragdummy {
 	box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
 	margin: 4px;
 	border-radius: 4px;
+}
+
+ms-soundlist>ms-soundcontainer {
+	min-height: 100%;
 }

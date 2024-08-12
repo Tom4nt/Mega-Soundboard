@@ -1,8 +1,8 @@
-import { IPlayable, IPlayableContainer } from "./interfaces";
+import { IBase, isIContainer } from "./interfaces";
 
 interface NodeSource {
-	uuid: string;
-	getPlayables(): readonly IPlayable[];
+	getUuid(): string;
+	getChildren(): readonly IBase[];
 }
 
 export default class UuidTree {
@@ -28,18 +28,18 @@ export class UuidNode {
 		onGetNode: (node: UuidNode) => void,
 		parent?: UuidNode,
 	): UuidNode {
-		const playables = container.getPlayables();
-		const children: UuidNode[] = [];
-		const instance = new UuidNode(container.uuid, children, parent);
-		for (const playable of playables) {
-			if (playable.isContainer) {
-				const newNode = this.fromContainer(playable as IPlayableContainer, onGetNode, instance);
+		const baseChildren = container.getChildren();
+		const nodeChildren: UuidNode[] = [];
+		const instance = new UuidNode(container.getUuid(), nodeChildren, parent);
+		for (const child of baseChildren) {
+			if (isIContainer(child)) {
+				const newNode = this.fromContainer(child, onGetNode, instance);
 				onGetNode(newNode);
-				children.push(newNode);
+				nodeChildren.push(newNode);
 			} else {
-				const newNode = new UuidNode(playable.uuid, [], instance);
+				const newNode = new UuidNode(child.getUuid(), [], instance);
 				onGetNode(newNode);
-				children.push(newNode);
+				nodeChildren.push(newNode);
 			}
 		}
 		return instance;

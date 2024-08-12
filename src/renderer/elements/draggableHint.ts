@@ -15,6 +15,9 @@ export default class DraggableHint extends HTMLElement {
 	accessor prefersCopy: boolean = false;
 
 	@calls("render")
+	accessor groupTarget: "none" | "sound" | "group" = "none";
+
+	@calls("render")
 	accessor destinationName: string = "";
 
 	protected connectedCallback(): void {
@@ -54,6 +57,10 @@ export default class DraggableHint extends HTMLElement {
 		if (this.canCopy && this.prefersCopy) {
 			text = "Copy";
 			icon = copyIcon;
+		}
+
+		if (this.groupTarget !== "none") {
+			text = this.groupTarget === "group" ? "Add to group" : "Create group";
 		}
 
 		if (this.destinationName) {

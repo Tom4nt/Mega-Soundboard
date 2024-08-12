@@ -56,15 +56,15 @@ export default class PlayableList extends HTMLElement {
 		item.canAddToNewLocation = this.currentSoundboard.linkedFolder === null;
 		item.isMovingToNewLocation = this.currentSoundboard.uuid !== this.dragStartSoundboardUuid;
 		item.newLocationName = this.currentSoundboard.name;
-		this.containerElement?.dragItem(pos);
+		this.containerElement?.dragItem(pos, item);
 	}
 
 	dragItemOutside(): void {
 		this.containerElement?.dragItemOutside();
 	}
 
-	dropItem(item: PlayableItem): void {
-		this.containerElement?.dropItem(item);
+	dropItem(pos: Point, item: PlayableItem): void {
+		this.containerElement?.dropItem(pos, item);
 	}
 
 	// ---

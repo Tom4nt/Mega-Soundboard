@@ -1,9 +1,9 @@
 import { stringContains } from "../../shared/sharedUtils";
-import { IPlayableData } from "../../shared/models/dataInterfaces";
+import { IBaseData } from "../../shared/models/dataInterfaces";
 import { FileDropArea, PlayableItem } from "../elements";
 import Utils from "../util/utils";
 import Actions from "../util/actions";
-import { ContainerSortedArgs, IPlayableArgs, PlayableAddedArgs, Point } from "../../shared/interfaces";
+import { ContainerSortedArgs, IPlayableArgs, PlayablesAddedArgs, Point } from "../../shared/interfaces";
 import MSR from "../msr";
 import { DragEventArgs } from "../draggableManager";
 
@@ -13,7 +13,7 @@ export default class PlayableContainer extends HTMLElement {
 	private _containerDiv!: HTMLDivElement;
 	private _emptyMsgSpan?: HTMLSpanElement;
 	private _currSubContainer: PlayableContainer | null = null;
-	private _isDraggingInside: boolean = false;
+	private _initialized = false;
 
 	/** The item that corresponds to the current playable being dragged.
 	 * Since containers can be loaded and unloaded while dragging,
@@ -36,6 +36,13 @@ export default class PlayableContainer extends HTMLElement {
 	) { super(); }
 
 	protected connectedCallback(): void {
+		window.events.playablesAdded.addHandler(this.handlePlayableAdded);
+		window.events.playableRemoved.addHandler(this.handlePlayableRemoved);
+		window.events.containerSorted.addHandler(this.handleContainerSorted);
+		MSR.instance.draggableManager.onDragStart.addHandler(this.handleDragStart);
+
+		if (this._initialized) return;
+
 		const dropArea = new FileDropArea(() => this.allowFileImport);
 		dropArea.style.flexGrow = "1";
 
@@ -71,14 +78,11 @@ export default class PlayableContainer extends HTMLElement {
 			this.showDragDummy();
 		}
 
-		window.events.playableAdded.addHandler(this.handlePlayableAdded);
-		window.events.playableRemoved.addHandler(this.handlePlayableRemoved);
-		window.events.containerSorted.addHandler(this.handleContainerSorted);
-		MSR.instance.draggableManager.onDragStart.addHandler(this.handleDragStart);
+		this._initialized = true;
 	}
 
 	protected disconnectedCallback(): void {
-		window.events.playableAdded.removeHandler(this.handlePlayableAdded);
+		window.events.playablesAdded.removeHandler(this.handlePlayableAdded);
 		window.events.playableRemoved.removeHandler(this.handlePlayableRemoved);
 		window.events.containerSorted.removeHandler(this.handleContainerSorted);
 		MSR.instance.draggableManager.onDragStart.removeHandler(this.handleDragStart);
@@ -103,7 +107,7 @@ export default class PlayableContainer extends HTMLElement {
 		this.updateMessage();
 	}
 
-	addItem(playable: IPlayableData, index?: number, isPlaying?: boolean): void {
+	addItem(playable: IBaseData, index?: number, isPlaying?: boolean): void {
 		const item = new PlayableItem(playable, isPlaying);
 
 		item.onExpandRequested.addHandler(() => {
@@ -119,7 +123,8 @@ export default class PlayableContainer extends HTMLElement {
 			this._loadedItems.push(item);
 		}
 		else {
-			const child = this._containerDiv.childNodes[index];
+			const itemAtIndex = this._loadedItems[index];
+			const child = this.findItem(itemAtIndex?.playable.uuid ?? "");
 			if (child) {
 				this._containerDiv.insertBefore(item, child);
 				this._loadedItems.splice(index, 0, item);
@@ -143,6 +148,9 @@ export default class PlayableContainer extends HTMLElement {
 		for (const item of this._loadedItems) {
 			if (item.playable.uuid === uuid) {
 				if (item === this._loadedDraggedItem) this._loadedDraggedItem = null;
+				if (uuid === this._currSubContainer?.parentUuid) {
+					this.closeCurrentSubContainer();
+				}
 				item.remove();
 				this._loadedItems.splice(i, 1);
 				this.updateMessage();
@@ -154,7 +162,8 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	getHeight(): number {
-		return this._containerDiv.offsetHeight;
+		if (!(this.firstElementChild instanceof HTMLElement)) return 0;
+		return this.firstElementChild.offsetHeight;
 	}
 
 	sort(uuids: string[]): void {
@@ -163,34 +172,75 @@ export default class PlayableContainer extends HTMLElement {
 		for (const item of sorted) {
 			this._containerDiv.append(item);
 		}
+		this.updateCurrentContainer();
 	}
 
-	dragItem(pos: Point): void {
-		this._isDraggingInside = true;
-		this.updateLoadedDraggedItem();
-		this.showDragDummy();
-		this.updateDragDummyPosition(pos);
+	dragItem(pos: Point, item: PlayableItem): void {
+		let overElements = document.elementsFromPoint(pos.x, pos.y);
+		if (this._currSubContainer && overElements.includes(this._currSubContainer)) {
+			this._currSubContainer.dragItem(pos, item);
+			this.dragItemOutside();
+
+		} else {
+			if (this._currSubContainer) {
+				this._currSubContainer.dragItemOutside();
+			}
+			if (item.inGroupMode) {
+				this.hideDragDummy();
+			} else {
+				this.showDragDummy();
+			}
+			this.updateLoadedDraggedItem();
+			this.updateDragDummyPosition(pos);
+
+			overElements = document.elementsFromPoint(pos.x, pos.y);
+			if (item.inGroupMode) {
+				const playableAtMouse = overElements.find(i => i instanceof PlayableItem);
+				if (playableAtMouse instanceof PlayableItem) {
+					item.groupTarget = playableAtMouse.playable.isGroup ? "group" : "sound";
+				} else {
+					item.groupTarget = "none";
+				}
+			} else {
+				item.groupTarget = "none";
+			}
+		}
 	}
 
 	dragItemOutside(): void {
-		this._isDraggingInside = false;
 		this.updateLoadedDraggedItem();
 		this.hideDragDummy();
 	}
 
-	dropItem(dragElement: PlayableItem): void {
+	dropItem(pos: Point, dragElement: PlayableItem): void {
 		const newIndex = this.getDragDummyIndex();
+		const elementsAtPoint = document.elementsFromPoint(pos.x, pos.y);
+		const playableAtPoint = elementsAtPoint.find(x => x instanceof PlayableItem);
+		const subContainer = elementsAtPoint.find(x => x instanceof PlayableContainer);
+
+		if (subContainer === this._currSubContainer) {
+			this._currSubContainer.dropItem(pos, dragElement);
+			return;
+		}
+
 		this.hideDragDummy();
+
 		if (this._loadedDraggedItem) {
 			this._loadedDraggedItem.hidden = false;
 			this._loadedDraggedItem = null;
 		}
 
-		const destinationUUID = this.parentUuid;
-		if (dragElement.inCopyMode) {
-			window.actions.copyPlayable(dragElement.playable.uuid, destinationUUID, newIndex);
+		if (dragElement.groupTarget === "sound") {
+			if (playableAtPoint instanceof PlayableItem) {
+				window.actions.createGroup(playableAtPoint.playable.uuid, dragElement.playable.uuid, dragElement.inCopyMode);
+			}
+		} else if (dragElement.groupTarget === "group") {
+			if (playableAtPoint instanceof PlayableItem) {
+				window.actions.copyOrMovePlayable(dragElement.playable.uuid, playableAtPoint.playable.uuid, !dragElement.inCopyMode, 0);
+			}
 		} else {
-			window.actions.movePlayable(dragElement.playable.uuid, destinationUUID, newIndex);
+			const destinationUUID = this.parentUuid;
+			window.actions.copyOrMovePlayable(dragElement.playable.uuid, destinationUUID, !dragElement.inCopyMode, newIndex);
 		}
 	}
 
@@ -211,12 +261,18 @@ export default class PlayableContainer extends HTMLElement {
 	private updateDragDummyPosition(pos: Point): void {
 		const targetElements = document.elementsFromPoint(pos.x, pos.y);
 		const targetElement = targetElements.find(x => x instanceof PlayableItem);
-		if (!targetElement) return;
+		if (!(targetElement instanceof PlayableItem)) return;
+		if (!this._loadedItems.find(x => x === targetElement)) return;
+		let targetElementExtension: HTMLElement = targetElement;
+		if (this._currSubContainer &&
+			this._currSubContainer.parentUuid === targetElement.playable.uuid) {
+			targetElementExtension = this._currSubContainer;
+		}
 
-		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElement)) {
+		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElementExtension)) {
 			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);
 		} else {
-			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement.nextElementSibling);
+			this._containerDiv.insertBefore(this._dragDummyDiv, targetElementExtension.nextElementSibling);
 		}
 	}
 
@@ -235,7 +291,8 @@ export default class PlayableContainer extends HTMLElement {
 
 	private getDragDummyIndex(): number {
 		const dragItemHidden = this._loadedDraggedItem?.hidden ?? true;
-		return Utils.getElementIndex(this._dragDummyDiv, (e) => !dragItemHidden || e != this._loadedDraggedItem);
+		return Utils.getElementIndex(this._dragDummyDiv,
+			(e) => (!dragItemHidden || e != this._loadedDraggedItem) && e instanceof PlayableItem);
 	}
 
 	private updateMessage(): void {
@@ -269,21 +326,33 @@ export default class PlayableContainer extends HTMLElement {
 		this._currSubContainer = root;
 		root.classList.add("group");
 		root.style.height = "0";
+		root.style.margin = "0";
+		under.showGroupArrow = true;
 		under.after(root);
 
 		const items = await window.actions.getContainerItems(under.playable.uuid);
 		if (under.playable.isGroup) root.loadItems(items);
 		const h = root.getHeight();
 
-		void root.offsetWidth; // Trigger reflow
 		root.style.height = `${h}px`;
+		root.style.margin = "";
+		void root.offsetWidth; // Trigger reflow 
+		setTimeout(() => { root.style.height = ""; }, 200);
 	}
 
 	private closeCurrentSubContainer(): void {
 		if (!this._currSubContainer) return;
-		// TODO: Close animation.
-		this._currSubContainer.remove();
+		const container = this._currSubContainer;
+
+		const item = this.findItem(container.parentUuid);
+		if (item) item.showGroupArrow = false;
+
+		container.style.height = `${container.getHeight()}px`;
+		void container.offsetWidth; // Trigger reflow
+		container.style.height = "0px";
+		container.style.margin = "0";
 		this._currSubContainer = null;
+		setTimeout(() => { container.remove(); }, 200);
 	}
 
 	// Checks if the container needs to be moved or closed.
@@ -308,7 +377,7 @@ export default class PlayableContainer extends HTMLElement {
 	private updateLoadedDraggedItem(): void {
 		const d = MSR.instance.draggableManager.currentGhost;
 		if (this._loadedDraggedItem && d instanceof PlayableItem) {
-			this._loadedDraggedItem.hidden = !d.inCopyMode || !this._isDraggingInside;
+			this._loadedDraggedItem.hidden = !d.inCopyMode || d.inGroupMode;
 		}
 	}
 
@@ -317,16 +386,23 @@ export default class PlayableContainer extends HTMLElement {
 	private handleDragStart = (e: DragEventArgs): void => {
 		if (e.ghost instanceof PlayableItem && !this._loadedDraggedItem) {
 			this._loadedDraggedItem = this.findItem(e.ghost.playable.uuid) ?? null;
+			if (this._currSubContainer?.parentUuid === e.ghost.playable.uuid) {
+				this.closeCurrentSubContainer();
+			}
 		}
 	};
 
-	private handlePlayableAdded = (e: PlayableAddedArgs): void => {
+	private handlePlayableAdded = (e: PlayablesAddedArgs): void => {
 		if (e.parentUuid === this.parentUuid) {
-			this.addItem(e.playable, e.index, e.isPlaying);
+			let index = e.index;
+			for (const playableArgs of e.playables) {
+				this.addItem(playableArgs.playable, index, playableArgs.isPlaying);
+				if (index !== undefined) index += 1;
+			}
 		}
 	};
 
-	private handlePlayableRemoved = (e: IPlayableData): void => {
+	private handlePlayableRemoved = (e: IBaseData): void => {
 		this.removeItem(e.uuid);
 	};
 

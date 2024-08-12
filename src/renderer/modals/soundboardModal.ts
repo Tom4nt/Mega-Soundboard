@@ -1,6 +1,5 @@
 import { FileSelector, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
-import { Event, ExposedEvent } from "../../shared/events";
 import { ISoundboardData } from "../../shared/models/dataInterfaces";
 
 export default class SoundboardModal extends Modal {
@@ -11,18 +10,30 @@ export default class SoundboardModal extends Modal {
 	private okButton!: HTMLButtonElement;
 	private removeButton!: HTMLButtonElement;
 
-	private loadedSoundboard: ISoundboardData;
+	private loadedSoundboard?: ISoundboardData;
+	private isNew = false;
+	private canRemove = false;
 
-	public get onSaved(): ExposedEvent<ISoundboardData> { return this._onSaved.expose(); }
-	private readonly _onSaved = new Event<ISoundboardData>();
+	constructor() { super(false); }
 
-	public get onRemove(): ExposedEvent<ISoundboardData> { return this._onRemove.expose(); }
-	private readonly _onRemove = new Event<ISoundboardData>();
+	public async openForAdd(): Promise<void> {
+		const sb = await window.actions.getNewSoundboard();
+		this.modalTitle = "Add Soundboard";
+		this.loadedSoundboard = sb;
+		this.isNew = true;
+		this.canRemove = false;
 
-	constructor(soundboard: ISoundboardData, private isNew: boolean, private isLast: boolean) {
-		super(false);
-		this.loadedSoundboard = soundboard;
-		this.modalTitle = isNew ? "Add Soundboard" : "Edit Soundboard";
+		await super.open();
+	}
+
+	public async openForEdit(uuid: string): Promise<void> {
+		const soundboard = await window.actions.getSoundboard(uuid);
+		this.loadedSoundboard = soundboard.soundboard;
+		this.canRemove = !soundboard.isAlone;
+		this.isNew = false;
+		this.modalTitle = "Edit Soundboard";
+
+		await super.open();
 	}
 
 	protected connectedCallback(): void {
@@ -70,6 +81,8 @@ export default class SoundboardModal extends Modal {
 	}
 
 	private update(): void {
+		if (!this.loadedSoundboard) throw Error("Calling openForAdd or openForEdit is required.");
+
 		this.nameElement.value = this.loadedSoundboard.name;
 		this.keysElement.keys = this.loadedSoundboard.keys;
 		this.volumeElement.value = this.loadedSoundboard.volume;
@@ -79,7 +92,7 @@ export default class SoundboardModal extends Modal {
 		this.folderElement.style.display = displaysFolderField ? "" : "none";
 
 		this.okButton.innerHTML = this.isNew ? "Add" : "Save";
-		this.removeButton.style.display = this.isLast || this.isNew ? "none" : "";
+		this.removeButton.style.display = !this.canRemove || this.isNew ? "none" : "";
 	}
 
 	private async validate(finalPath: string | null): Promise<boolean> {
@@ -99,6 +112,7 @@ export default class SoundboardModal extends Modal {
 	}
 
 	private async save(): Promise<void> {
+		if (!this.loadedSoundboard) throw Error("Calling openForAdd or openForEdit is required.");
 		const path = await window.actions.parsePath(this.folderElement.value);
 		if (! await this.validate(path)) return;
 
@@ -106,13 +120,19 @@ export default class SoundboardModal extends Modal {
 		this.loadedSoundboard.keys = this.keysElement.keys;
 		this.loadedSoundboard.volume = this.volumeElement.value;
 		if (this.folderElement.value) this.loadedSoundboard.linkedFolder = path;
-		this._onSaved.raise(this.loadedSoundboard);
+
+		if (this.isNew) {
+			window.actions.addSoundboard(this.loadedSoundboard);
+		} else {
+			window.actions.editSoundboard(this.loadedSoundboard);
+		}
 
 		this.close();
 	}
 
 	private removeSoundboard(): void {
-		this._onRemove.raise(this.loadedSoundboard);
+		if (!this.loadedSoundboard) throw Error("Calling openForAdd or openForEdit is required.");
+		window.actions.deleteSoundboard(this.loadedSoundboard.uuid);
 		this.close();
 	}
 }

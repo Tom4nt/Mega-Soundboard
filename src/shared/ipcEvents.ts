@@ -4,22 +4,21 @@ import {
 	IPlayArgs,
 	KeyRecordingArgs,
 	NonOptional,
-	PlayableAddedArgs,
+	PlayablesAddedArgs,
 	SoundboardAddedArgs,
 	UpdaterState,
 	WindowState
 } from "./interfaces";
-import { IPlayableData, ISettingsData, ISoundboardData, PlayData, UuidHierarchyData } from "./models/dataInterfaces";
+import { IBaseData, ISettingsData, ISoundboardData, UuidHierarchyData } from "./models/dataInterfaces";
 
 class ConcreteEvents {
 	keybindsStateChanged: ExposedEvent<boolean> | null = null;
 	overlapSoundsStateChanged: ExposedEvent<boolean> | null = null;
 	loopSoundsChanged: ExposedEvent<boolean> | null = null;
 	settingsChanged: ExposedEvent<ISettingsData> | null = null;
-	playableAdded: ExposedEvent<PlayableAddedArgs> | null = null;
-	playablesAdded: ExposedEvent<PlayableAddedArgs[]> | null = null;
-	playableChanged: ExposedEvent<IPlayableData> | null = null;
-	playableRemoved: ExposedEvent<IPlayableData> | null = null;
+	playablesAdded: ExposedEvent<PlayablesAddedArgs> | null = null;
+	playableChanged: ExposedEvent<IBaseData> | null = null;
+	playableRemoved: ExposedEvent<IBaseData> | null = null;
 	soundboardAdded: ExposedEvent<SoundboardAddedArgs> | null = null;
 	soundboardChanged: ExposedEvent<ISoundboardData> | null = null;
 	soundboardRemoved: ExposedEvent<ISoundboardData> | null = null;
@@ -35,9 +34,10 @@ class ConcreteEvents {
 
 	// Audio Manager
 	play: ExposedEvent<IPlayArgs> | null = null;
-	stop: ExposedEvent<PlayData> | null = null;
+	stop: ExposedEvent<string> | null = null;
 	playing: ExposedEvent<UuidHierarchyData> | null = null; // TODO: Raise and listen to these
 	notPlaying: ExposedEvent<UuidHierarchyData> | null = null;
+	playError: ExposedEvent<string> | null = null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,44 +1,43 @@
-import { IContainer, IPlayable, IPlayableContainer } from "./interfaces";
+import { IBaseChild, IContainer, isIContainer } from "./interfaces";
 
 export class Container implements IContainer {
 	constructor(
-		private readonly playables: IPlayable[],
+		private readonly children: IBaseChild[],
 	) { }
 
 	readonly isSoundboard = false;
 	readonly isGroup = false;
 
-	getPlayables(): readonly IPlayable[] {
-		return this.playables;
+	getChildren(): readonly IBaseChild[] {
+		return this.children;
 	}
 
-	addPlayable(playable: IPlayable, index?: number): void {
-		if (index == undefined) index = this.playables.length - 1;
-		this.playables.splice(index, 0, playable);
+	addChild(playable: IBaseChild, index?: number): void {
+		if (index == undefined) index = this.children.length - 1;
+		this.children.splice(index, 0, playable);
 	}
 
-	removePlayable(playable: IPlayable): void {
-		playable.parent = null;
-		const index = this.playables.indexOf(playable);
-		this.playables.splice(index, 1);
+	removeChild(playable: IBaseChild): void {
+		const index = this.children.indexOf(playable);
+		this.children.splice(index, 1);
 	}
 
-	containsPlayable(playable: IPlayable): boolean {
-		return this.playables.indexOf(playable) >= 0;
+	contains(playable: IBaseChild): boolean {
+		return this.children.indexOf(playable) >= 0;
 	}
 
-	findPlayablesRecursive(predicate: (p: IPlayable) => boolean): readonly IPlayable[] {
-		const result: IPlayable[] = [];
-		for (const playable of this.playables) {
+	findChildrenRecursive(predicate: (p: IBaseChild) => boolean): readonly IBaseChild[] {
+		const result: IBaseChild[] = [];
+		for (const playable of this.children) {
 			if (predicate(playable)) result.push(playable);
-			if (playable.isContainer) {
-				result.push(...(playable as IPlayableContainer).findPlayablesRecursive(predicate));
+			if (isIContainer(playable)) {
+				result.push(...playable.findChildrenRecursive(predicate));
 			}
 		}
 		return result;
 	}
 
-	sortPlayables(): void {
-		this.playables.sort((a, b) => a.compare(b));
+	sortChildren(): void {
+		this.children.sort((a, b) => a.compare(b));
 	}
 }

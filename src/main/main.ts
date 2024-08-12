@@ -61,7 +61,11 @@ async function init(): Promise<void> {
 	await windowManager.showMainWindow(() => ({
 		settings: settingsCache.settings,
 		soundboards: soundboardsCache.soundboards.map(s => s.asData()),
-		initialPlayables: sb.getPlayables().map<IPlayableArgs>(p => ({ data: p.asData(), isPlaying: false })),
+		initialPlayables: sb.getChildren().map<IPlayableArgs>(p => ({
+			data: p.asData(),
+			isPlaying: false,
+			isInLinkedSoundboard: sb.linkedFolder !== null
+		})),
 		shouldShowChangelog: settingsCache.shouldShowChangelog(),
 	}));
 }

@@ -17,7 +17,6 @@ export default class Seekbar extends HTMLElement {
 		return this._currentInstance;
 	}
 	set currentInstance(value: AudioInstance | null) {
-		console.log("setting current instance");
 		if (this._currentInstance) {
 			this.removeInstanceListeners(this._currentInstance);
 		}
@@ -91,7 +90,6 @@ export default class Seekbar extends HTMLElement {
 			: "pause"
 		);
 		this.updateTime();
-		console.log("updated");
 	}
 
 	private updateTime(): void {
@@ -115,11 +113,9 @@ export default class Seekbar extends HTMLElement {
 	};
 
 	private handleChange = (): void => {
-		console.log("input change");
 		if (!this.currentInstance) return;
 		if (!this.wasPaused) {
 			void this.currentInstance.play();
-			console.log("play called in handleChange");
 		}
 		this.isScrubbing = false;
 	};
@@ -130,11 +126,9 @@ export default class Seekbar extends HTMLElement {
 			this.isScrubbing = true;
 			this.wasPaused = this.currentInstance.isPaused;
 			this.currentInstance.pause();
-			console.log("paused in handleInput");
 		}
 		this.currentInstance.currentTime =
 			this.currentInstance.duration * this.sliderElement.value;
-		console.log("set currentTime in handleInput");
 	};
 
 	private handleUpdate = (): void => {

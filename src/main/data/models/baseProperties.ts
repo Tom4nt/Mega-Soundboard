@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import Keys from "../../../shared/keys";
 import { tryGetValue } from "../../../shared/sharedUtils";
 import { JSONObject } from "./interfaces";
-import { IPlayableData } from "../../../shared/models/dataInterfaces";
+import { IBaseData } from "../../../shared/models/dataInterfaces";
 
 export class BaseProperties {
 	constructor(
@@ -20,7 +20,7 @@ export class BaseProperties {
 		};
 	}
 
-	static fromData(data: IPlayableData): BaseProperties {
+	static fromData(data: IBaseData): BaseProperties {
 		return new BaseProperties(data.uuid, data.name, data.volume, data.keys);
 	}
 

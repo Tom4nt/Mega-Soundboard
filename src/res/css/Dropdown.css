@@ -21,6 +21,11 @@ ms-dropdown {
 	white-space: nowrap;
 }
 
+.dropdown-default.dark {
+	background-color: var(--color-normalD);
+	border-color: var(--color-darkL);
+}
+
 .dropdown-default.open {
 	border-radius: 4px 4px 0 0;
 }
@@ -34,6 +39,10 @@ ms-dropdown {
 .dropdown-arrow {
 	line-height: 1.1;
 	margin-left: auto;
+}
+
+.dropdown-default.dark:hover {
+	background-color: var(--color-normal);
 }
 
 .dropdown-default:hover {

@@ -1,10 +1,7 @@
 import { Dropdown, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
-import { Event, ExposedEvent } from "../../shared/events";
 import { GroupMode, IGroupData } from "../../shared/models/dataInterfaces";
 import { DropDownItem } from "../elements/dropdown";
-
-type SaveEventArgs = { group: IGroupData }
 
 export default class GroupModal extends Modal {
 	private nameElement!: TextField;
@@ -15,18 +12,23 @@ export default class GroupModal extends Modal {
 	private removeButton!: HTMLButtonElement;
 	private ungroupButton!: HTMLButtonElement;
 
-	public get onSave(): ExposedEvent<SaveEventArgs> { return this._onSave.expose(); }
-	private readonly _onSave = new Event<SaveEventArgs>();
+	private loadedGroup?: IGroupData;
+	private isInLinkedSoundboard = false;
 
-	public get onRemove(): ExposedEvent<string> { return this._onRemove.expose(); }
-	private readonly _onRemove = new Event<string>();
-
-	constructor(
-		private readonly loadedGroup: IGroupData,
-		private readonly isInLinkedSoundboard: boolean,
-	) {
+	constructor() {
 		super(false);
 		this.modalTitle = "Edit Group";
+	}
+
+	public async openForEdit(uuid: string): Promise<void> {
+		const playable = await window.actions.getPlayable(uuid);
+		if (!playable) throw Error(`Playable with uuid ${uuid} could not be found.`);
+		if (!playable.data.isGroup) throw Error(`Cannot edit a non-group playable with the GroupModal.`);
+
+		this.loadedGroup = playable.data as IGroupData;
+		this.isInLinkedSoundboard = playable.isInLinkedSoundboard;
+
+		await super.open();
 	}
 
 	protected canCloseWithKey(): boolean {
@@ -43,12 +45,6 @@ export default class GroupModal extends Modal {
 		this.modeElement = new Dropdown();
 		this.volumeElement = new Slider("Volume");
 		this.keysElement = new KeyRecorder();
-
-		this.modeElement.addItems(
-			new DropDownItem("Random", "random" as GroupMode),
-			new DropDownItem("Sequence", "sequence" as GroupMode),
-			new DropDownItem("First", "first" as GroupMode),
-		);
 
 		return [
 			this.nameElement,
@@ -75,6 +71,15 @@ export default class GroupModal extends Modal {
 	}
 
 	private update(): void {
+		if (!this.loadedGroup) throw Error("Calling openForEdit is required.");
+
+		this.modeElement.addItems(
+			new DropDownItem("Random", "random" as GroupMode),
+			new DropDownItem("Sequence", "sequence" as GroupMode),
+			new DropDownItem("First", "first" as GroupMode),
+			new DropDownItem("Combine", "combine" as GroupMode),
+		);
+
 		this.nameElement.value = this.loadedGroup.name;
 		this.modeElement.selectItemWithValue(this.loadedGroup.mode);
 		this.volumeElement.value = this.loadedGroup.volume;
@@ -91,15 +96,11 @@ export default class GroupModal extends Modal {
 			valid = false;
 		}
 
-		if (!this.modeElement.selectedIndex) {
-			// TODO: Warn
-			valid = false;
-		}
-
 		return valid;
 	}
 
 	private async save(): Promise<void> {
+		if (!this.loadedGroup) throw Error("Calling openForEdit is required.");
 		if (!await this.validate()) return;
 
 		this.loadedGroup.name = this.nameElement.value;
@@ -107,16 +108,19 @@ export default class GroupModal extends Modal {
 		this.loadedGroup.volume = this.volumeElement.value;
 		this.loadedGroup.keys = this.keysElement.keys;
 
-		this._onSave.raise({ group: this.loadedGroup });
+		window.actions.editPlayable(this.loadedGroup);
+
 		this.close();
 	}
 
 	private removeGroup(): void {
-		this._onRemove.raise(this.loadedGroup.uuid);
+		if (!this.loadedGroup) throw Error("Calling openForEdit is required.");
+		window.actions.deletePlayable(this.loadedGroup.uuid);
 		this.close();
 	}
 
 	private ungroup(): void {
+		if (!this.loadedGroup) throw Error("Calling openForEdit is required.");
 		void window.actions.ungroupGroup(this.loadedGroup.uuid);
 		this.close();
 	}

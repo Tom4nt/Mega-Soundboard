@@ -4,12 +4,14 @@ ms-sound {
 	font-size: 16px;
 	font-family: Roboto;
 	color: var(--color-white);
+	position: relative;
 }
 
 ms-sound .root {
+	display: flex;
 	overflow: hidden;
 	list-style: none;
-	/* flex-grow: 1; */
+	flex-grow: 1;
 	border-radius: 4px;
 	background-color: var(--color-normalL);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -19,16 +21,26 @@ ms-sound .root {
 	position: relative;
 }
 
-ms-sound .root:hover {
+ms-sound .root div:hover {
 	background-color: var(--color-light);
 	box-shadow: 0 10px 16px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+ms-sound .group-arrow {
+	position: absolute;
+	right: 21px;
+	bottom: -14px;
+	width: 10px;
+	height: 10px;
+	background-color: var(--color-dark);
+	transform: rotate(45deg);
 }
 
 ms-sound ms-iconbutton:hover {
 	background-color: var(--color-lightL);
 }
 
-ms-sound .root:active {
+ms-sound .root div:active {
 	background-color: var(--color-lightL);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }

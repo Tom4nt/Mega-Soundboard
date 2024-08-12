@@ -2,12 +2,12 @@ import * as p from "path";
 import { randomUUID } from "crypto";
 import { tryGetValue } from "../../../shared/sharedUtils";
 import { BaseProperties } from "./baseProperties";
-import { IPlayable, IPlayableContainer, JSONObject } from "./interfaces";
+import { IBase, IBaseChild, IBaseContainer, IDirectPlayable, IDirectPlayableChild, JSONObject } from "./interfaces";
 import Utils from "../../utils/utils";
 import { validSoundExts } from "../../../shared/sharedUtils";
 import { ISoundData } from "../../../shared/models/dataInterfaces";
 
-export class Sound implements IPlayable {
+export class Sound implements IBaseChild, IDirectPlayable {
 	constructor(
 		baseProperties: BaseProperties,
 		public path: string,
@@ -18,23 +18,32 @@ export class Sound implements IPlayable {
 		this.volume = baseProperties.volume;
 	}
 
-	readonly isSound = true;
-	readonly isGroup = false;
+	readonly hasParent = true;
 	readonly isContainer = false;
-	readonly isSoundboard = false;
-
 	readonly uuid: string;
 	name: string;
 	keys: number[];
 	volume: number;
-	readonly parent: IPlayableContainer | null = null;
+	readonly parent?: IBaseContainer;
+
+	getUuid(): string {
+		return this.uuid;
+	}
+
+	getName(): string {
+		return this.name;
+	}
+
+	getKeys(): number[] {
+		return this.keys;
+	}
 
 	getAudioPath(): string {
 		return this.path;
 	}
 
-	getFinalVolume(): number {
-		return ((this.parent?.getFinalVolume() ?? 0) / 100) * (this.volume / 100);
+	getVolume(): number {
+		return (this.parent?.getVolume() ?? 0) * (this.volume / 100);
 	}
 
 	getSavable(): JSONObject {
@@ -46,12 +55,16 @@ export class Sound implements IPlayable {
 		};
 	}
 
+	getDirectPlayables(): IDirectPlayableChild[] {
+		return [this];
+	}
+
 	copy(): Sound {
 		return Sound.convert(this.getSavable());
 	}
 
-	compare(other: IPlayable): number {
-		return this.name.localeCompare(other.name);
+	compare(other: IBase): number {
+		return this.name.localeCompare(other.getName());
 	}
 
 	edit(data: ISoundData): void {
@@ -70,7 +83,7 @@ export class Sound implements IPlayable {
 			path: this.path,
 			keys: this.keys,
 			volume: this.volume,
-			isGroup: false,
+			isGroup: false
 		};
 	}
 

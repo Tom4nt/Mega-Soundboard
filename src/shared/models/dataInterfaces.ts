@@ -1,7 +1,7 @@
 import { IDevice, IPlayableArgs, Optional } from "../interfaces";
 import { ActionName } from "../quickActions";
 
-export interface IPlayableData {
+export interface IBaseData {
 	uuid: string;
 	name: string;
 	volume: number;
@@ -9,16 +9,16 @@ export interface IPlayableData {
 	isGroup: boolean;
 }
 
-export interface ISoundData extends IPlayableData {
+export interface ISoundData extends IBaseData {
 	path: string;
 }
 
-export type GroupMode = "sequence" | "random" | "first";
-export interface IGroupData extends IPlayableData {
+export type GroupMode = "sequence" | "random" | "first" | "combine";
+export interface IGroupData extends IBaseData {
 	mode: GroupMode
 }
 
-export interface ISoundboardData extends IPlayableData {
+export interface ISoundboardData extends IBaseData {
 	linkedFolder: string | null;
 	hasSounds: boolean;
 }
@@ -26,11 +26,14 @@ export interface ISoundboardData extends IPlayableData {
 /** The last uuid belongs to the deepest item. The first belongs to the root. */
 export type UuidHierarchyData = string[];
 
-export type PlayData = {
-	mainPlayableUuid: string,
-	hierarchy: UuidHierarchyData,
+export type Audio = {
+	uuid: string,
 	path: string,
-	volume: number,
+	volume: number
+}
+
+export type PlayData = {
+	sounds: Audio[],
 	devices: readonly IDevice[],
 	loops: boolean,
 }

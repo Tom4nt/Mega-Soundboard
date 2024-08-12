@@ -3,7 +3,7 @@ import Draggable from "./draggable";
 import Actions from "../util/actions";
 import KeyStateListener from "../util/keyStateListener";
 import { Event, ExposedEvent } from "../../shared/events";
-import { IPlayableData, UuidHierarchyData } from "../../shared/models/dataInterfaces";
+import { IBaseData, UuidHierarchyData } from "../../shared/models/dataInterfaces";
 import DraggableHint from "./draggableHint";
 import MSR from "../msr";
 import { calls } from "../../shared/decorators";
@@ -14,14 +14,22 @@ export default class PlayableItem extends Draggable {
 	private titleElement!: HTMLSpanElement;
 	private detailsElement!: HTMLSpanElement;
 	private indicatorElement!: HTMLDivElement;
+	private groupArrow!: HTMLDivElement;
 	private currentKeyStateListener: KeyStateListener | null = null;
 	private dragHint: DraggableHint | null = null;
 	private _inCopyMode = false;
+	private _inGroupMode = false;
 
 	private _expandRequested = new Event<PlayableItem>();
 	public get onExpandRequested(): ExposedEvent<PlayableItem> { return this._expandRequested.expose(); }
 
 	public get inCopyMode(): boolean { return this._inCopyMode; }
+	public get inGroupMode(): boolean { return this._inGroupMode; }
+
+	public get showGroupArrow(): boolean { return !this.groupArrow.hidden; }
+	public set showGroupArrow(value: boolean) {
+		this.groupArrow.hidden = !value;
+	}
 
 	@calls("updateDragState")
 	accessor isMovingToNewLocation = false;
@@ -35,12 +43,10 @@ export default class PlayableItem extends Draggable {
 	@calls("updateDragState")
 	accessor newLocationName = "";
 
-	// eslint-disable-next-line class-methods-use-this
-	protected get classDuringDrag(): string {
-		return "drag";
-	}
+	@calls("updateDragState")
+	accessor groupTarget: "none" | "sound" | "group" = "none";
 
-	constructor(public playable: IPlayableData, isPlaying: boolean = false) {
+	constructor(public playable: IBaseData, isPlaying: boolean = false) {
 		super();
 		this.init(isPlaying);
 	}
@@ -74,13 +80,15 @@ export default class PlayableItem extends Draggable {
 	}
 
 	public updateDragState(): void {
-		if (!this.dragHint) return;
+		if (!this.dragHint || !this.currentKeyStateListener) return;
 		const g = this.dragHint;
 		g.canCopy = this.canAddToNewLocation;
 		g.canMove = !this.isMovingToNewLocation || (this.canAddToNewLocation && this.canRemoveFromCurrentLocation);
-		g.prefersCopy = this.currentKeyStateListener?.isCtrlPressed ?? false;
+		g.prefersCopy = this.currentKeyStateListener.isCtrlPressed;
 		g.destinationName = this.isMovingToNewLocation ? this.newLocationName : "";
+		g.groupTarget = this.currentKeyStateListener.isShiftPressed ? this.groupTarget : "none";
 		this._inCopyMode = g.prefersCopy && g.canCopy;
+		this._inGroupMode = this.currentKeyStateListener.isShiftPressed;
 		MSR.instance.draggableManager.update();
 	}
 
@@ -129,7 +137,13 @@ export default class PlayableItem extends Draggable {
 			left, ...this.playable.isGroup ? [right] : [], this.indicatorElement
 		];
 		root.append(...items);
-		this.append(root);
+
+		const groupArrow = document.createElement("div");
+		groupArrow.className = "group-arrow";
+		groupArrow.hidden = true;
+		this.groupArrow = groupArrow;
+
+		this.append(root, groupArrow);
 
 		const handleClick = async (e: MouseEvent): Promise<void> => {
 			if (e.target === this.indicatorElement) return;
@@ -146,7 +160,7 @@ export default class PlayableItem extends Draggable {
 		});
 
 		this.addEventListener("contextmenu", () => {
-			void Actions.editPlayable(this.playable.uuid);
+			void Actions.editPlayable(this.playable.uuid, this.playable.isGroup);
 		});
 
 		this.indicatorElement.addEventListener("click", () => {
@@ -194,7 +208,7 @@ export default class PlayableItem extends Draggable {
 			this.setPlayingState(false);
 	};
 
-	private handlePlayableChanged = (playable: IPlayableData): void => {
+	private handlePlayableChanged = (playable: IBaseData): void => {
 		if (playable.uuid === this.playable.uuid) {
 			this.playable = playable;
 			this.update();

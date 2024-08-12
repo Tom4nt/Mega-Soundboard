@@ -1,6 +1,6 @@
 import * as p from "path";
 import { promises as fs, constants as fsConstants, PathLike } from "fs";
-import { IPlayable, JSONObject } from "../data/models/interfaces";
+import { IBase, IBaseChild, isIBaseChild, JSONObject } from "../data/models/interfaces";
 import { Group } from "../data/models/group";
 import { Sound } from "../data/models/sound";
 import UuidHierarchy from "../data/models/uuidHierarchy";
@@ -65,10 +65,10 @@ export default class Utils {
 	}
 }
 
-export function convertPlayables(data: JSONObject[]): IPlayable[] {
-	const playables: IPlayable[] = [];
+export function convertChildren(data: JSONObject[]): IBaseChild[] {
+	const playables: IBaseChild[] = [];
 	data.forEach(item => {
-		let s: IPlayable;
+		let s: IBaseChild;
 		if ("playables" in item && "mode" in item) {
 			s = Group.convert(item);
 		} else {
@@ -79,10 +79,10 @@ export function convertPlayables(data: JSONObject[]): IPlayable[] {
 	return playables;
 }
 
-export function getHierarchy(playable: IPlayable): UuidHierarchy {
-	if (playable.parent) {
-		return new UuidHierarchy(...getHierarchy(playable.parent), playable.uuid);
+export function getHierarchy(child: IBase): UuidHierarchy {
+	if (isIBaseChild(child) && child.parent) {
+		return new UuidHierarchy(...getHierarchy(child.parent), child.getUuid());
 	} else {
-		return new UuidHierarchy(playable.uuid);
+		return new UuidHierarchy(child.getUuid());
 	}
 }

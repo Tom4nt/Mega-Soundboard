@@ -102,7 +102,7 @@ async function init(): Promise<void> {
 	const shouldShowChangelog = content.shouldShowChangelog;
 	if (shouldShowChangelog) {
 		const modal = await NewsModal.load();
-		modal.open();
+		void modal.open();
 		window.actions.flagChangelogViewed();
 	}
 
@@ -201,7 +201,7 @@ function addElementListeners(): void {
 	});
 
 	msbutton.addEventListener("click", () => {
-		new MSModal().open();
+		void new MSModal().open();
 	});
 
 	addSoundboardButton.addEventListener("click", () => {
@@ -230,7 +230,7 @@ function addElementListeners(): void {
 		const paths = await Utils.getValidSoundPaths(e);
 		if (paths) {
 			const sbId = await Actions.addSounds(paths, null);
-			window.actions.setCurrentSoundboard(sbId);
+			if (sbId) window.actions.setCurrentSoundboard(sbId);
 		}
 	});
 
@@ -319,7 +319,7 @@ function addElementListeners(): void {
 
 	buttonMoreSettings.addEventListener("click", () => {
 		quickSettings.classList.add("closed");
-		new SettingsModal().open();
+		void new SettingsModal().open();
 	});
 
 	//#endregion
@@ -408,13 +408,9 @@ const handleDragEnd = (e: DragEventArgs): void => {
 
 	const pointElements = document.elementsFromPoint(e.pos.x, e.pos.y);
 	if (pointElements.includes(addSoundboardButton)) {
-		if (g.inCopyMode) {
-			window.actions.copyPlayable(g.playable.uuid, null, 0);
-		} else {
-			window.actions.movePlayable(g.playable.uuid, null, 0);
-		}
+		window.actions.copyOrMovePlayable(g.playable.uuid, null, !g.inCopyMode, 0);
 	} else {
-		playableList.dropItem(g);
+		playableList.dropItem(e.pos, g);
 	}
 };
 
