@@ -26,7 +26,6 @@ class ConcreteEvents {
 	windowStateChanged: ExposedEvent<WindowState> | null = null;
 	windowFocusChanged: ExposedEvent<boolean> | null = null;
 	keyRecordingProgress: ExposedEvent<KeyRecordingArgs> | null = null;
-	keybindPressed: ExposedEvent<number[]> | null = null;
 	currentSoundboardChanged: ExposedEvent<ISoundboardData> | null = null;
 	minToTrayChanged: ExposedEvent<boolean> | null = null;
 	updateStateChanged: ExposedEvent<UpdaterState> | null = null;
@@ -35,7 +34,7 @@ class ConcreteEvents {
 	// Audio Manager
 	play: ExposedEvent<IPlayArgs> | null = null;
 	stop: ExposedEvent<string> | null = null;
-	playing: ExposedEvent<UuidHierarchyData> | null = null; // TODO: Raise and listen to these
+	playing: ExposedEvent<UuidHierarchyData> | null = null;
 	notPlaying: ExposedEvent<UuidHierarchyData> | null = null;
 	playError: ExposedEvent<string> | null = null;
 }

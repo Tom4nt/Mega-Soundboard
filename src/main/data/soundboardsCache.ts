@@ -96,6 +96,7 @@ export default class SoundboardsCache {
 		const object = this.find(uuid);
 		if (!object) throw new Error(`Object with runtime UUID ${uuid} could not be found.`);
 		if (!isIBaseChild(object) || !object.parent) return; // Cannot be removed because it's not in a parent.
+		MS.instance.audioManager.stop(uuid);
 		object.parent.removeChild(object);
 		EventSender.send("playableRemoved", object.asData());
 		await DataAccess.saveSoundboards(this.soundboards);

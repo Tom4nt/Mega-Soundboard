@@ -91,7 +91,10 @@ async function init(): Promise<void> {
 	overlapSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundOverlap")!;
 	loopSoundsToggler.isOn = content.settings.quickActionStates.get("toggleSoundLooping")!;
 
-	window.events.keybindsStateChanged.addHandler(state => enabeKeybindsToggler.isOn = state);
+	window.events.keybindsStateChanged.addHandler(state => {
+		void MSR.instance.audioPlayer.playUI(state ? "on" : "off");
+		return enabeKeybindsToggler.isOn = state;
+	});
 	window.events.overlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
 	window.events.loopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
 	window.events.currentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));

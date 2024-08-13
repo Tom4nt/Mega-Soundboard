@@ -33,7 +33,6 @@ export default class SoundboardItem extends Draggable {
 		this.addEventListener("dragover", this.handleDragOver);
 
 		window.events.soundboardChanged.addHandler(this.handleSoundboardChanged);
-		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
 		window.events.playing.addHandler(this.handlePlaying);
 		window.events.notPlaying.addHandler(this.handleNotPlaying);
 
@@ -44,7 +43,6 @@ export default class SoundboardItem extends Draggable {
 		super.disconnectedCallback();
 
 		window.events.soundboardChanged.removeHandler(this.handleSoundboardChanged);
-		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
 		window.events.playing.removeHandler(this.handlePlaying);
 		window.events.notPlaying.removeHandler(this.handleNotPlaying);
 	}
@@ -126,12 +124,6 @@ export default class SoundboardItem extends Draggable {
 	private handleNotPlaying = (h: UuidHierarchyData): void => {
 		if (h.includes(this.soundboard.uuid)) {
 			this.setPlayingIndicatorState(false);
-		}
-	};
-
-	private handleKeybindPressed = (keybind: number[]): void => {
-		if (Keys.equals(keybind, this.soundboard.keys)) {
-			window.actions.setCurrentSoundboard(this.soundboard.uuid);
 		}
 	};
 

@@ -172,14 +172,12 @@ export default class PlayableItem extends Draggable {
 		window.events.playing.addHandler(this.handlePlaying);
 		window.events.notPlaying.addHandler(this.handleNotPlaying);
 		window.events.playableChanged.addHandler(this.handlePlayableChanged);
-		window.events.keybindPressed.addHandler(this.handleKeybindPressed);
 	}
 
 	private removeGlobalListeners(): void {
 		window.events.playing.removeHandler(this.handlePlaying);
 		window.events.notPlaying.removeHandler(this.handleNotPlaying);
 		window.events.playableChanged.removeHandler(this.handlePlayableChanged);
-		window.events.keybindPressed.removeHandler(this.handleKeybindPressed);
 	}
 
 	private setAsDraggableGhost(offset: Point): void {
@@ -212,18 +210,6 @@ export default class PlayableItem extends Draggable {
 		if (playable.uuid === this.playable.uuid) {
 			this.playable = playable;
 			this.update();
-		}
-	};
-
-	private handleKeybindPressed = async (keys: number[]): Promise<void> => {
-		// TODO: Handle keybind presses in the main process
-		if (Keys.equals(keys, this.playable.keys)) {
-			try {
-				// const data = await window.actions.getPlayData(this.playable.uuid);
-				// if (data) await MSR.instance.audioManager.play(data);
-			} catch (error) {
-				// await MSR.instance.audioManager.playUISound(UISoundPath.ERROR);
-			}
 		}
 	};
 }

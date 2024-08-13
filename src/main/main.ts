@@ -50,7 +50,6 @@ async function init(): Promise<void> {
 	await windowManager.showLoadingWindow();
 	const s = settingsCache.settings;
 	const keybindManager = new KeybindManager(settings.processKeysOnRelease);
-	keybindManager.raiseExternal = s.quickActionStates.get("toggleKeybinds")!;
 	const trayManager = TrayManager.createTray(windowManager.mainWindow, s.quickActionStates);
 	const audioManager = new AudioManager();
 

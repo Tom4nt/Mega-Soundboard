@@ -84,7 +84,6 @@ const implementer: Actions = {
 	},
 
 	deletePlayable(id) {
-		MS.instance.audioManager.stop(id);
 		void MS.instance.soundboardsCache.removePlayable(id);
 	},
 
@@ -316,9 +315,7 @@ const implementer: Actions = {
 	},
 
 	stop(uuid) {
-		const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
-		const uuids = sounds.map(s => s.uuid);
-		MS.instance.audioManager.stopMultiple(uuids);
+		MS.instance.audioManager.stop(uuid);
 	},
 
 	stopAll() {

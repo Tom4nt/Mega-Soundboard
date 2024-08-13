@@ -26,7 +26,6 @@ export const actionBindings: QuickActionBindings = {
 		const s = ms.settingsCache.settings;
 		s.quickActionStates.set(key, !s.quickActionStates.get(key)!);
 		ms.trayManager.update(s.quickActionStates);
-		ms.keybindManager.raiseExternal = s.quickActionStates.get(key)!;
 		EventSender.send("keybindsStateChanged", s.quickActionStates.get(key));
 		await ms.settingsCache.save({ quickActionStates: s.quickActionStates });
 	},

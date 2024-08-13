@@ -5,8 +5,6 @@ import EventSender from "../eventSender";
 import MS from "../ms";
 import { getHierarchy } from "../utils/utils";
 
-// TODO: Let the audio manager do the unpacking of groups, instead of doing it outside.
-
 // The audio is actually played on the renderer process using HTMLAudioElement.
 // The audio manager is in the main process to have access to all the data.
 // Otherwise, we would have to send current playing sounds to the main process before loading a soundboard.
@@ -25,18 +23,6 @@ export default class AudioManager {
 
 	/** Uuids of currently playing instances. */
 	playingInstances: string[] = [];
-
-	constructor() {
-		// TODO: Call directly from keybindsStateChanged function.
-		// window.events.keybindsStateChanged.addHandler(s => {
-		// 	void this.playUISound(s ? "on" : "off");
-		// });
-
-		// TODO: Call directly from playable remove function.
-		// window.events.playableRemoved.addHandler(async s => {
-		// 	await this.stop(s.uuid);
-		// });
-	}
 
 	play(uuid: string, softError: boolean): void {
 		const overlap = MS.instance.settingsCache.settings.quickActionStates.get("toggleSoundOverlap")!;
@@ -86,24 +72,11 @@ export default class AudioManager {
 	stop(uuid: string): void {
 		const sb = MS.instance.soundboardsCache.findSoundboardOf(uuid);
 		if (!sb) throw Error("Could not find soundboard of playable to stop.");
-		const tree = new UuidTree(sb);
-		const playingBefore = [...this.playingInstances];
 
-		this.stopInstancesOf(uuid);
+		const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
+		const uuids = sounds.map(s => s.uuid);
 
-		this.updatePTTState();
-		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
-	}
-
-	/** Stops all instances of the specified Playables. */
-	stopMultiple(uuids: Iterable<string>): void {
-		const tree = MS.instance.soundboardsCache.getGeneralTree();
-		const playingBefore = [...this.playingInstances];
-		for (const uuid of uuids) {
-			this.stopInstancesOf(uuid);
-		}
-		this.updatePTTState();
-		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
+		this.stopMultiple(uuids);
 	}
 
 	stopAll(): void {
@@ -123,6 +96,18 @@ export default class AudioManager {
 	/** Sends the appropriate notifications to the renderer process when a playing playable is moved. */
 	notifyMove(treeBefore: UuidTree, treeAfter: UuidTree): void {
 		this.notifyChanges(treeBefore, treeAfter, this.playingInstances, this.playingInstances);
+	}
+
+	// ###
+
+	private stopMultiple(uuids: Iterable<string>): void {
+		const tree = MS.instance.soundboardsCache.getGeneralTree();
+		const playingBefore = [...this.playingInstances];
+		for (const uuid of uuids) {
+			this.stopInstancesOf(uuid);
+		}
+		this.updatePTTState();
+		this.notifyChanges(tree, tree, playingBefore, this.playingInstances);
 	}
 
 	private updatePTTState(): void {

@@ -6,15 +6,13 @@ import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
 import KeybindManager from "./managers/keybindManager";
-import Keys from "../shared/keys";
 import { app } from "electron";
 import path = require("path");
-import { actionBindings } from "./quickActionBindings";
-import { isAction } from "../shared/quickActions";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
 import AudioManager from "./managers/audioManager";
 import { isIDirectPlayable } from "./data/models/interfaces";
+import KeybindHandler from "./keybindHandler";
 
 /** Represents the app instance in the main process. */
 export default class MS {
@@ -32,6 +30,8 @@ export default class MS {
 		MS._instance = value;
 	}
 
+	public readonly keybindHandler: KeybindHandler;
+
 	constructor(
 		public readonly windowManager: WindowManager,
 		public readonly trayManager: TrayManager,
@@ -41,7 +41,7 @@ export default class MS {
 		public readonly audioManager: AudioManager,
 	) {
 		MS.instance = this;
-		keybindManager.onKeybindPressed.addHandler(this.handleKeyPressed);
+		this.keybindHandler = new KeybindHandler(keybindManager, soundboardsCache, settingsCache, audioManager);
 	}
 
 	flagChangelogViewed(): void {
@@ -90,24 +90,4 @@ export default class MS {
 		}
 		EventSender.send("currentSoundboardChanged", soundboard.asData());
 	}
-
-	private handleKeyPressed = async (kb: number[]): Promise<void> => {
-		const s = this.settingsCache.settings;
-		const keybindsEnabled = s.quickActionStates.get("toggleKeybinds")!;
-		if (keybindsEnabled) {
-			for (const k of s.quickActionKeys.keys()) {
-				if (k === "toggleKeybinds") continue; // Special case below.
-				const keybind = s.quickActionKeys.get(k);
-				if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
-					await actionBindings[k](k as never, true);
-				}
-			}
-		}
-
-		// Special case. This action is toggled even when keybinds are disabled.
-		const keys = s.quickActionKeys.get("toggleKeybinds");
-		if (keys && Keys.equals(kb, keys)) {
-			await actionBindings["toggleKeybinds"]("toggleKeybinds", true);
-		}
-	};
 }
