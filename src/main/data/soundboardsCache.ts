@@ -61,10 +61,12 @@ export default class SoundboardsCache {
 		if (!isIBaseChild(playable)) throw Error("Object cannot be moved because it is not an IBaseChild.");
 		const destination = await this.getOrCreateContainer(destinationId);
 		if (!destination) throw new Error("Destination container not found.");
-		destinationId = destination.getUuid();
 
-		if (isSoundboard(destination) && destination.linkedFolder !== null)
+		destinationId = destination.getUuid();
+		const sourceUuid = playable.parent!.getUuid();
+		if (sourceUuid !== destinationId && isSoundboard(destination) && destination.linkedFolder !== null) {
 			throw Error(`Cannot ${move ? "move" : "copy"} a sound to a linked Soundboard.`);
+		}
 
 		const treeBefore = MS.instance.soundboardsCache.getGeneralTree();
 
@@ -117,8 +119,10 @@ export default class SoundboardsCache {
 		const soundboard = this.find(soundboardData.uuid) as Soundboard | null;
 		if (!soundboard) throw new Error("Soundboard not found.");
 		soundboard.edit(soundboardData);
-		await soundboard.syncSounds();
+		const hasLinkedSoundboardChanges = await soundboard.syncSounds();
 		EventSender.send("soundboardChanged", soundboardData);
+		if (hasLinkedSoundboardChanges)
+			EventSender.send("currentSoundboardChanged", soundboard.asData());
 		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
@@ -217,18 +221,18 @@ export default class SoundboardsCache {
 		if (!secondObject || !isIBaseChild(secondObject))
 			throw Error("Second object for the group could not be found.");
 
-		parent.removeChild(secondObject);
+		if (!copy) {
+			parent.removeChild(secondObject);
+			EventSender.send("playableRemoved", secondObject.asData());
+		}
+
 		const index = parent.getChildren().indexOf(mainObject);
 		parent.removeChild(mainObject);
+		EventSender.send("playableRemoved", mainObject.asData());
+
 		const group = Group.getWithName(mainObject.getName());
 		group.addChild(mainObject);
-		group.addChild(secondObject);
-
-		EventSender.send("playableRemoved", mainObject.asData());
-		EventSender.send("playableRemoved", secondObject.asData());
-
-		void copy;
-		// TODO: Handle copy
+		group.addChild(secondObject.copy());
 
 		parent.addChild(group, index);
 		EventSender.send("playablesAdded", {
@@ -277,6 +281,7 @@ export default class SoundboardsCache {
 			isCurrent: true,
 			index: 0
 		});
+		await soundboard.syncSounds();
 		EventSender.send("currentSoundboardChanged", soundboard.asData());
 		await DataAccess.saveSoundboards(this.soundboards);
 	}

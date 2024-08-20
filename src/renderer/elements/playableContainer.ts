@@ -5,15 +5,17 @@ import Utils from "../util/utils";
 import Actions from "../util/actions";
 import { ContainerSortedArgs, IPlayableArgs, PlayablesAddedArgs, Point } from "../../shared/interfaces";
 import MSR from "../msr";
-import { DragEventArgs } from "../draggableManager";
+import { DragEventArgs, DragPreStartArgs } from "../draggableManager";
+import ContainerHelper from "../util/containerHelper";
 
 export default class PlayableContainer extends HTMLElement {
-	private _loadedItems: PlayableItem[] = [];
+	private readonly _loadedItems: PlayableItem[] = [];
 	private _dragDummyDiv!: HTMLDivElement;
 	private _containerDiv!: HTMLDivElement;
 	private _emptyMsgSpan?: HTMLSpanElement;
 	private _currSubContainer: PlayableContainer | null = null;
 	private _initialized = false;
+	private _containerHelper!: ContainerHelper;
 
 	/** The item that corresponds to the current playable being dragged.
 	 * Since containers can be loaded and unloaded while dragging,
@@ -30,15 +32,21 @@ export default class PlayableContainer extends HTMLElement {
 		this.filterItems(v);
 	}
 
+	public get filteredItems(): PlayableItem[] {
+		return this._loadedItems.filter(i => !i.hidden);
+	}
+
 	public constructor(
 		public readonly parentUuid: string,
 		public readonly emptyMessageRequested: () => string,
+		public readonly allowGroupCreation: boolean,
 	) { super(); }
 
 	protected connectedCallback(): void {
 		window.events.playablesAdded.addHandler(this.handlePlayableAdded);
 		window.events.playableRemoved.addHandler(this.handlePlayableRemoved);
 		window.events.containerSorted.addHandler(this.handleContainerSorted);
+		MSR.instance.draggableManager.onDragPreStart.addHandler(this.handleDragPreStart);
 		MSR.instance.draggableManager.onDragStart.addHandler(this.handleDragStart);
 
 		if (this._initialized) return;
@@ -65,7 +73,8 @@ export default class PlayableContainer extends HTMLElement {
 
 		dropArea.onOver.addHandler(e => {
 			this.showDragDummy();
-			this.updateDragDummyPosition({ x: e.clientX, y: e.clientY });
+			const index = this._containerHelper.getIndexAtPosition({ x: e.clientX, y: e.clientY });
+			if (index) this.updateDragDummyPosition(index);
 		});
 		dropArea.onLeave.addHandler(() => {
 			this.hideDragDummy();
@@ -78,6 +87,8 @@ export default class PlayableContainer extends HTMLElement {
 			this.showDragDummy();
 		}
 
+		const padding = parseInt(window.getComputedStyle(itemsContainer).padding);
+		this._containerHelper = new ContainerHelper(this, itemsContainer, padding, () => this._currSubContainer);
 		this._initialized = true;
 	}
 
@@ -103,7 +114,7 @@ export default class PlayableContainer extends HTMLElement {
 			//isValid = isValid || isCurrentDragElement;
 			item.style.display = isValid ? "" : "none";
 		}
-		this.updateCurrentContainer();
+		this.updateCurrentSubContainer();
 		this.updateMessage();
 	}
 
@@ -158,7 +169,7 @@ export default class PlayableContainer extends HTMLElement {
 			}
 			i++;
 		}
-		this.updateCurrentContainer();
+		this.updateCurrentSubContainer();
 	}
 
 	getHeight(): number {
@@ -172,31 +183,34 @@ export default class PlayableContainer extends HTMLElement {
 		for (const item of sorted) {
 			this._containerDiv.append(item);
 		}
-		this.updateCurrentContainer();
+		this.updateCurrentSubContainer();
 	}
 
 	dragItem(pos: Point, item: PlayableItem): void {
+		const index = this._containerHelper.getIndexAtPosition(pos);
 		let overElements = document.elementsFromPoint(pos.x, pos.y);
-		if (this._currSubContainer && overElements.includes(this._currSubContainer)) {
-			this._currSubContainer.dragItem(pos, item);
+		if (index === null) {
+			if (this._currSubContainer) this._currSubContainer.dragItem(pos, item);
 			this.dragItemOutside();
 
 		} else {
 			if (this._currSubContainer) {
 				this._currSubContainer.dragItemOutside();
 			}
+
+			item.canBeInGroupMode = this.allowGroupCreation;
 			if (item.inGroupMode) {
 				this.hideDragDummy();
 			} else {
 				this.showDragDummy();
 			}
 			this.updateLoadedDraggedItem();
-			this.updateDragDummyPosition(pos);
+			this.updateDragDummyPosition(index);
 
 			overElements = document.elementsFromPoint(pos.x, pos.y);
 			if (item.inGroupMode) {
 				const playableAtMouse = overElements.find(i => i instanceof PlayableItem);
-				if (playableAtMouse instanceof PlayableItem) {
+				if (playableAtMouse instanceof PlayableItem && this.allowGroupCreation) {
 					item.groupTarget = playableAtMouse.playable.isGroup ? "group" : "sound";
 				} else {
 					item.groupTarget = "none";
@@ -213,13 +227,12 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	dropItem(pos: Point, dragElement: PlayableItem): void {
-		const newIndex = this.getDragDummyIndex();
+		const newIndex = this._containerHelper.getIndexAtPosition(pos);
 		const elementsAtPoint = document.elementsFromPoint(pos.x, pos.y);
 		const playableAtPoint = elementsAtPoint.find(x => x instanceof PlayableItem);
-		const subContainer = elementsAtPoint.find(x => x instanceof PlayableContainer);
 
-		if (subContainer === this._currSubContainer) {
-			this._currSubContainer.dropItem(pos, dragElement);
+		if (newIndex === null) {
+			if (this._currSubContainer !== null) this._currSubContainer.dropItem(pos, dragElement);
 			return;
 		}
 
@@ -258,41 +271,22 @@ export default class PlayableContainer extends HTMLElement {
 		this.updateMessageSpanVisibility();
 	}
 
-	private updateDragDummyPosition(pos: Point): void {
-		const targetElements = document.elementsFromPoint(pos.x, pos.y);
-		const targetElement = targetElements.find(x => x instanceof PlayableItem);
-		if (!(targetElement instanceof PlayableItem)) return;
-		if (!this._loadedItems.find(x => x === targetElement)) return;
-		let targetElementExtension: HTMLElement = targetElement;
-		if (this._currSubContainer &&
-			this._currSubContainer.parentUuid === targetElement.playable.uuid) {
-			targetElementExtension = this._currSubContainer;
-		}
-
-		if (Utils.getElementIndex(this._dragDummyDiv) > Utils.getElementIndex(targetElementExtension)) {
-			this._containerDiv.insertBefore(this._dragDummyDiv, targetElement);
-		} else {
-			this._containerDiv.insertBefore(this._dragDummyDiv, targetElementExtension.nextElementSibling);
-		}
+	private updateDragDummyPosition(index: number): void {
+		const item = this.filteredItems[index] ?? null;
+		this._containerDiv.insertBefore(this._dragDummyDiv, item);
 	}
 
 	private clear(): void {
 		for (const item of this._loadedItems) {
 			item.remove();
 		}
-		this._loadedItems = [];
+		this._loadedItems.length = 0;
 		this._loadedDraggedItem = null;
 		this.updateMessage();
 	}
 
 	private hasVisibleItems(): boolean {
 		return this._loadedItems.filter(x => window.getComputedStyle(x).display !== "none").length > 0;
-	}
-
-	private getDragDummyIndex(): number {
-		const dragItemHidden = this._loadedDraggedItem?.hidden ?? true;
-		return Utils.getElementIndex(this._dragDummyDiv,
-			(e) => (!dragItemHidden || e != this._loadedDraggedItem) && e instanceof PlayableItem);
 	}
 
 	private updateMessage(): void {
@@ -313,7 +307,13 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	private async finishFileDrag(e: DragEvent): Promise<void> {
-		const index = this.getDragDummyIndex();
+		const index = this._containerHelper.getIndexAtPosition({ x: e.offsetX, y: e.offsetY });
+
+		if (index === null) {
+			if (this._currSubContainer !== null) void this._currSubContainer.finishFileDrag(e);
+			return;
+		}
+
 		this.hideDragDummy();
 		const paths = await Utils.getValidSoundPaths(e);
 		if (paths)
@@ -322,7 +322,7 @@ export default class PlayableContainer extends HTMLElement {
 
 	private async openSubContainer(under: PlayableItem): Promise<void> {
 		this.closeCurrentSubContainer();
-		const root = new PlayableContainer(under.playable.uuid, () => "No sounds in this group");
+		const root = new PlayableContainer(under.playable.uuid, () => "No sounds in this group", false);
 		this._currSubContainer = root;
 		root.classList.add("group");
 		root.style.height = "0";
@@ -355,8 +355,8 @@ export default class PlayableContainer extends HTMLElement {
 		setTimeout(() => { container.remove(); }, 200);
 	}
 
-	// Checks if the container needs to be moved or closed.
-	private updateCurrentContainer(): void {
+	// Checks if the sub-container needs to be moved or closed.
+	private updateCurrentSubContainer(): void {
 		if (!this._currSubContainer) return;
 		const id = this._currSubContainer.parentUuid;
 		if (!id) return;
@@ -382,6 +382,12 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	// Handlers
+
+	private handleDragPreStart = (e: DragPreStartArgs): void => {
+		if (e.element instanceof PlayableItem) {
+			e.cancel = this.filter !== "";
+		}
+	};
 
 	private handleDragStart = (e: DragEventArgs): void => {
 		if (e.ghost instanceof PlayableItem && !this._loadedDraggedItem) {

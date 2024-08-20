@@ -31,32 +31,34 @@ export default class FileDropArea extends HTMLElement {
 
 	private handleDragEnter = (e: DragEvent): void => {
 		e.preventDefault();
-		if (MSR.instance.modalManager.hasOpenModal || !this.check()) return;
+		if (!this.check()) return;
 		if (this._dragDepth === 0) this._onEnter.raise(e);
 		this._dragDepth++;
 	};
 
 	private handleDragOver = (e: DragEvent): void => {
 		e.preventDefault();
-		if (MSR.instance.modalManager.hasOpenModal || !this.check()) return;
+		if (!this.check()) return;
 		this._onOver.raise(e);
 	};
 
 	private handleDragLeave = (e: DragEvent): void => {
 		e.preventDefault();
-		if (MSR.instance.modalManager.hasOpenModal || !this.check()) return;
+		if (!this.check()) return;
 		this._dragDepth--;
 		if (this._dragDepth === 0) this._onLeave.raise(e);
 	};
 
 	private handleDrop = (e: DragEvent): void => {
 		e.preventDefault();
+		if (!this.check()) return;
 		this._dragDepth = 0;
 		this._onDrop.raise(e);
 	};
 
 	private check(): boolean {
-		if (this.checkAllows) return this.checkAllows();
-		else return true;
+		const isModalOpen = MSR.instance.modalManager.hasOpenModal;
+		if (this.checkAllows) return this.checkAllows() && !isModalOpen;
+		else return !isModalOpen;
 	}
 }

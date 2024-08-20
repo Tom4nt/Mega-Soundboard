@@ -11,6 +11,13 @@ export type DragStartArgs = {
 	offset: Point,
 }
 
+export type DragPreStartArgs = {
+	draggable: Draggable,
+	startPos: Point,
+	offset: Point,
+	cancel: boolean,
+}
+
 export default abstract class Draggable extends HTMLElement {
 	private isMouseDown = false;
 	private startPos: Point = { x: 0, y: 0 };
@@ -20,6 +27,9 @@ export default abstract class Draggable extends HTMLElement {
 	allowDrag = true;
 
 	private _isBeingDragged = false;
+
+	private _onDragPreStart = new Event<DragPreStartArgs>();
+	get onDragPreStart(): ExposedEvent<DragPreStartArgs> { return this._onDragPreStart.expose(); }
 
 	private _onDragStart = new Event<DragStartArgs>();
 	get onDragStart(): ExposedEvent<DragStartArgs> { return this._onDragStart.expose(); }
@@ -63,6 +73,10 @@ export default abstract class Draggable extends HTMLElement {
 	}
 
 	protected startDrag(pos: Point, offset: Point): void {
+		const args = { draggable: this, startPos: pos, offset, cancel: false };
+		this._onDragPreStart.raise(args);
+		if (args.cancel) return;
+
 		this._isBeingDragged = true;
 
 		const ghost = this.createGhost(pos, offset);

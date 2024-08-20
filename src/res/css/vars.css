@@ -1,29 +1,30 @@
 @font-face {
-    font-family: 'MaterialIcons';
-    font-style: normal;
-    font-weight: 100 700;
-    src: url('../material_symbols_rounded.woff2') format('woff2');
+	font-family: 'MaterialIcons';
+	font-style: normal;
+	font-weight: 100 700;
+	src: url('../material_symbols_rounded.woff2') format('woff2');
 }
 
 
 :root {
-    --color-black: #0e0e11;
-    --color-dark: #121217;
-    --color-darkL: #17171c;
-    --color-normalD: #1c1c21;
-    --color-normal: #1f1f24;
-    --color-normalL: #25252b;
-    --color-light: #2c2c33;
-    --color-lightL: #3b3b42;
-    --color-gray: #545458;
-    --color-grayL: #636368;
-    --color-white: #b3b3b8;
-    --color-red-dark: #2f1a1a;
-    --color-red: #b52a2a4f;
-    --color-red-light: #b52a2a73;
-    --color-red-lightL: #b52a2a91;
-    --color-green: #2d5f2f;
-    --color-greenL: #377539;
-    --color-dimmer: #25252bb3;
-    --color-link: #03a9f4;
+	--color-black: #0e0e11;
+	--color-dark: #121217;
+	--color-darkL: #17171c;
+	--color-normalD: #1c1c21;
+	--color-normal: #1f1f24;
+	--color-normalL: #25252b;
+	--color-light: #2c2c33;
+	--color-lightL: #3b3b42;
+	--color-gray: #545458;
+	--color-grayL: #636368;
+	--color-white: #b3b3b8;
+	--color-red-dark: #2f1a1a;
+	--color-red: #b52a2a4f;
+	--color-red-light: #b52a2a73;
+	--color-red-lightL: #b52a2a91;
+	--color-green: #2d5f2f;
+	--color-greenL: #377539;
+	--color-dimmer: #25252bb3;
+	--color-link: #03a9f4;
+	--min-playable-width: 250px;
 }

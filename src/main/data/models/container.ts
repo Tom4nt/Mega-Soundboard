@@ -1,25 +1,27 @@
-import { IBaseChild, IContainer, isIContainer } from "./interfaces";
+import { IBaseChild, IBaseContainer, IContainer, isIContainer } from "./interfaces";
 
 export class Container implements IContainer {
 	constructor(
 		private readonly children: IBaseChild[],
-	) { }
-
-	readonly isSoundboard = false;
-	readonly isGroup = false;
+		private readonly owner: IBaseContainer,
+	) {
+		children.forEach(c => c.parent = owner);
+	}
 
 	getChildren(): readonly IBaseChild[] {
 		return this.children;
 	}
 
-	addChild(playable: IBaseChild, index?: number): void {
+	addChild(child: IBaseChild, index?: number): void {
 		if (index == undefined) index = this.children.length - 1;
-		this.children.splice(index, 0, playable);
+		this.children.splice(index, 0, child);
+		child.parent = this.owner;
 	}
 
-	removeChild(playable: IBaseChild): void {
-		const index = this.children.indexOf(playable);
+	removeChild(child: IBaseChild): void {
+		const index = this.children.indexOf(child);
 		this.children.splice(index, 1);
+		child.parent = undefined;
 	}
 
 	contains(playable: IBaseChild): boolean {

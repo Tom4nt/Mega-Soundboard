@@ -42,6 +42,7 @@ export default class SoundModal extends Modal {
 		this.modalTitle = "Edit Sound";
 		this.loadedSound = playable.data as ISoundData;
 		this.isNew = false;
+		this.isInLinkedSoundboard = playable.isInLinkedSoundboard;
 
 		await super.open();
 	}

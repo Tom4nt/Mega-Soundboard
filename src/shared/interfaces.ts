@@ -14,6 +14,8 @@ export type Optional<Type> = {
 	[Property in keyof Type]+?: Type[Property];
 };
 
+export type CancelEventArgs = { cancel: boolean };
+
 export interface IEquatable<T> {
 	equals: (to: T) => boolean;
 }

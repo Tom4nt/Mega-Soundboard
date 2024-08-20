@@ -1,5 +1,5 @@
 import { ExposedEvent, Event } from "../../shared/events";
-import { IDirectPlayable, isIBaseChild } from "../data/models/interfaces";
+import { IDirectPlayable, IDirectPlayableChild, isIBaseChild } from "../data/models/interfaces";
 import UuidTree from "../data/models/uuidTree";
 import EventSender from "../eventSender";
 import MS from "../ms";
@@ -32,9 +32,15 @@ export default class AudioManager {
 		if (!base || !isIBaseChild(base)) throw Error("IBaseChild not found.");
 		const hierarchy = getHierarchy(base);
 
-		const playables = base.getDirectPlayables();
-		const allUuids = [...hierarchy, ...playables.map(x => x.getUuid())];
+		let playables: IDirectPlayableChild[] = [];
+		try {
+			playables = base.getDirectPlayables();
+		} catch (error) {
+			if (error instanceof Error) EventSender.send("playError", error.message);
+			return;
+		}
 
+		const allUuids = [...hierarchy, ...playables.map(x => x.getUuid())];
 		const playData = {
 			sounds: playables.map(p => ({ uuid: p.getUuid(), path: p.getAudioPath(), volume: p.getVolume() })),
 			devices: MS.instance.settingsCache.getDevices(),
@@ -70,9 +76,6 @@ export default class AudioManager {
 
 	/** Stops all instances of the specified Playable. */
 	stop(uuid: string): void {
-		const sb = MS.instance.soundboardsCache.findSoundboardOf(uuid);
-		if (!sb) throw Error("Could not find soundboard of playable to stop.");
-
 		const sounds = MS.instance.soundboardsCache.getAllSounds(uuid);
 		const uuids = sounds.map(s => s.uuid);
 

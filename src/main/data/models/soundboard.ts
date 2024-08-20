@@ -1,10 +1,10 @@
-import { promises as fs } from "fs";
+import { Dirent, promises as fs } from "fs";
 import path = require("path");
 import { tryGetValue } from "../../../shared/sharedUtils";
 import Utils, { convertChildren } from "../../utils/utils";
 import { BaseProperties } from "./baseProperties";
 import { Container } from "./container";
-import { IDirectPlayable, JSONObject, IBaseContainer, IBaseChild, isIContainer, isIBase } from "./interfaces";
+import { IDirectPlayable, JSONObject, IBaseContainer, IBaseChild, isIContainer, isIBase, IContainer, isIDirectPlayable } from "./interfaces";
 import { Sound } from "./sound";
 import { randomUUID } from "crypto";
 import { ISoundboardData } from "../../../shared/models/dataInterfaces";
@@ -15,8 +15,7 @@ export class Soundboard implements IBaseContainer {
 		public linkedFolder: string | null,
 		children: IBaseChild[],
 	) {
-		this.container = new Container(children);
-		children.forEach(p => p.parent = this);
+		this.container = new Container(children, this);
 		this.uuid = baseProperties.uuid;
 		this.name = baseProperties.name;
 		this.keys = baseProperties.keys;
@@ -98,43 +97,26 @@ export class Soundboard implements IBaseContainer {
 		this.linkedFolder = data.linkedFolder;
 	}
 
-	// TODO: Sub-folders should be converted to groups.
-	/** Adds Sounds to and/or removes them from the specified Soundboard as necessary
-	 * to sync them with its linked folder. */
-	async syncSounds(): Promise<void> {
-		if (!this.linkedFolder) return;
-		await Utils.assertAccessibleDirectory(this.linkedFolder);
-		const files = await fs.readdir(this.linkedFolder);
+	/** Adds and/or removes Sounds/Groups from the specified Soundboard as necessary
+	 * to sync them with its linked folder.
+	 * Returns true if changes were made. */
+	async syncSounds(): Promise<boolean> {
+		if (!this.linkedFolder) return false;
 
-		// Loop through files and add unexisting sounds
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i]!;
-			const soundPath = path.join(this.linkedFolder, file);
-			if (!Sound.isValidSoundFile(soundPath)) return;
-			const soundWithPath = this.container.findChildrenRecursive(
-				p => !isIContainer(p) && (p as IDirectPlayable & IBaseChild).getAudioPath() == soundPath
-			)[0];
-			const stat = await fs.stat(soundPath);
-			if (!soundWithPath && stat.isFile()) {
-				const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(soundPath), 100, []);
-				const s = new Sound(info, soundPath);
-				this.container.addChild(s);
-			}
+		let entries: Dirent[] = [];
+		if (await Utils.isDirectoryAccessible(this.linkedFolder)) {
+			entries = await fs.readdir(this.linkedFolder, { withFileTypes: true });
 		}
 
-		// Loop through existing sounds and remove those without a file
-		if (this.container.getChildren().length > 0) {
-			const playables = this.container.findChildrenRecursive(
-				c => {
-					if (isIContainer(c)) return false;
-					const p = c as IDirectPlayable & IBaseChild;
-					const path = p.getAudioPath();
-					if (typeof path === "number") return false;
-					return files.includes(path);
-				}
-			);
-			playables.forEach(p => p.parent?.removeChild(p));
+		let hasChanges = false;
+		if (this.linkedFolder) {
+			hasChanges = await this.addSyncedSounds(entries);
 		}
+		if (await this.removeSyncedSounds(entries)) {
+			hasChanges = true;
+		}
+
+		return hasChanges;
 	}
 
 	asData(): ISoundboardData {
@@ -175,6 +157,46 @@ export class Soundboard implements IBaseContainer {
 		}
 
 		return new Soundboard(commonInfo, linkedFolder, playables);
+	}
+
+	/** Loops through files/folders and adds unexisting sounds/groups. */
+	private async addSyncedSounds(entries: Dirent[]): Promise<boolean> {
+		if (!this.linkedFolder) throw Error("Cannot add synced sounds without a linkedFolder.");
+		return Soundboard.addSoundsFromFiles(entries, this, this.linkedFolder);
+	}
+
+	private static addSoundsFromFiles(entries: Dirent[], container: IContainer, linkedFolder: string): boolean {
+		let hasChanges = false;
+		for (const entry of entries) {
+			const completeName = path.join(linkedFolder, entry.name);
+			if (entry.isFile()) {
+				if (!Sound.isValidSoundFile(completeName)) continue;
+				const soundWithPath = container.getChildren().find(
+					p => !isIContainer(p) && (p as IDirectPlayable & IBaseChild).getAudioPath() == completeName
+				);
+				if (!soundWithPath) {
+					const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(completeName), 100, []);
+					const s = new Sound(info, completeName);
+					container.addChild(s);
+					hasChanges = true;
+				}
+			}
+		}
+		return hasChanges;
+	}
+
+	/** Loops through existing sounds and removes those without a file. */
+	private async removeSyncedSounds(entries: Dirent[]): Promise<boolean> {
+		let hasChanges = false;
+		const playables = this.container.getChildren().filter(c => {
+			if (!this.linkedFolder) return true;
+			if (isIDirectPlayable(c)) {
+				return !entries.some(e => path.join(this.linkedFolder!, e.name) === c.getAudioPath());
+			} else return false;
+		});
+		if (playables.length > 0) hasChanges = true;
+		playables.forEach(p => p.parent?.removeChild(p));
+		return hasChanges;
 	}
 }
 

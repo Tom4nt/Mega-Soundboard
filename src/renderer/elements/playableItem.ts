@@ -46,6 +46,9 @@ export default class PlayableItem extends Draggable {
 	@calls("updateDragState")
 	accessor groupTarget: "none" | "sound" | "group" = "none";
 
+	@calls("updateDragState")
+	accessor canBeInGroupMode = true;
+
 	constructor(public playable: IBaseData, isPlaying: boolean = false) {
 		super();
 		this.init(isPlaying);
@@ -81,14 +84,14 @@ export default class PlayableItem extends Draggable {
 
 	public updateDragState(): void {
 		if (!this.dragHint || !this.currentKeyStateListener) return;
-		const g = this.dragHint;
-		g.canCopy = this.canAddToNewLocation;
-		g.canMove = !this.isMovingToNewLocation || (this.canAddToNewLocation && this.canRemoveFromCurrentLocation);
-		g.prefersCopy = this.currentKeyStateListener.isCtrlPressed;
-		g.destinationName = this.isMovingToNewLocation ? this.newLocationName : "";
-		g.groupTarget = this.currentKeyStateListener.isShiftPressed ? this.groupTarget : "none";
-		this._inCopyMode = g.prefersCopy && g.canCopy;
-		this._inGroupMode = this.currentKeyStateListener.isShiftPressed;
+		const h = this.dragHint;
+		h.canCopy = this.canAddToNewLocation;
+		h.canMove = !this.isMovingToNewLocation || (this.canAddToNewLocation && this.canRemoveFromCurrentLocation);
+		h.prefersCopy = this.currentKeyStateListener.isCtrlPressed;
+		h.destinationName = this.isMovingToNewLocation ? this.newLocationName : "";
+		this._inGroupMode = this.canBeInGroupMode && this.currentKeyStateListener.isShiftPressed && this.canAddToNewLocation;
+		h.groupTarget = this._inGroupMode ? this.groupTarget : "none";
+		this._inCopyMode = h.prefersCopy && h.canCopy;
 		MSR.instance.draggableManager.update();
 	}
 

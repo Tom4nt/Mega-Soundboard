@@ -32,12 +32,14 @@ export default class Utils {
 		}
 	}
 
-	/** Throws an Error if the path is not a directory or if it's not accessible. */
-	static async assertAccessibleDirectory(path: string): Promise<void> {
-		if (!await Utils.isPathAccessible(path))
-			throw Error("The specified path cannot be accessed.");
-		if (!(await fs.stat(path)).isDirectory())
-			throw Error("The specified path is not valid because it is not a directory.");
+	static async isDirectoryAccessible(path: string): Promise<boolean> {
+		if (!await Utils.isPathAccessible(path)) {
+			return false;
+		}
+		if (!(await fs.stat(path)).isDirectory()) {
+			return false;
+		}
+		return true;
 	}
 
 	static parsePath(path: string): string | null {

@@ -72,7 +72,7 @@ export default class PlayableList extends HTMLElement {
 	private getContainer(soundboardUuid: string, filter: string): PlayableContainer {
 		if (this.containerElement) this.containerElement.remove();
 
-		const container = new PlayableContainer(soundboardUuid, () => this.getEmptyMessage());
+		const container = new PlayableContainer(soundboardUuid, () => this.getEmptyMessage(), true);
 		container.filter = filter;
 		this.containerElement = container;
 		this.append(container);

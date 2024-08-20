@@ -12,8 +12,7 @@ export class Group implements IBaseChild, IBaseContainer {
 		public mode: GroupMode,
 		children: IBaseChild[],
 	) {
-		this.container = new Container(children);
-		children.forEach(p => p.parent = this);
+		this.container = new Container(children, this);
 		this.uuid = baseProperties.uuid;
 		this.name = baseProperties.name;
 		this.volume = baseProperties.volume;

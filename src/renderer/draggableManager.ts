@@ -1,11 +1,17 @@
 import { Draggable } from "./elements";
 import { Event, ExposedEvent } from "../shared/events";
 import { Point } from "../shared/interfaces";
-import { DragStartArgs } from "./elements/draggable";
+import { DragPreStartArgs as DraggablePreStartArgs, DragStartArgs } from "./elements/draggable";
 
 export type DragEventArgs = {
 	ghost: HTMLElement,
 	pos: Point,
+}
+
+export type DragPreStartArgs = {
+	element: Draggable,
+	pos: Point,
+	cancel: boolean,
 }
 
 export default class DraggableManager {
@@ -22,6 +28,9 @@ export default class DraggableManager {
 	private _currentGhost: HTMLElement | null = null;
 	get currentGhost(): HTMLElement | null { return this._currentGhost; }
 
+	private _onDragPreStart = new Event<DragPreStartArgs>();
+	get onDragPreStart(): ExposedEvent<DragPreStartArgs> { return this._onDragPreStart.expose(); }
+
 	private _onDragStart = new Event<DragEventArgs>();
 	get onDragStart(): ExposedEvent<DragEventArgs> { return this._onDragStart.expose(); }
 
@@ -32,6 +41,7 @@ export default class DraggableManager {
 	get onDragUpdate(): ExposedEvent<DragEventArgs> { return this._onDragUpdate.expose(); }
 
 	register(draggable: Draggable): void {
+		draggable.onDragPreStart.addHandler(this.handleDragPreStart);
 		draggable.onDragStart.addHandler(this.handleDragStart);
 	}
 
@@ -57,6 +67,12 @@ export default class DraggableManager {
 		if (!this._lockX) this._currentGhost.style.left = `${pos.x - this._offset.x}px`;
 		if (!this._lockY) this._currentGhost.style.top = `${pos.y - this._offset.y}px`;
 	}
+
+	private handleDragPreStart = (d: DraggablePreStartArgs): void => {
+		const args = { element: d.draggable, pos: d.startPos, cancel: d.cancel };
+		this._onDragPreStart.raise(args);
+		d.cancel = args.cancel;
+	};
 
 	private handleDragStart = (d: DragStartArgs): void => {
 		this._currentGhost = d.ghost;

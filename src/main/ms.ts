@@ -82,12 +82,8 @@ export default class MS {
 			}
 		});
 
-		try {
-			await soundboard.syncSounds();
-			await watcher.start();
-		} catch (error) {
-			// The folder is invalid and the soundboard will be shown as empty.
-		}
+		await soundboard.syncSounds();
+		await watcher.start();
 		EventSender.send("currentSoundboardChanged", soundboard.asData());
 	}
 }

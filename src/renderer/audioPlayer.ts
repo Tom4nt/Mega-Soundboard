@@ -69,6 +69,7 @@ export default class AudioPlayer {
 	};
 
 	handlePlayError = (error: string): void => {
+		void this.playUI("error");
 		const errorModal = new MessageModal("Could not Play", error, true);
 		void errorModal.open();
 	};
