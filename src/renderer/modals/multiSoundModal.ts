@@ -24,7 +24,6 @@ export default class MultiSoundModal extends Modal {
 		return this.isSaved ? this.parentUuid : null; // This is set on save.
 	}
 
-	// eslint-disable-next-line class-methods-use-this
 	protected canCloseWithKey(): boolean {
 		return true;
 	}

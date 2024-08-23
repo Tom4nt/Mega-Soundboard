@@ -1,5 +1,5 @@
 import { Dirent, promises as fs } from "fs";
-import path = require("path");
+import * as path from "path";
 import { tryGetValue } from "../../../shared/sharedUtils";
 import Utils, { convertChildren } from "../../utils/utils";
 import { BaseProperties } from "./baseProperties";

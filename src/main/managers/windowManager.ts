@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain, Menu, MenuItem, screen, shell } from "electron";
-import path = require("path");
+import * as path from "path";
 import EventSender from "../eventSender";
 import MS from "../ms";
 import Utils from "../utils/utils";

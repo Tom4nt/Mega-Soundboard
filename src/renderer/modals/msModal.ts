@@ -14,7 +14,6 @@ export default class MSModal extends Modal {
 		this.modalTitle = "Mega Soundboard";
 	}
 
-	// eslint-disable-next-line class-methods-use-this
 	protected canCloseWithKey(): boolean {
 		return true;
 	}

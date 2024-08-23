@@ -28,6 +28,7 @@ export default class Utils {
 			await fs.access(path, fsConstants.F_OK);
 			return true;
 		} catch (error) {
+			void error;
 			return false;
 		}
 	}

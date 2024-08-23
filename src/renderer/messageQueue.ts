@@ -46,5 +46,5 @@ function hideMessage(message: Message): void {
 }
 
 function throwIfHostNull(host: MessageHost | undefined): asserts host is MessageHost {
-	if (!host) throw "Message queue host element was not defined.";
+	if (!host) throw new Error("Message queue host element was not defined.");
 }

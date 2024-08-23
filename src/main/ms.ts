@@ -7,7 +7,7 @@ import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
 import KeybindManager from "./managers/keybindManager";
 import { app } from "electron";
-import path = require("path");
+import * as path from "path";
 import { Soundboard } from "./data/models/soundboard";
 import { Sound } from "./data/models/sound";
 import AudioManager from "./managers/audioManager";

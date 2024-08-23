@@ -20,16 +20,23 @@ export default class AudioPlayer {
 
 	get seekbarUpdate(): ExposedEvent<AudioInstance | null> { return this._seekbarUpdate.expose(); }
 
-	static async getAudioDevices(): Promise<MediaDeviceInfo[]> {
+	public static async getAudioDevices(): Promise<MediaDeviceInfo[]> {
 		const devices = await navigator.mediaDevices.enumerateDevices();
 		const filtered = devices.filter(d => d.kind == "audiooutput" && d.deviceId != "communications");
 		return filtered;
 	}
 
-	async playUI(uiSound: UISound): Promise<void> {
+	public async playUI(uiSound: UISound): Promise<void> {
 		this.uiMediaElement.src = UISoundPath[uiSound];
 		this.uiMediaElement.load();
 		await this.uiMediaElement.play();
+	}
+
+	/** Recalculates the volume of all sounds playing on the specified device. */
+	public updateVolumesOnDevice(device: IDevice): void {
+		for (const instance of this.playingInstances) {
+			instance.updateVolume(device);
+		}
 	}
 
 	/** Updates the seekbar state only if needed. */
@@ -76,6 +83,7 @@ export default class AudioPlayer {
 
 	private async createInstances(sounds: Audio[], devices: readonly IDevice[], loop: boolean): Promise<readonly AudioInstance[]> {
 		return await Promise.all(sounds.map(async s => {
+			// TODO: Handle error on create
 			const instance = await AudioInstance.create(s.uuid, s.volume, s.path, devices, loop);
 			instance.onEnd.addHandler(() => {
 				this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);

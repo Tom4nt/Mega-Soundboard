@@ -93,13 +93,13 @@ export default class Dropdown extends HTMLElement {
 
 	selectItem(item: DropdownItem): void {
 		const index = this.options.indexOf(item);
-		if (index < 0) throw "Specified item is not present in the Dropdown.";
+		if (index < 0) throw new Error("Specified item is not present in the Dropdown.");
 		this.selectedIndex = index;
 	}
 
 	selectItemWithValue(value: unknown): void {
 		const item = this.options.find(i => i.value == value);
-		if (!item) throw "Specified item is not present in the Dropdown.";
+		if (!item) throw new Error("Specified item is not present in the Dropdown.");
 		this.selectItem(item);
 	}
 

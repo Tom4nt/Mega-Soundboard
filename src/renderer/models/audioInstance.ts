@@ -3,6 +3,20 @@ import { IDevice } from "../../shared/interfaces";
 
 /** Represents a single sound playing on multiple devices. */
 export default class AudioInstance {
+	public readonly duration: number;
+
+	private constructor(
+		public readonly playableUuid: string,
+		public readonly playableVolume: number,
+		public readonly audioElements: HTMLAudioElement[],
+		private readonly stopEvent: Event<void>,
+		private readonly pauseEvent: Event<void>,
+		private readonly playEvent: Event<void>,
+		private readonly timeUpdateEvent: Event<void>,
+	) {
+		this.duration = audioElements.length > 0 ? audioElements[0]!.duration : 0;
+	}
+
 	public get onEnd(): ExposedEvent<void> { return this.stopEvent.expose(); }
 	public get onPause(): ExposedEvent<void> { return this.pauseEvent.expose(); }
 	public get onPlay(): ExposedEvent<void> { return this.playEvent.expose(); }
@@ -15,8 +29,6 @@ export default class AudioInstance {
 	public set loop(value: boolean) { this.audioElements.forEach(e => e.loop = value); }
 
 	public get isPaused(): boolean { return this.getAny()?.paused ?? true; }
-
-	public readonly duration: number;
 
 	public static async create(
 		playableUuid: string,
@@ -54,6 +66,7 @@ export default class AudioInstance {
 			try {
 				await audio.setSinkId(device.id);
 			} catch (error) {
+				void error;
 				if (isFirst) { // We must play to at least one device.
 					// If setSinkId fails, it is set to the default device.
 					console.log(`Invalid sinkId: '${device.id}'. Using default device.`);
@@ -83,31 +96,20 @@ export default class AudioInstance {
 		firstAudioElement.addEventListener("timeupdate", () => timeUpdateEvent.raise());
 
 		return new AudioInstance(
-			playableUuid, audioElements, stopEvent, pauseEvent, playEvent, timeUpdateEvent
+			playableUuid, volume, audioElements, stopEvent, pauseEvent, playEvent, timeUpdateEvent
 		);
 	}
 
-	private constructor(
-		public readonly playableUuid: string,
-		public readonly audioElements: HTMLAudioElement[],
-		private readonly stopEvent: Event<void>,
-		private readonly pauseEvent: Event<void>,
-		private readonly playEvent: Event<void>,
-		private readonly timeUpdateEvent: Event<void>,
-	) {
-		this.duration = audioElements.length > 0 ? audioElements[0]!.duration : 0;
-	}
-
-	pause(): void {
+	public pause(): void {
 		this.audioElements.forEach(x => x.pause());
 	}
 
-	stop(): void {
+	public stop(): void {
 		this.pause();
 		this.audioElements.length = 0;
 	}
 
-	async play(): Promise<void> {
+	public async play(): Promise<void> {
 		const playTasks: Promise<void>[] = [];
 		for (const audioElement of this.audioElements) {
 			// Some audio files cause "PIPELINE_ERROR_READ: FFmpegDemuxer: demuxer seek failed" when seeked to the end.
@@ -120,6 +122,15 @@ export default class AudioInstance {
 			}
 		}
 		await Promise.all(playTasks);
+	}
+
+	/** Recalculates the volume if playing on the specified device. If not, ignores. */
+	public updateVolume(device: IDevice): void {
+		for (const element of this.audioElements) {
+			if (device.id === element.sinkId) {
+				element.volume = (device.volume / 100) * this.playableVolume;
+			}
+		}
 	}
 
 	// Audio elements are always synced so we can get info from any of them.

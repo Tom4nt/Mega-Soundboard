@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import { autoUpdater } from "electron-updater";
 import { Actions, actionsKeys } from "../shared/ipcActions";
 import MS from "./ms";
-import path = require("path");
+import * as path from "path";
 import { validSoundExts } from "../shared/sharedUtils";
 import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";

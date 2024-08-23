@@ -18,7 +18,7 @@ export default class Settings {
 		public processKeysOnRelease = false,
 		public windowSize: number[] = [],
 		public windowPosition: number[] = [],
-		public windowIsMaximized: boolean = false,
+		public windowIsMaximized = false,
 		public quickActionKeys = new Map<ActionName, number[]>(),
 		public quickActionStates = Settings.getDefaultQuickActionStates(),
 	) { }
@@ -81,7 +81,7 @@ export default class Settings {
 		for (const key of Object.keys(data)) {
 			if (!actionNames.includes(key as ActionName)) continue;
 			if (typeof data[key] !== "boolean") continue;
-			res.set(key as ActionName, data[key] as boolean);
+			res.set(key as ActionName, data[key]);
 		}
 		return res;
 	}
@@ -94,7 +94,7 @@ export default class Settings {
 			const key = keys[i]!;
 			const actionName = actionNames[i]!;
 			if (typeof data[key] === "boolean")
-				current.set(actionName, data[key] as boolean);
+				current.set(actionName, data[key]);
 		}
 	}
 
@@ -106,7 +106,7 @@ export default class Settings {
 			const key = keys[i]!;
 			const actionName = actionNames[i]!;
 			if (Keys.isKeys(data[key]))
-				current.set(actionName, data[key] as number[]);
+				current.set(actionName, data[key]);
 		}
 	}
 }

@@ -67,6 +67,7 @@ export default class DataAccess {
 			await fs.access(soundboardsPath, fsc.F_OK);
 			hasAcess = true;
 		} catch (error) {
+			void error;
 			hasAcess = false;
 		}
 

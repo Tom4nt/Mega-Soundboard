@@ -1,24 +1,25 @@
 {
-  "compilerOptions": {
-    "target": "ES2021",
-    "module": "CommonJS",
-    "sourceMap": true,
-    "outDir": "out",
-    "baseUrl": ".",
-    "strict": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmitOnError": true,
-    "noUncheckedIndexedAccess": true,
-    // "paths": {
-    //   // "@node/*": [ "node_modules/*" ],
-    //   "app/*": [ "src/app/*" ],
-    //   "models/*": [ "src/models/*" ],
-    //   "elements/*": [ "src/elements/*" ],
-    // }
-  },
-  "include": [
-    "src/**/*"
-  ]
+	"compilerOptions": {
+		"target": "ES2021",
+		"module": "CommonJS",
+		"sourceMap": true,
+		"outDir": "out",
+		"baseUrl": ".",
+		"strict": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmitOnError": true,
+		"noUncheckedIndexedAccess": true,
+		// "paths": {
+		//   // "@node/*": [ "node_modules/*" ],
+		//   "app/*": [ "src/app/*" ],
+		//   "models/*": [ "src/models/*" ],
+		//   "elements/*": [ "src/elements/*" ],
+		// }
+	},
+	"include": [
+		"src/**/*",
+		"eslint.config.mjs"
+	]
 }

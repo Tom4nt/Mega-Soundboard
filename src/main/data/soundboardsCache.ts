@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import DataAccess from "./dataAccess";
 import EventSender from "../eventSender";
 import MS from "../ms";
-import path = require("path");
+import * as path from "path";
 import { isSoundboard, Soundboard } from "./models/soundboard";
 import { IBaseData, ISoundData, ISoundboardData } from "../../shared/models/dataInterfaces";
 import { Sound } from "./models/sound";
@@ -201,7 +201,7 @@ export default class SoundboardsCache {
 
 	getGeneralTree(): UuidTree {
 		const root = {
-			getUuid: () => "",
+			getUuid: (): string => "",
 			getChildren: (): readonly Soundboard[] => {
 				return this.soundboards;
 			}

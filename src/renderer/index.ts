@@ -296,10 +296,18 @@ function addElementListeners(): void {
 
 	mainDeviceVolumeSlider.onValueChange.addHandler(s => {
 		window.actions.setMainDevice(undefined, s.value);
+		if (typeof mainDeviceDropdown.selectedItem?.value === "string")
+			MSR.instance.audioPlayer.updateVolumesOnDevice(
+				{ id: mainDeviceDropdown.selectedItem.value, volume: s.value }
+			);
 	});
 
 	secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
 		window.actions.setSecondaryDevice(undefined, s.value);
+		if (typeof secondaryDeviceDropdown.selectedItem?.value === "string")
+			MSR.instance.audioPlayer.updateVolumesOnDevice(
+				{ id: secondaryDeviceDropdown.selectedItem.value, volume: s.value }
+			);
 	});
 
 	mainDeviceDropdown.onSelectedItem.addHandler(item => {
