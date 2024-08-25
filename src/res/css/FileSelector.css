@@ -25,7 +25,6 @@ ms-fileselector {
 }
 
 .fileselector-button {
-    font-family: 'MSIcons';
     background-color: transparent;
     outline: none;
     border-style: solid;
@@ -34,7 +33,6 @@ ms-fileselector {
     border-radius: 0 4px 4px 0;
     padding: 6px 10px 6px 10px;
     color: var(--color-white);
-    font-size: 18px;
 }
 
 .fileselector-button:hover {

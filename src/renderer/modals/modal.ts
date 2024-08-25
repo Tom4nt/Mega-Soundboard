@@ -1,142 +1,147 @@
 import MSR from "../msr";
 
 export default abstract class Modal extends HTMLElement {
-    static blockClosureKey = false;
+	static blockClosureKey = false;
 
-    readonly isError: boolean;
+	readonly isError: boolean;
 
-    private windowElement!: HTMLDivElement;
-    private dimmerElement!: HTMLDivElement;
-    private titleElement!: HTMLHeadingElement;
+	private windowElement!: HTMLDivElement;
+	private dimmerElement!: HTMLDivElement;
+	private titleElement!: HTMLHeadingElement;
 
-    private _modalTitle = "No Title";
-    public get modalTitle(): string {
-        return this._modalTitle;
-    }
-    public set modalTitle(v: string) {
-        this._modalTitle = v;
-        if (this.isConnected) this.titleElement.innerHTML = v;
-    }
+	private closeResolve!: () => void;
+	private closePromise = new Promise<void>((rs, _rj) => { this.closeResolve = rs; });
 
-    constructor(isError: boolean) {
-        super();
-        this.isError = isError;
-        document.addEventListener("keyup", this.keyUpHandler);
-    }
+	private _modalTitle = "No Title";
+	public get modalTitle(): string {
+		return this._modalTitle;
+	}
+	public set modalTitle(v: string) {
+		this._modalTitle = v;
+		if (this.isConnected) this.titleElement.innerHTML = v;
+	}
 
-    keyUpHandler = (e: KeyboardEvent): void => {
-        if (e.key == "Escape" && this.canCloseWithKey())
-            this.close();
-    };
+	constructor(isError: boolean) {
+		super();
+		this.isError = isError;
+		document.addEventListener("keyup", this.keyUpHandler);
+	}
 
-    static getButton(label: string, clickCallback: () => void, left = false, red = false): HTMLButtonElement {
-        const button = document.createElement("button");
-        button.innerHTML = label;
-        if (left)
-            button.style.float = "left";
-        if (red)
-            button.classList.add("button-warn");
-        button.onclick = clickCallback;
-        return button;
-    }
+	keyUpHandler = (e: KeyboardEvent): void => {
+		if (e.key == "Escape" && this.canCloseWithKey())
+			this.close();
+	};
 
-    static getLabel(text: string): HTMLParagraphElement {
-        const label = document.createElement("p");
-        label.classList.add("modal-label");
-        label.innerHTML = text;
-        return label;
-    }
+	static getButton(label: string, clickCallback: () => void, left = false, red = false): HTMLButtonElement {
+		const button = document.createElement("button");
+		button.innerHTML = label;
+		if (left)
+			button.style.float = "left";
+		if (red)
+			button.classList.add("button-warn");
+		button.onclick = clickCallback;
+		return button;
+	}
 
-    static getText(text: string): HTMLParagraphElement {
-        const textE = document.createElement("p");
-        textE.innerHTML = text;
-        return textE;
-    }
+	static getLabel(text: string): HTMLParagraphElement {
+		const label = document.createElement("p");
+		label.classList.add("modal-label");
+		label.innerHTML = text;
+		return label;
+	}
 
-    protected connectedCallback(): void {
-        this.classList.add("modal");
-        if (this.isError) this.classList.add("error");
+	static getText(text: string): HTMLParagraphElement {
+		const textE = document.createElement("p");
+		textE.innerHTML = text;
+		return textE;
+	}
 
-        const window = document.createElement("div");
-        window.classList.add("modal-window");
-        const dimmer = document.createElement("div");
-        dimmer.classList.add("modal-dimmer");
-        dimmer.addEventListener("click", () => this.close());
+	protected connectedCallback(): void {
+		this.classList.add("modal");
+		if (this.isError) this.classList.add("error");
 
-        //Header
-        const header = document.createElement("div");
-        header.classList.add("modal-header");
-        window.appendChild(header);
+		const window = document.createElement("div");
+		window.classList.add("modal-window");
+		const dimmer = document.createElement("div");
+		dimmer.classList.add("modal-dimmer");
+		dimmer.addEventListener("click", () => this.close());
 
-        const titleE = document.createElement("h1");
-        this.titleElement = titleE;
-        titleE.innerHTML = this._modalTitle;
-        header.appendChild(titleE);
-        //---
+		//Header
+		const header = document.createElement("div");
+		header.classList.add("modal-header");
+		window.appendChild(header);
 
-        //Body
-        const body = document.createElement("div");
-        body.classList.add("modal-body");
-        body.append(...this.getContent());
-        window.appendChild(body);
-        //---
+		const titleE = document.createElement("h1");
+		this.titleElement = titleE;
+		titleE.innerHTML = this._modalTitle;
+		header.appendChild(titleE);
+		//---
 
-        //Footer
-        const footer = document.createElement("div");
-        footer.classList.add("modal-footer");
-        const buttons = this.getFooterButtons();
-        buttons.forEach(button => {
-            footer.append(button);
-        });
-        window.appendChild(footer);
+		//Body
+		const body = document.createElement("div");
+		body.classList.add("modal-body");
+		body.append(...this.getContent());
+		window.appendChild(body);
+		//---
 
-        dimmer.classList.add("hidden");
-        window.classList.add("hidden");
+		//Footer
+		const footer = document.createElement("div");
+		footer.classList.add("modal-footer");
+		const buttons = this.getFooterButtons();
+		buttons.forEach(button => {
+			footer.append(button);
+		});
+		window.appendChild(footer);
 
-        this.windowElement = window;
-        this.dimmerElement = dimmer;
-        this.append(window, dimmer);
-    }
+		dimmer.classList.add("hidden");
+		window.classList.add("hidden");
 
-    protected disconnectedCallback(): void {
-        document.removeEventListener("keyup", this.keyUpHandler);
-    }
+		this.windowElement = window;
+		this.dimmerElement = dimmer;
+		this.append(window, dimmer);
+	}
 
-    protected abstract getContent(): HTMLElement[];
-    protected abstract getFooterButtons(): HTMLButtonElement[];
-    protected abstract canCloseWithKey(): boolean;
+	protected disconnectedCallback(): void {
+		document.removeEventListener("keyup", this.keyUpHandler);
+	}
 
-    open(): void {
-        MSR.instance.modalManager.openModal(this);
-        void this.show();
-    }
+	protected abstract getContent(): HTMLElement[];
+	protected abstract getFooterButtons(): HTMLButtonElement[];
+	protected abstract canCloseWithKey(): boolean;
 
-    close(): void {
-        void (async (): Promise<void> => {
-            await this.hide();
-            MSR.instance.modalManager.closeModal(this);
-        })();
-    }
+	open(): Promise<void> {
+		MSR.instance.modalManager.openModal(this);
+		void this.show();
+		return this.closePromise;
+	}
 
-    /** Promise completes after the animation finishes. */
-    private show(): Promise<void> {
-        void this.offsetWidth; // Triggers Reflow
-        this.windowElement.classList.remove("hidden");
-        this.dimmerElement.classList.remove("hidden");
+	close(): void {
+		void (async (): Promise<void> => {
+			await this.hide();
+			MSR.instance.modalManager.closeModal(this);
+		})();
+		this.closeResolve();
+	}
 
-        return new Promise(r => {
-            this.addEventListener("transitionend", () => r());
-        });
-    }
+	/** Promise completes after the animation finishes. */
+	private show(): Promise<void> {
+		void this.offsetWidth; // Triggers Reflow
+		this.windowElement.classList.remove("hidden");
+		this.dimmerElement.classList.remove("hidden");
 
-    /** Promise completes after the animation finishes. */
-    private hide(): Promise<void> {
-        this.dispatchEvent(new CustomEvent("close"));
-        this.windowElement.classList.add("hidden");
-        this.dimmerElement.classList.add("hidden");
+		return new Promise(r => {
+			this.addEventListener("transitionend", () => r());
+		});
+	}
 
-        return new Promise(r => {
-            this.addEventListener("transitionend", () => r());
-        });
-    }
+	/** Promise completes after the animation finishes. */
+	private hide(): Promise<void> {
+		this.dispatchEvent(new CustomEvent("close"));
+		this.windowElement.classList.add("hidden");
+		this.dimmerElement.classList.add("hidden");
+
+		return new Promise(r => {
+			this.addEventListener("transitionend", () => r());
+		});
+	}
 }

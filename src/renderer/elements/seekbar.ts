@@ -1,4 +1,5 @@
-import { AudioInstance } from "../models";
+import AudioInstance from "../models/audioInstance";
+import MSR from "../msr";
 import Utils from "../util/utils";
 import IconButton from "./iconButton";
 import Slider from "./slider";
@@ -28,7 +29,7 @@ export default class Seekbar extends HTMLElement {
 
 	constructor() {
 		super();
-		this.sliderElement = new Slider(null);
+		this.sliderElement = new Slider(undefined, 1);
 		this.buttonElement = new IconButton();
 		this.timeElement = document.createElement("span");
 	}
@@ -36,12 +37,11 @@ export default class Seekbar extends HTMLElement {
 	protected connectedCallback(): void {
 		if (this.didConnect) return;
 
-		this.buttonElement.innerHTML = "play";
+		this.buttonElement.setAttribute("icon", "play_arrow");
 		this.buttonElement.addEventListener("click", this.handlePlayPauseClick);
 
 		this.timeElement.innerHTML = "00:00";
 
-		this.sliderElement.max = 1;
 		this.sliderElement.step = null;
 		this.sliderElement.addEventListener("change", this.handleChange);
 		this.sliderElement.addEventListener("input", this.handleInput);
@@ -49,6 +49,12 @@ export default class Seekbar extends HTMLElement {
 		this.append(this.buttonElement, this.timeElement, this.sliderElement);
 		this.style.display = "none";
 		this.didConnect = true;
+
+		MSR.instance.audioPlayer.seekbarUpdate.addHandler(this.handlePlayingInstanceChanged);
+	}
+
+	protected disconnectedCallback(): void {
+		MSR.instance.audioPlayer.seekbarUpdate.removeHandler(this.handlePlayingInstanceChanged);
 	}
 
 	private addInstanceListeners(instance: AudioInstance): void {
@@ -78,9 +84,10 @@ export default class Seekbar extends HTMLElement {
 
 	private update(): void {
 		if (!this.currentInstance) return;
-		this.buttonElement.innerHTML = this.currentInstance.isPaused
-			? "play"
-			: "pause";
+		this.buttonElement.setIcon(this.currentInstance.isPaused
+			? "play_arrow"
+			: "pause"
+		);
 		this.updateTime();
 	}
 
@@ -92,6 +99,10 @@ export default class Seekbar extends HTMLElement {
 	}
 
 	// Handlers
+
+	private handlePlayingInstanceChanged = (audioInstance: AudioInstance | null): void => {
+		this.currentInstance = audioInstance;
+	};
 
 	private handlePlayPauseClick = (): void => {
 		if (!this.currentInstance) return;
@@ -124,10 +135,10 @@ export default class Seekbar extends HTMLElement {
 	};
 
 	private handlePlay = (): void => {
-		this.buttonElement.innerHTML = "pause";
+		this.buttonElement.setIcon("pause");
 	};
 
 	private handlePause = (): void => {
-		this.buttonElement.innerHTML = "play";
+		this.buttonElement.setIcon("play_arrow");
 	};
 }

@@ -39,9 +39,13 @@ export default class FileSelector extends HTMLElement {
         });
 
         const button = document.createElement("button");
+        const icon = document.createElement("i");
+        icon.innerText = "folder";
+        icon.style.fontSize = "18px";
+        icon.style.fontVariationSettings = "'opsz' 20;";
         button.classList.add("fileselector-button");
         button.onclick = (): void => void this.browseFile();
-        button.innerHTML = "folder";
+        button.append(icon);
 
         this.append(this.inputElement, button);
     }

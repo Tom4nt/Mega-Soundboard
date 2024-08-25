@@ -1,106 +1,46 @@
 ms-soundlist {
-    padding: 4px;
-    padding-top: 0;
-    top: -4px;
-    font-family: Roboto;
-    color: var(--color-white);
-    position: relative;
-    box-sizing: border-box;
-    font-size: 0;
-    display: block;
-    max-height: calc(100% - 46px);
-    overflow-y: overlay;
-    overflow-x: hidden;
-    padding-bottom: 78px;
+	padding-top: 0;
+	top: -4px;
+	font-family: Roboto;
+	color: var(--color-white);
+	position: relative;
+	box-sizing: border-box;
+	font-size: 0;
+	display: block;
+	height: calc(100% - 46px);
+	overflow-y: overlay;
+	overflow-x: hidden;
+	padding-bottom: 78px;
 }
 
 ms-soundlist .itemcontainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(var(--min-playable-width), 1fr));
+	grid-auto-flow: dense;
+	padding: 4px;
+	overflow: hidden;
 }
 
-ms-soundlist .itemcontainer .item {
-    display: list-item;
-    list-style: none;
-    flex-grow: 1;
-    padding: 8px;
-    border-radius: 4px;
-    background-color: var(--color-normalL);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    margin: 4px;
-    box-sizing: border-box;
-    font-size: 16px;
-    transition: background-color 0.1s, box-shadow 0.3s cubic-bezier(.25, .8, .25, 1), width 0s, background-position 0.2s, transform 0.2s;
-    vertical-align: middle;
-    position: relative;
-    overflow: hidden;
-}
-
-ms-soundlist .itemcontainer .item:hover:not(.dragdummy) {
-    background-color: var(--color-light);
-    box-shadow: 0 10px 16px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-}
-
-ms-soundlist .itemcontainer .item:active:not(.dragdummy):not(.drag) {
-    background-color: var(--color-lightL);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-}
-
-ms-soundlist .itemcontainer .item.drag {
-    transform: rotate(4deg) scale(1.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 12px 10px rgba(0, 0, 0, 0.23);
+ms-soundlist .itemcontainer .group {
+	grid-column: 1 / -1;
+	transition: height 0.2s, margin 0.2s;
+	will-change: height, margin;
 }
 
 ms-soundlist .info {
-    display: inline-block;
-    font-size: 14px;
-    margin-top: 12px;
-    width: 100%;
-    text-align: center;
-}
-
-ms-soundlist .itemcontainer .item.dragdummy {
-    display: none;
-    background-color: var(--color-normal);
-    box-shadow: none;
-    height: 53px;
-    box-shadow: inset 0px 0px 12px 0px rgba(0, 0, 0, 0.3);
-}
-
-ms-soundlist .itemcontainer .item span {
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-ms-soundlist .itemcontainer .item .desc {
-    font-size: 12px;
-    color: var(--color-grayL);
-    margin-top: 4px;
-}
-
-ms-soundlist .itemcontainer .item .indicator {
-    top: -22px;
-    right: -22px;
-    width: 22px;
-    height: 22px;
-    display: block;
-    position: absolute;
-    background-color: var(--color-green);
-    transform: rotate(45deg);
-    transition: all 0.3s cubic-bezier(0.65, 0.05, 0.36, 1);
-}
-
-ms-soundlist .itemcontainer .item .indicator:hover {
-    background-color: var(--color-greenL);
+	display: inline-block;
+	font-size: 14px;
+	margin-top: 12px;
+	margin-bottom: 12px;
+	width: 100%;
+	text-align: center;
 }
 
 ms-soundlist #soundlist-dragoverlay {
-    display: none;
-    width: 100%;
-    height: 100%;
-    background-color: aliceblue;
-    position: absolute;
-    z-index: 1;
+	display: none;
+	width: 100%;
+	height: 100%;
+	background-color: aliceblue;
+	position: absolute;
+	z-index: 1;
 }

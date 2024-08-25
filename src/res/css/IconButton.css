@@ -1,10 +1,7 @@
 ms-iconbutton {
-    font-family: 'MSIcons';
     color: var(--color-white);
-    font-variant-ligatures: discretionary-ligatures;
     display: inline-block;
     padding: 6px;
-    font-size: 22px;
     border-radius: 4px;
     outline: none;
     border: none;
@@ -12,6 +9,10 @@ ms-iconbutton {
     background-size: 22px;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+ms-iconbutton i {
+    font-size: 24px;
 }
 
 ms-iconbutton.hover {

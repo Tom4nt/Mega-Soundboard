@@ -5,99 +5,85 @@ import SoundboardsCache from "./data/soundboardsCache";
 import TrayManager from "./managers/trayManager";
 import WindowManager from "./managers/windowManager";
 import FolderWatcher from "./folderWatcher";
-import SoundUtils from "./utils/soundUtils";
-import { Settings, Soundboard } from "../shared/models";
 import KeybindManager from "./managers/keybindManager";
-import Keys from "../shared/keys";
 import { app } from "electron";
-import path = require("path");
-import SoundboardUtils from "./utils/soundboardUtils";
-import { actionBindings } from "./quickActionBindings";
-import { isAction } from "../shared/quickActions";
+import * as path from "path";
+import { Soundboard } from "./data/models/soundboard";
+import { Sound } from "./data/models/sound";
+import AudioManager from "./managers/audioManager";
+import { isIDirectPlayable } from "./data/models/interfaces";
+import KeybindHandler from "./keybindHandler";
 
 /** Represents the app instance in the main process. */
 export default class MS {
-    private currentSoundboardWatcher: FolderWatcher | null = null;
+	private currentSoundboardWatcher: FolderWatcher | null = null;
 
-    static readonly defaultSoundsPath = path.join(app.getPath("appData"), "MegaSoundboard/Sounds");
-    static readonly latestWithLog = 4; // Increments on every version that should display the changelog.
+	static readonly defaultSoundsPath = path.join(app.getPath("appData"), "MegaSoundboard/Sounds");
+	static readonly latestWithLog = 4; // Increments on every version that should display the changelog.
 
-    private static _instance?: MS;
-    public static get instance(): MS {
-        if (!MS._instance) throw Error("MS Singleton was not initialized");
-        return MS._instance;
-    }
-    private static set instance(value: MS) {
-        MS._instance = value;
-    }
+	private static _instance?: MS;
+	public static get instance(): MS {
+		if (!MS._instance) throw Error("MS Singleton was not initialized");
+		return MS._instance;
+	}
+	private static set instance(value: MS) {
+		MS._instance = value;
+	}
 
-    constructor(
-        public readonly windowManager: WindowManager,
-        public readonly trayManager: TrayManager,
-        public readonly soundboardsCache: SoundboardsCache,
-        public readonly settingsCache: SettingsCache,
-        public readonly keybindManager: KeybindManager,
-    ) {
-        MS.instance = this;
-        keybindManager.onKeybindPressed.addHandler(async kb => {
-            const s = this.settingsCache.settings;
-            const keybindsEnabled = Settings.getActionState(s, "toggleKeybinds");
-            if (keybindsEnabled) {
-                for (const k in s.quickActionKeys) {
-                    const keybind = s.quickActionKeys[k];
-                    if (keybind && Keys.equals(kb, keybind) && isAction(k)) {
-                        void actionBindings[k](k as never);
-                    }
-                }
-            } else {
-                if (Keys.equals(kb, Settings.getActionKeys(s, "toggleKeybinds"))) {
-                    void actionBindings["toggleKeybinds"]("toggleKeybinds");
-                }
-            }
-        });
-    }
+	public readonly keybindHandler: KeybindHandler;
 
-    flagChangelogViewed(): void {
-        this.settingsCache.settings.latestLogViewed = MS.latestWithLog;
-        void DataAccess.saveSettings(this.settingsCache.settings);
-    }
+	constructor(
+		public readonly windowManager: WindowManager,
+		public readonly trayManager: TrayManager,
+		public readonly soundboardsCache: SoundboardsCache,
+		public readonly settingsCache: SettingsCache,
+		public readonly keybindManager: KeybindManager,
+		public readonly audioManager: AudioManager,
+	) {
+		MS.instance = this;
+		this.keybindHandler = new KeybindHandler(keybindManager, soundboardsCache, settingsCache, audioManager);
+	}
 
-    static stopAllSounds(): void {
-        EventSender.send("onStopAllSounds");
-    }
+	flagChangelogViewed(): void {
+		this.settingsCache.settings.latestLogViewed = MS.latestWithLog;
+		void DataAccess.saveSettings(this.settingsCache.settings);
+	}
 
-    async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
-        const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
-        this.settingsCache.settings.selectedSoundboard = index;
+	getCurrentSoundboard(): Soundboard | undefined {
+		const index = this.settingsCache.settings.selectedSoundboard;
+		return this.soundboardsCache.soundboards[index];
+	}
 
-        if (this.currentSoundboardWatcher) this.currentSoundboardWatcher.stop();
-        this.currentSoundboardWatcher = null;
+	async setCurrentSoundboard(soundboard: Soundboard): Promise<void> {
+		const index = this.soundboardsCache.findSoundboardIndex(soundboard.uuid);
+		this.settingsCache.settings.selectedSoundboard = index;
 
-        if (!soundboard.linkedFolder) {
-            EventSender.send("onCurrentSoundboardChanged", soundboard);
-            return;
-        }
+		if (this.currentSoundboardWatcher) this.currentSoundboardWatcher.stop();
+		this.currentSoundboardWatcher = null;
 
-        const watcher = new FolderWatcher(soundboard.linkedFolder);
-        this.currentSoundboardWatcher = watcher;
+		if (!soundboard.linkedFolder) {
+			EventSender.send("currentSoundboardChanged", soundboard.asData());
+			return;
+		}
 
-        watcher.onSoundAdded.addHandler(p => {
-            const sound = SoundUtils.getNewSoundsFromPaths([p])[0];
-            if (sound)
-                void MS.instance.soundboardsCache.addSounds([sound], soundboard.uuid, false);
-        });
+		const watcher = new FolderWatcher(soundboard.linkedFolder);
+		this.currentSoundboardWatcher = watcher;
 
-        watcher.onSoundRemoved.addHandler(p => {
-            const sound = Soundboard.getSoundWithPath(soundboard, p);
-            if (sound) void MS.instance.soundboardsCache.removeSound(sound.uuid);
-        });
+		watcher.onSoundAdded.addHandler(p => {
+			const sound = Sound.getNewSoundsFromPaths([p])[0];
+			if (sound)
+				void MS.instance.soundboardsCache.addSounds([sound.asData()], soundboard.uuid, false);
+		});
 
-        try {
-            await SoundboardUtils.syncSounds(soundboard);
-            await watcher.start();
-        } catch (error) {
-            // The folder is invalid and the soundboard will be shown as empty.
-        }
-        EventSender.send("onCurrentSoundboardChanged", soundboard);
-    }
+		watcher.onSoundRemoved.addHandler(path => {
+			const sounds = soundboard.findChildrenRecursive(p => isIDirectPlayable(p) && p.getAudioPath() == path);
+			if (sounds.length > 0) {
+				void MS.instance.soundboardsCache.removePlayable(sounds[0]!.getUuid());
+			}
+		});
+
+		await soundboard.syncSounds();
+		await watcher.start();
+		EventSender.send("currentSoundboardChanged", soundboard.asData());
+	}
 }

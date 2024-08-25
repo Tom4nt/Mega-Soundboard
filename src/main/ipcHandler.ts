@@ -1,272 +1,328 @@
 import { app, dialog, ipcMain, shell } from "electron";
 import { promises as fs } from "fs";
 import { autoUpdater } from "electron-updater";
-import { Soundboard } from "../shared/models";
 import { Actions, actionsKeys } from "../shared/ipcActions";
 import MS from "./ms";
-import path = require("path");
-import SoundUtils from "./utils/soundUtils";
-import { randomUUID } from "crypto";
+import * as path from "path";
 import { validSoundExts } from "../shared/sharedUtils";
 import Utils from "./utils/utils";
 import ZoomUtils from "./utils/zoomUtils";
 import EventSender from "./eventSender";
 import { actionBindings } from "./quickActionBindings";
 import Updater from "./updater";
+import { Soundboard } from "./data/models/soundboard";
+import { Sound } from "./data/models/sound";
+import UuidTree from "./data/models/uuidTree";
 
 export default class IPCHandler {
-    public static register(): void {
-        for (const action of actionsKeys) {
-            this.addHandler(action);
-        }
-    }
+	public static register(): void {
+		for (const action of actionsKeys) {
+			this.addHandler(action);
+		}
+	}
 
-    public static addHandler<T extends keyof Actions>(name: T): void {
-        const f = implementer[name] as (...args: unknown[]) => unknown;
-        ipcMain.handle(name, (_e, args) => f(...args as unknown[]));
-    }
+	public static addHandler<T extends keyof Actions>(name: T): void {
+		const f = implementer[name] as (...args: unknown[]) => unknown;
+		ipcMain.handle(name, (_e, args) => f(...args as unknown[]));
+	}
 
-    public static removeActionHandle<T extends keyof Actions>(name: T): void {
-        ipcMain.removeHandler(name);
-    }
+	public static removeActionHandle<T extends keyof Actions>(name: T): void {
+		ipcMain.removeHandler(name);
+	}
 }
 
-
 const implementer: Actions = {
-    minimize() {
-        MS.instance.windowManager.mainWindow.minimize();
-    },
+	minimize() {
+		MS.instance.windowManager.mainWindow.minimize();
+	},
 
-    toggleMaximizedState() {
-        if (MS.instance.windowManager.mainWindow.isMaximized()) {
-            MS.instance.windowManager.mainWindow.unmaximize();
-        } else {
-            MS.instance.windowManager.mainWindow.maximize();
-        }
-    },
+	toggleMaximizedState() {
+		if (MS.instance.windowManager.mainWindow.isMaximized()) {
+			MS.instance.windowManager.mainWindow.unmaximize();
+		} else {
+			MS.instance.windowManager.mainWindow.maximize();
+		}
+	},
 
-    close() {
-        app.quit();
-    },
+	close() {
+		app.quit();
+	},
 
-    zoomIncrement(value) {
-        const wc = MS.instance.windowManager.mainWindow.webContents;
-        ZoomUtils.incrementZoomFactor(wc, value);
-        EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
-    },
+	zoomIncrement(value) {
+		const wc = MS.instance.windowManager.mainWindow.webContents;
+		ZoomUtils.incrementZoomFactor(wc, value);
+		EventSender.send("zoomFactorChanged", wc.getZoomFactor());
+	},
 
-    zoomSet(value) {
-        const wc = MS.instance.windowManager.mainWindow.webContents;
-        ZoomUtils.setZoomFactor(wc, value);
-        EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
-    },
+	zoomSet(value) {
+		const wc = MS.instance.windowManager.mainWindow.webContents;
+		ZoomUtils.setZoomFactor(wc, value);
+		EventSender.send("zoomFactorChanged", wc.getZoomFactor());
+	},
 
-    async zoomGet() {
-        return MS.instance.windowManager.mainWindow.webContents.getZoomFactor();
-    },
+	async zoomGet() {
+		return MS.instance.windowManager.mainWindow.webContents.getZoomFactor();
+	},
 
-    zoomReset() {
-        const wc = MS.instance.windowManager.mainWindow.webContents;
-        wc.setZoomFactor(1);
-        EventSender.send("onZoomFactorChanged", wc.getZoomFactor());
-    },
+	zoomReset() {
+		const wc = MS.instance.windowManager.mainWindow.webContents;
+		wc.setZoomFactor(1);
+		EventSender.send("zoomFactorChanged", wc.getZoomFactor());
+	},
 
-    async addSounds(sounds, soundboardId, moveFile, startIndex) {
-        const sb = await MS.instance.soundboardsCache.addSounds(sounds, soundboardId, moveFile, startIndex);
-        await MS.instance.setCurrentSoundboard(sb);
-    },
+	async addSounds(playables, destinationId, moveFile, startIndex) {
+		const sb = await MS.instance.soundboardsCache.addSounds(playables, destinationId, moveFile, startIndex);
+		return sb.getUuid();
+	},
 
-    editSound(sound) {
-        void MS.instance.soundboardsCache.editSound(sound);
-    },
+	editPlayable(data) {
+		void MS.instance.soundboardsCache.editPlayable(data);
+	},
 
-    async moveSound(soundId, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, false);
-        await MS.instance.setCurrentSoundboard(sb);
-    },
+	copyOrMovePlayable(id, destinationId, move, destinationIndex) {
+		void MS.instance.soundboardsCache.copyOrMove(id, destinationId, destinationIndex, move);
+	},
 
-    async copySound(soundId, destinationSoundboardId, destinationIndex) {
-        const sb = await MS.instance.soundboardsCache.moveSound(soundId, destinationSoundboardId, destinationIndex, true);
-        await MS.instance.setCurrentSoundboard(sb);
-    },
+	deletePlayable(id) {
+		void MS.instance.soundboardsCache.removePlayable(id);
+	},
 
-    deleteSound(soundId) {
-        void MS.instance.soundboardsCache.removeSound(soundId);
-    },
+	getSoundDataFromPaths(paths) {
+		const sounds = Sound.getNewSoundsFromPaths(paths);
+		return Promise.resolve(sounds.map(s => s.asData()));
+	},
 
-    getNewSoundsFromPaths(paths) {
-        const sounds = SoundUtils.getNewSoundsFromPaths(paths);
-        return Promise.resolve(sounds);
-    },
+	getValidSoundPaths(paths) {
+		const valid = Sound.getValidSoundPaths(paths);
+		return Promise.resolve(valid);
+	},
 
-    getValidSoundPaths(paths) {
-        const valid = SoundUtils.getValidSoundPaths(paths);
-        return Promise.resolve(valid);
-    },
+	async getPlayableRoot(uuid) {
+		const root = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		return root?.asData();
+	},
 
-    getSoundboard(uuid) {
-        const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
-        if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
-        return Promise.resolve(sb);
-    },
+	async getPlayable(uuid) {
+		const soundboard = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		const playable = MS.instance.soundboardsCache.find(uuid);
+		const playingUuids = MS.instance.audioManager.playingInstances;
+		const tree = MS.instance.soundboardsCache.getGeneralTree();
+		const nodes = tree.nodes.find(n => n.uuid === uuid)?.getFlatChildren();
+		if (!nodes || !playable) return undefined;
 
-    async getNewSoundboard() {
-        const sb = new Soundboard(randomUUID(), "", [], 100, null, []);
-        return await Promise.resolve(sb);
-    },
+		const uuids = nodes.map(n => n.uuid);
+		return {
+			data: playable.asData(),
+			isPlaying: playingUuids.some(p => uuids.includes(p)),
+			isInLinkedSoundboard: soundboard?.linkedFolder !== null,
+		};
+	},
 
-    addSoundboard(soundboard) {
-        void MS.instance.soundboardsCache.addSoundboard(soundboard);
-    },
+	async getContainerItems(uuid) {
+		const soundboard = MS.instance.soundboardsCache.findSoundboardOf(uuid);
+		const container = MS.instance.soundboardsCache.getContainer(uuid);
+		if (!container) return [];
 
-    moveSoundboard(soundboardId, destinationIndex) {
-        void (async (): Promise<void> => {
-            const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
-            const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
-            if (!selected) throw new Error("Cannot move: Current selected soundboard index is out of bounds.");
-            await MS.instance.soundboardsCache.moveSoundboard(soundboardId, destinationIndex);
-            await MS.instance.setCurrentSoundboard(selected);
-        })();
-    },
+		const tree = new UuidTree(container);
+		const playingUuids = MS.instance.audioManager.playingInstances;
+		return container.getChildren().map(p => {
+			const node = tree.nodes.find(n => n.uuid === p.getUuid());
+			const nodes = node?.getFlatChildren();
+			const uuids = nodes?.map(n => n.uuid);
+			return {
+				data: p.asData(),
+				isPlaying: playingUuids.some(x => uuids?.includes(x)),
+				isInLinkedSoundboard: soundboard?.linkedFolder !== null,
+			};
+		});
+	},
 
-    deleteSoundboard(soundboardId) {
-        void (async (): Promise<void> => {
-            const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
-            const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
-            if (!selected) throw new Error("Cannot delete: Current selected soundboard index is out of bounds.");
-            await MS.instance.soundboardsCache.removeSoundboard(soundboardId);
-            if (soundboardId === selected.uuid)
-                await MS.instance.setCurrentSoundboard(MS.instance.soundboardsCache.soundboards[0]!);
-            else { // Update the index because it might have changed after removing a soundboard.
-                const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
-                MS.instance.settingsCache.settings.selectedSoundboard = index;
-            }
-        })();
-    },
+	createGroup(mainUuid, secondUuid, copy) {
+		void MS.instance.soundboardsCache.createGroup(mainUuid, secondUuid, copy);
+	},
 
-    editSoundboard(soundboard) {
-        void MS.instance.soundboardsCache.editSoundboard(soundboard);
-    },
+	ungroupGroup(groupUuid) {
+		void MS.instance.soundboardsCache.unGroupGroup(groupUuid);
+	},
 
-    setCurrentSoundboard(id) {
-        const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(id);
-        const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex]!;
-        void MS.instance.setCurrentSoundboard(soundboard);
-    },
+	getSoundboard(uuid) {
+		const sb = MS.instance.soundboardsCache.soundboards.find(x => x.uuid === uuid);
+		const isAlone = MS.instance.soundboardsCache.soundboards.length === 1;
+		if (!sb) throw Error(`Soundboard with runtime UUID ${uuid} could not be found.`);
+		return Promise.resolve({ soundboard: sb.asData(), isAlone });
+	},
 
-    async getSoundboards() {
-        return MS.instance.soundboardsCache.soundboards;
-    },
+	async getNewSoundboard() {
+		const sb: Soundboard = Soundboard.getDefault("");
+		return await Promise.resolve(sb.asData());
+	},
 
-    async getInitialSoundboardIndex() {
-        const lastSoundboardIndex = MS.instance.soundboardsCache.soundboards.length - 1;
-        let index = MS.instance.settingsCache.settings.selectedSoundboard;
-        if (index < 0) index = 0;
-        if (index > lastSoundboardIndex) index = lastSoundboardIndex;
-        return index;
-    },
+	addSoundboard(soundboard) {
+		void MS.instance.soundboardsCache.addSoundboard(soundboard);
+	},
 
-    async sortSoundboard(soundboardId) {
-        await MS.instance.soundboardsCache.sortSoundboard(soundboardId);
-    },
+	moveSoundboard(soundboardId, destinationIndex) {
+		void (async (): Promise<void> => {
+			const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
+			const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
+			if (!selected) throw new Error("Cannot move: Current selected soundboard index is out of bounds.");
+			const isCurrent = selected.uuid === soundboardId;
+			await MS.instance.soundboardsCache.moveSoundboard(soundboardId, isCurrent, destinationIndex);
+			const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
+			MS.instance.settingsCache.settings.selectedSoundboard = index; // Update the index because it changed.
+		})();
+	},
 
-    flagChangelogViewed() {
-        MS.instance.flagChangelogViewed();
-    },
+	deleteSoundboard(soundboardId) {
+		void (async (): Promise<void> => {
+			const selectedIndex = MS.instance.settingsCache.settings.selectedSoundboard;
+			const selected = MS.instance.soundboardsCache.soundboards[selectedIndex];
+			if (!selected) throw new Error("Cannot delete: Current selected soundboard index is out of bounds.");
+			await MS.instance.soundboardsCache.removeSoundboard(soundboardId);
+			if (soundboardId === selected.uuid)
+				await MS.instance.setCurrentSoundboard(MS.instance.soundboardsCache.soundboards[0]!);
+			else { // Update the index because it might have changed after removing a soundboard.
+				const index = MS.instance.soundboardsCache.findSoundboardIndex(selected.uuid);
+				MS.instance.settingsCache.settings.selectedSoundboard = index;
+			}
+		})();
+	},
 
-    installUpdate() {
-        autoUpdater.quitAndInstall();
-    },
+	editSoundboard(soundboard) {
+		void MS.instance.soundboardsCache.editSoundboard(soundboard);
+	},
 
-    async checkUpdate() {
-        return await Updater.instance.check();
-    },
+	setCurrentSoundboard(uuid) {
+		const soundboardIndex = MS.instance.soundboardsCache.findSoundboardIndex(uuid);
+		const soundboard = MS.instance.soundboardsCache.soundboards[soundboardIndex]!;
+		void MS.instance.setCurrentSoundboard(soundboard);
+	},
 
-    setMainDevice(id, volume) {
-        void MS.instance.settingsCache.setMainDevice(id, volume);
-    },
+	async getCurrentSoundboard() { return MS.instance.getCurrentSoundboard()?.asData(); },
 
-    setSecondaryDevice(id, volume) {
-        void MS.instance.settingsCache.setSecondaryDevice(id, volume);
-    },
+	async getSoundboards() {
+		return MS.instance.soundboardsCache.soundboards.map(s => s.asData());
+	},
 
-    async getSettings() {
-        return MS.instance.settingsCache.settings;
-    },
+	async getInitialSoundboardIndex() {
+		const lastSoundboardIndex = MS.instance.soundboardsCache.soundboards.length - 1;
+		let index = MS.instance.settingsCache.settings.selectedSoundboard;
+		if (index < 0) index = 0;
+		if (index > lastSoundboardIndex) index = lastSoundboardIndex;
+		return index;
+	},
 
-    saveSettings(settings) {
-        void MS.instance.settingsCache.save(settings);
-        if (settings.processKeysOnRelease != null)
-            MS.instance.keybindManager.processKeysOnRelease = settings.processKeysOnRelease;
-    },
+	async sortSoundboard(soundboardId) {
+		await MS.instance.soundboardsCache.sortContainer(soundboardId);
+	},
 
-    async shouldShowChangelog() {
-        return MS.instance.settingsCache.shouldShowChangelog();
-    },
+	flagChangelogViewed() {
+		MS.instance.flagChangelogViewed();
+	},
 
-    async executeQuickAction(name) {
-        await actionBindings[name](name as never);
-    },
+	installUpdate() {
+		autoUpdater.quitAndInstall();
+	},
 
-    openRepo() {
-        void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard");
-    },
+	async checkUpdate() {
+		return await Updater.instance.check();
+	},
 
-    openFeedback() {
-        void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard/issues/new/choose");
-    },
+	setMainDevice(id, volume) {
+		void MS.instance.settingsCache.setMainDevice(id, volume);
+	},
 
-    async browseSounds() {
-        const r = await dialog.showOpenDialog({
-            properties: ["openFile", "multiSelections"],
-            filters: [
-                { name: "Audio files", extensions: validSoundExts }
-            ]
-        });
-        return r.filePaths;
-    },
+	setSecondaryDevice(id, volume) {
+		void MS.instance.settingsCache.setSecondaryDevice(id, volume);
+	},
 
-    async browseFolder() {
-        const r = await dialog.showOpenDialog({
-            properties: ["openDirectory"]
-        });
-        return r.filePaths[0];
-    },
+	async getSettings() {
+		return MS.instance.settingsCache.settings;
+	},
 
-    getNameFromPath(path) {
-        const name = Utils.getNameFromFile(path);
-        return Promise.resolve(name);
-    },
+	saveSettings(settings) {
+		void MS.instance.settingsCache.save(settings);
+		if (settings.processKeysOnRelease != null)
+			MS.instance.keybindManager.processKeysOnRelease = settings.processKeysOnRelease;
+	},
 
-    async getDefaultMovePath() {
-        return MS.defaultSoundsPath;
-    },
+	async shouldShowChangelog() {
+		return MS.instance.settingsCache.shouldShowChangelog();
+	},
 
-    async parsePath(path) {
-        return Utils.parsePath(path);
-    },
+	async executeQuickAction(name) {
+		await actionBindings[name](name as never, false);
+	},
 
-    async startKeyRecordingSession() {
-        return MS.instance.keybindManager.startRecordingSession();
-    },
+	openRepo() {
+		void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard");
+	},
 
-    stopKeyRecordingSession(id) {
-        MS.instance.keybindManager.stopRecordingSession(id);
-    },
+	openFeedback() {
+		void shell.openExternal("https://github.com/Tom4nt/Mega-Soundboard/issues/new/choose");
+	},
 
-    async holdPTT() {
-        return MS.instance.keybindManager.holdKeys(MS.instance.settingsCache.settings.pttKeys);
-    },
+	async browseSounds() {
+		const r = await dialog.showOpenDialog({
+			properties: ["openFile", "multiSelections"],
+			filters: [
+				{ name: "Audio files", extensions: validSoundExts }
+			]
+		});
+		return r.filePaths;
+	},
 
-    async releasePTT(handle) {
-        MS.instance.keybindManager.releaseKeys(handle);
-    },
+	async browseFolder() {
+		const r = await dialog.showOpenDialog({
+			properties: ["openDirectory"]
+		});
+		return r.filePaths[0];
+	},
 
-    async getNewsHtml() {
-        return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");
-    },
+	getNameFromPath(path) {
+		const name = Utils.getNameFromFile(path);
+		return Promise.resolve(name);
+	},
 
-    async getVersion() {
-        return app.getVersion();
-    },
+	async getDefaultMovePath() {
+		return MS.defaultSoundsPath;
+	},
+
+	async parsePath(path) {
+		return Utils.parsePath(path);
+	},
+
+	async startKeyRecordingSession() {
+		return MS.instance.keybindManager.startRecordingSession();
+	},
+
+	stopKeyRecordingSession(id) {
+		MS.instance.keybindManager.stopRecordingSession(id);
+	},
+
+	async getNewsHtml() {
+		return await fs.readFile(path.join(__dirname, "../res/news.html"), "utf-8");
+	},
+
+	async getVersion() {
+		return app.getVersion();
+	},
+
+	// Audio Manager
+
+	play(uuid) {
+		MS.instance.audioManager.play(uuid, false);
+	},
+
+	stop(uuid) {
+		MS.instance.audioManager.stop(uuid);
+	},
+
+	stopAll() {
+		MS.instance.audioManager.stopAll();
+	},
+
+	soundEnd(instanceUuid) {
+		MS.instance.audioManager.stopInstance(instanceUuid);
+	},
 };

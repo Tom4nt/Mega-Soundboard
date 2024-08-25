@@ -1,45 +1,32 @@
 export const actionNames = [
-    "stopSounds",
-    "playRandomSound",
-    "toggleKeybinds",
-    "toggleSoundOverlap",
-    "toggleSoundLooping",
+	"stopSounds",
+	"playRandomSound",
+	"toggleKeybinds",
+	"toggleSoundOverlap",
+	"toggleSoundLooping",
 ] as const;
 
 export type ActionName = (typeof actionNames)[number];
 
-interface Action {
-    name: string;
-    default: boolean | null;
-}
-
-type Actions = {
-    [P in ActionName]: Action;
-}
+type ActionDefaults = { [P in ActionName]: boolean | null; }
+type ActionNames = { [P in ActionName]: string; }
 
 export function isAction(name: string): name is ActionName {
-    return actionNames.includes(name as ActionName);
+	return actionNames.includes(name as ActionName);
 }
 
-export const actions: Actions = {
-    stopSounds: {
-        name: "Stop sounds",
-        default: null,
-    },
-    playRandomSound: {
-        name: "Play random sound",
-        default: null,
-    },
-    toggleKeybinds: {
-        name: "Keybinds usable",
-        default: true,
-    },
-    toggleSoundOverlap: {
-        name: "Overlap sounds",
-        default: true,
-    },
-    toggleSoundLooping: {
-        name: "Loop sounds",
-        default: false,
-    }
+export const actionFriendlyNames: ActionNames = {
+	stopSounds: "Stop sounds",
+	playRandomSound: "Play random sound",
+	toggleKeybinds: "Keybinds",
+	toggleSoundLooping: "Loop sounds",
+	toggleSoundOverlap: "Overlap sounds"
+};
+
+export const actionDefaults: ActionDefaults = {
+	stopSounds: null,
+	playRandomSound: null,
+	toggleKeybinds: true,
+	toggleSoundLooping: false,
+	toggleSoundOverlap: true,
 };

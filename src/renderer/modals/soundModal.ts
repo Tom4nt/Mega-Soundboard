@@ -1,129 +1,154 @@
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
-import { Sound } from "../../shared/models";
-import { Event, ExposedEvent } from "../../shared/events";
-
-type SaveEventArgs = { sound: Sound, moveRequested: boolean }
+import { ISoundData } from "../../shared/models/dataInterfaces";
+import Utils from "../util/utils";
 
 export default class SoundModal extends Modal {
-    private nameElement!: TextField;
-    private moveElement!: Toggler;
-    private pathElement!: FileSelector;
-    private volumeElement!: Slider;
-    private keysElement!: KeyRecorder;
-    private okButton!: HTMLButtonElement;
-    private removeButton!: HTMLButtonElement;
+	private nameElement!: TextField;
+	private moveElement!: Toggler;
+	private pathElement!: FileSelector;
+	private volumeElement!: Slider;
+	private keysElement!: KeyRecorder;
+	private okButton!: HTMLButtonElement;
+	private removeButton!: HTMLButtonElement;
 
-    private loadedSound: Sound;
-    private isNew: boolean;
+	private _isSaved = false;
+	private loadedSound?: ISoundData;
+	private isNew = false;
+	private isInLinkedSoundboard = false;
+	private parentUuid: string | null = null;
+	private index?: number;
 
-    public get onSave(): ExposedEvent<SaveEventArgs> { return this._onSave.expose(); }
-    private readonly _onSave = new Event<SaveEventArgs>();
+	constructor() { super(false); }
 
-    public get onRemove(): ExposedEvent<Sound> { return this._onRemove.expose(); }
-    private readonly _onRemove = new Event<Sound>();
+	public get isSaved(): boolean { return this._isSaved; }
 
-    constructor(sound: Sound, isNew: boolean) {
-        super(false);
-        this.loadedSound = sound;
-        this.isNew = isNew;
-        this.modalTitle = isNew ? "Add Sound" : "Edit Sound";
-    }
+	public async openForAdd(path: string, parentUuid: string | null, index?: number): Promise<string | null> {
+		const sounds = await window.actions.getSoundDataFromPaths([path]);
+		this.modalTitle = "Add Sound";
+		this.loadedSound = sounds[0]!;
+		this.parentUuid = parentUuid;
+		this.index = index;
+		this.isNew = true;
 
-    protected canCloseWithKey(): boolean {
-        return !this.keysElement.isRecording;
-    }
+		await super.open();
+		return this.isSaved ? this.parentUuid : null; // This is set on save.
+	}
 
-    protected connectedCallback(): void {
-        super.connectedCallback();
-        void this.update();
-    }
+	public async openForEdit(uuid: string): Promise<void> {
+		const playable = await window.actions.getPlayable(uuid);
+		if (!playable) throw Error(`Playable with uuid ${uuid} could not be found.`);
+		if (playable.data.isGroup) throw Error(`Cannot edit a group with the SoundModal.`);
 
-    protected getContent(): HTMLElement[] {
-        this.nameElement = new TextField("Name");
-        this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
-        this.pathElement = new FileSelector("Path", "sound");
-        this.volumeElement = new Slider("Volume");
-        this.keysElement = new KeyRecorder();
+		this.modalTitle = "Edit Sound";
+		this.loadedSound = playable.data as ISoundData;
+		this.isNew = false;
+		this.isInLinkedSoundboard = playable.isInLinkedSoundboard;
 
-        this.pathElement.onValueChanged.addHandler(async v => {
-            if (!this.nameElement.value) {
-                const name = await window.actions.getNameFromPath(v);
-                this.nameElement.value = name;
-            }
-        });
+		await super.open();
+	}
 
-        return [
-            this.nameElement,
-            this.moveElement,
-            this.pathElement,
-            this.volumeElement,
-            Modal.getLabel("Play"),
-            this.keysElement,
-        ];
-    }
+	protected canCloseWithKey(): boolean {
+		return !this.keysElement.isRecording;
+	}
 
-    protected getFooterButtons(): HTMLButtonElement[] {
-        this.okButton = Modal.getButton("ok", () => { void this.save(); }, false, false);
-        this.removeButton = Modal.getButton("remove", () => { this.removeSound(); }, true, true);
+	protected connectedCallback(): void {
+		super.connectedCallback();
+		this.update();
+	}
 
-        const buttons = [
-            this.removeButton,
-            Modal.getButton("close", () => { this.close(); }, false, false),
-            this.okButton
-        ];
+	protected getContent(): HTMLElement[] {
+		this.nameElement = new TextField("Name");
+		this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
+		this.pathElement = new FileSelector("Path", "sound");
+		this.volumeElement = new Slider(Utils.volumeLabelGenerator, 1);
+		this.volumeElement.step = 0.01;
+		this.keysElement = new KeyRecorder();
 
-        return buttons;
-    }
+		this.pathElement.onValueChanged.addHandler(async v => {
+			if (!this.nameElement.value) {
+				const name = await window.actions.getNameFromPath(v);
+				this.nameElement.value = name;
+			}
+		});
 
-    private async update(): Promise<void> {
-        this.nameElement.value = this.loadedSound.name;
-        this.pathElement.value = this.loadedSound.path;
-        this.volumeElement.value = this.loadedSound.volume;
-        this.keysElement.keys = this.loadedSound.keys;
+		return [
+			this.nameElement,
+			this.moveElement,
+			this.pathElement,
+			this.volumeElement,
+			Modal.getLabel("Play"),
+			this.keysElement,
+		];
+	}
 
-        let isLinked = false;
-        if (this.loadedSound.soundboardUuid) {
-            const soundboard = await window.actions.getSoundboard(this.loadedSound.soundboardUuid);
-            isLinked = soundboard.linkedFolder !== null;
-        }
-        this.moveElement.style.display = this.isNew ? "" : "none"; // Can only move when it's a new sound
-        this.pathElement.style.display = !isLinked ? "" : "none"; // Can only set the path for sounds in unlinked soundboards
-        this.removeButton.style.display = this.isNew || isLinked ? "none" : "";
+	protected getFooterButtons(): HTMLButtonElement[] {
+		this.okButton = Modal.getButton("ok", () => { void this.save(); }, false, false);
+		this.removeButton = Modal.getButton("remove", () => { this.removeSound(); }, true, true);
 
-        this.okButton.innerHTML = this.isNew ? "Add" : "Save";
-    }
+		const buttons = [
+			this.removeButton,
+			Modal.getButton("close", () => { this.close(); }, false, false),
+			this.okButton
+		];
 
-    private async validate(finalPath: string | null): Promise<boolean> {
-        let valid = true;
-        if (!this.nameElement.value || !this.nameElement.value.trim()) {
-            this.nameElement.warn();
-            valid = false;
-        }
+		return buttons;
+	}
 
-        if (!finalPath) {
-            this.pathElement.warn();
-            valid = false;
-        }
+	private update(): void {
+		if (!this.loadedSound) throw Error("Calling openForAdd or openForEdit is required.");
 
-        return valid;
-    }
+		this.nameElement.value = this.loadedSound.name;
+		this.pathElement.value = this.loadedSound.path;
+		this.volumeElement.value = this.loadedSound.volume;
+		this.keysElement.keys = this.loadedSound.keys;
 
-    private async save(): Promise<void> {
-        const path = await window.actions.parsePath(this.pathElement.value);
-        if (!await this.validate(path) || !path) return;
+		this.moveElement.style.display = this.isNew ? "" : "none";
+		this.pathElement.style.display = !this.isInLinkedSoundboard ? "" : "none";
+		this.removeButton.style.display = this.isNew || this.isInLinkedSoundboard ? "none" : "";
 
-        this.loadedSound.name = this.nameElement.value;
-        this.loadedSound.path = path;
-        this.loadedSound.volume = this.volumeElement.value;
-        this.loadedSound.keys = this.keysElement.keys;
+		this.okButton.innerHTML = this.isNew ? "Add" : "Save";
+	}
 
-        this._onSave.raise({ sound: this.loadedSound, moveRequested: this.moveElement.isOn });
-        this.close();
-    }
+	private async validate(finalPath: string | null): Promise<boolean> {
+		let valid = true;
+		if (!this.nameElement.value || !this.nameElement.value.trim()) {
+			this.nameElement.warn();
+			valid = false;
+		}
 
-    private removeSound(): void {
-        this._onRemove.raise(this.loadedSound);
-        this.close();
-    }
+		if (!finalPath) {
+			this.pathElement.warn();
+			valid = false;
+		}
+
+		return valid;
+	}
+
+	private async save(): Promise<void> {
+		if (!this.loadedSound) throw Error("Calling openForAdd or openForEdit is required.");
+
+		const path = await window.actions.parsePath(this.pathElement.value);
+		if (!await this.validate(path) || !path) return;
+
+		this.loadedSound.name = this.nameElement.value;
+		this.loadedSound.path = path;
+		this.loadedSound.volume = this.volumeElement.value;
+		this.loadedSound.keys = this.keysElement.keys;
+
+		if (this.isNew) {
+			this.parentUuid = await window.actions.addSounds([this.loadedSound], this.parentUuid, this.moveElement.isOn, this.index);
+		} else {
+			window.actions.editPlayable(this.loadedSound);
+		}
+
+		this._isSaved = true;
+		this.close();
+	}
+
+	private removeSound(): void {
+		if (!this.loadedSound) throw Error("Calling openForAdd or openForEdit is required.");
+		window.actions.deletePlayable(this.loadedSound.uuid);
+		this.close();
+	}
 }

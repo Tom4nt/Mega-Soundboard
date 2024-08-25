@@ -1,149 +1,126 @@
+import { ISoundboardData } from "../../shared/models/dataInterfaces";
 import { SoundboardItem } from "../elements";
-import { Soundboard } from "../../shared/models";
+import MSR from "../msr";
 import Utils from "../util/utils";
-import Draggable from "./draggable";
-import GlobalEvents from "../util/globalEvents";
 
 export default class SoundboardList extends HTMLElement {
-    private selectedItem?: SoundboardItem;
-    private dragElement: SoundboardItem | null = null;
-    private dragDummy!: HTMLDivElement;
+	private _loadedItems: SoundboardItem[] = [];
+	private _selectedItem: SoundboardItem | undefined;
+	get selectedItem(): SoundboardItem | undefined { return this._selectedItem; }
 
-    private *getItems(): Generator<SoundboardItem> {
-        for (let i = 0; i < this.childElementCount; i++) {
-            const element = this.childNodes[i];
-            if (element instanceof SoundboardItem) {
-                yield element;
-            }
-        }
-    }
+	private dragElement: SoundboardItem | null = null;
+	private dragDummy!: HTMLDivElement;
 
-    protected connectedCallback(): void {
-        // Add drag dummy item
-        const item = document.createElement("div");
-        item.classList.add("item", "dragdummy");
-        this.dragDummy = item;
-        this.appendChild(item);
+	protected connectedCallback(): void {
+		// Add drag dummy item
+		const item = document.createElement("div");
+		item.classList.add("item", "dragdummy");
+		this.dragDummy = item;
+		this.appendChild(item);
 
-        GlobalEvents.addHandler("onCurrentSoundboardChanged", sb => {
-            this.selectSoundboard(sb);
-        });
+		window.events.currentSoundboardChanged.addHandler(sb => {
+			this.selectSoundboard(sb);
+		});
 
-        GlobalEvents.addHandler("onSoundboardRemoved", sb => {
-            const elem = this.getSoundboardElement(sb.uuid);
-            elem?.destroy();
-        });
+		window.events.soundboardRemoved.addHandler(sb => {
+			const elem = this._loadedItems.findIndex(x => x.soundboard.uuid === sb.uuid);
+			if (elem < 0) return;
+			this._loadedItems[elem]?.remove();
+			this._loadedItems.splice(elem, 1);
+		});
 
-        GlobalEvents.addHandler("onSoundboardAdded", args => {
-            this.addSoundboard(args.soundboard, args.index);
-        });
+		window.events.soundboardAdded.addHandler(args => {
+			this.addSoundboard(args.soundboard, args.isCurrent, args.index);
+		});
 
-        Draggable.onDrag.addHandler(e => {
-            if (e.draggable instanceof SoundboardItem) {
-                if (!this.dragElement) {
-                    this.showDragDummy();
-                    this.dragElement = e.draggable;
-                }
-                this.handleDragOver(e.event.clientY);
-            }
-        });
-    }
+		MSR.instance.draggableManager.onDragUpdate.addHandler(args => {
+			if (args.ghost instanceof SoundboardItem) {
+				if (!this.dragElement) {
+					this.showDragDummy();
+					const uuid = args.ghost.soundboard.uuid;
+					this.dragElement = this._loadedItems.find(x => x.soundboard.uuid === uuid) ?? null;
+					if (this.dragElement) this.dragElement.style.display = "none";
+				}
+				this.updateDragDummyPosition(args.pos.y);
+			}
+		});
 
-    getSelectedSoundboard(): Soundboard | null {
-        if (this.selectedItem)
-            return this.selectedItem.soundboard;
-        return null;
-    }
+		MSR.instance.draggableManager.onDragEnd.addHandler(() => {
+			if (!this.dragElement) return;
 
-    addSoundboard(soundboard: Soundboard, index?: number): void {
-        const sbElement = new SoundboardItem(soundboard);
+			const newIndex = this.getDragDummyIndex();
+			window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);
 
-        sbElement.onDragEnd.addHandler(() => {
-            this.handleDrop();
-            this.dragElement = null;
-        });
+			this.hideDragDummy();
+			this.dragElement.style.display = "";
+			this.dragElement = null;
+		});
+	}
 
-        let beforeElement: HTMLElement | undefined = undefined;
-        if (index !== undefined) {
-            const items = Array.from(this.getItems());
-            if (index >= 0 && index < items.length) beforeElement = items[index];
-        }
+	addSoundboard(soundboard: ISoundboardData, isSelected: boolean, index?: number): void {
+		const sbElement = new SoundboardItem(soundboard);
+		sbElement.isSelected = isSelected;
 
-        if (beforeElement) this.insertBefore(sbElement, beforeElement);
-        else this.appendChild(sbElement);
-    }
+		let beforeElement: HTMLElement | undefined = undefined;
+		if (index !== undefined && index >= 0 && index < this._loadedItems.length) {
+			beforeElement = this._loadedItems[index];
+		}
 
-    selectSoundboard(soundboard: Soundboard): void {
-        this.unselectAll();
-        for (const item of this.getItems()) {
-            if (Soundboard.equals(item.soundboard, soundboard)) {
-                item.soundboard = soundboard;
-                item.isSelected = true;
-                this.selectedItem = item;
-            }
-        }
-    }
+		if (beforeElement) {
+			this.insertBefore(sbElement, beforeElement);
+			this._loadedItems.splice(index!, 0, sbElement);
+		}
+		else {
+			this.appendChild(sbElement);
+			this._loadedItems.push(sbElement);
+		}
+	}
 
-    private unselectAll(): void {
-        for (const item of this.getItems()) {
-            item.isSelected = false;
-        }
-    }
+	selectSoundboard(sb: ISoundboardData): void {
+		this.unselectAll();
+		const item = this._loadedItems.find(x => x.soundboard.uuid === sb.uuid);
+		if (item) {
+			item.soundboard = sb;
+			item.isSelected = true;
+			this._selectedItem = item;
+		}
+	}
 
-    private hideDragDummy(): void {
-        this.dragDummy.style.display = "";
-    }
+	private getDragDummyIndex(): number {
+		return Utils.getElementIndex(this.dragDummy, (e) => e != this.dragElement);
+	}
 
-    private showDragDummy(): void {
-        this.dragDummy.style.display = "inline-block";
-    }
+	private unselectAll(): void {
+		for (const item of this._loadedItems) {
+			item.isSelected = false;
+		}
+	}
 
-    /** Returns the element from the list representing a specific soundboard. Returns null if no element is found. */
-    private getSoundboardElement(soundboardUuid: string): SoundboardItem | null {
-        for (const item of this.getItems()) {
-            if (item.soundboard.uuid === soundboardUuid) return item;
-        }
-        return null;
-    }
+	private hideDragDummy(): void {
+		this.dragDummy.style.display = "";
+	}
 
-    private getItemAtPosition(y: number, x?: number): SoundboardItem | undefined {
-        const target = document.elementFromPoint(x ?? this.getBoundingClientRect().x, y);
+	private showDragDummy(): void {
+		this.dragDummy.style.display = "block";
+	}
 
-        if (!target) return undefined;
-        if (!(target instanceof SoundboardItem)) return undefined;
+	private getItemAtPosition(y: number, x?: number): SoundboardItem | undefined {
+		const target = document.elementFromPoint(x ?? this.getBoundingClientRect().x, y);
 
-        return target;
-    }
+		if (!target) return undefined;
+		if (!(target instanceof SoundboardItem)) return undefined;
 
-    private getItemIndex(item: SoundboardItem): number {
-        let i = 0;
-        for (const curr of this.getItems()) {
-            if (curr === item) return i;
-            i++;
-        }
-        return i;
-    }
+		return target;
+	}
 
-    // Handlers
+	private updateDragDummyPosition(yPos: number): void {
+		const target = this.getItemAtPosition(yPos);
+		if (!target || !this.dragElement) return;
 
-    private handleDragOver = (yPos: number): void => {
-        const target = this.getItemAtPosition(yPos);
-        if (!target || !this.dragElement) return;
-
-        if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
-            this.insertBefore(this.dragDummy, target);
-        } else {
-            this.insertBefore(this.dragDummy, target.nextElementSibling);
-        }
-    };
-
-    private handleDrop = (): void => {
-        if (!this.dragElement) return;
-
-        this.insertBefore(this.dragElement, this.dragDummy.nextElementSibling);
-        const newIndex = this.getItemIndex(this.dragElement);
-        window.actions.moveSoundboard(this.dragElement.soundboard.uuid, newIndex);
-
-        this.hideDragDummy();
-    };
+		if (Utils.getElementIndex(this.dragDummy) > Utils.getElementIndex(target)) {
+			this.insertBefore(this.dragDummy, target);
+		} else {
+			this.insertBefore(this.dragDummy, target.nextElementSibling);
+		}
+	}
 }

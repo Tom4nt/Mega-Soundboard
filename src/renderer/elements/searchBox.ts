@@ -12,7 +12,7 @@ export default class SearchBox extends HTMLElement {
     protected connectedCallback(): void {
         const btn = document.createElement("ms-iconbutton") as IconButton;
         btn.id = "soundlist-searchbox-button";
-        btn.innerHTML = "search";
+        btn.setAttribute("icon", "search");
 
         const ipt = document.createElement("input");
         ipt.id = "soundlist-searchbox";
@@ -21,11 +21,11 @@ export default class SearchBox extends HTMLElement {
             if (ipt.classList.contains("open")) {
                 ipt.classList.remove("open");
                 ipt.value = "";
-                btn.innerHTML = "search";
+                btn.setIcon("search");
             } else {
                 ipt.classList.add("open");
                 ipt.focus();
-                btn.innerHTML = "close";
+                btn.setIcon("close");
             }
             this._onButtonClick.raise();
         });
@@ -38,7 +38,7 @@ export default class SearchBox extends HTMLElement {
             if (!e.composedPath().includes(ipt) && !e.composedPath().includes(btn) && ipt.value == "") {
                 ipt.classList.remove("open");
                 ipt.value = "";
-                btn.innerHTML = "search";
+                btn.setIcon("search");
             }
         });
 

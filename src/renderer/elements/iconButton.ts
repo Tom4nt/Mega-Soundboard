@@ -2,6 +2,7 @@ import { Tooltip } from "../elements";
 import { Side, sides } from "../models";
 
 export default class IconButton extends HTMLElement {
+    private iconElement!: HTMLElement;
     private _isRed = false;
     set isRed(value: boolean) {
         this._isRed = value;
@@ -16,7 +17,18 @@ export default class IconButton extends HTMLElement {
         return this._isRed;
     }
 
+    public setIcon(icon: string): void {
+        this.iconElement.innerText = icon;
+    }
+
     protected connectedCallback(): void {
+        const icon = document.createElement("i");
+        this.iconElement = icon;
+
+        if (this.hasAttribute("icon")) {
+            icon.innerText = this.getAttribute("icon")!;
+        }
+
         if (this.hasAttribute("red")) {
             this.classList.add("red");
         }
@@ -34,5 +46,7 @@ export default class IconButton extends HTMLElement {
                 }
             }
         }
+
+        this.append(icon);
     }
 }
