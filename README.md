@@ -18,18 +18,22 @@
 
 Mega Soundboard is an app that allows you to organize sound files and play them to two output devices at the same time, optionally with keybinds.
 
+## Main features
+* Arrange sounds in soundboards.
+* Use global keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
+* Play a random sound in a soundboard with a keybind.
+* Configure volume per output device, soundboard and sound.
+* Choose if sounds can overlap each other and if they loop. Both can be set with keybinds.
+* Let Mega Soundboard virtually press a key (or keys) of your choice while a sound is playing. This is usefull for push-to-talk.
+* Folder-linked Soundboards: Sounds can be synced between a folder on your system and a Soundboard. They are synced instantly and based on events (no polling).
+* Move the source file to a specified folder before importing a sound.
+
+## Screenshots
 ![d](doc/images/main.png)
 ![d](doc/images/addSoundboard.png)
 ![d](doc/images/settings.png)
 ![d](doc/images/quickSettings.png)
 ![d](doc/images/devices.png)
-
-## Main features
-* Arrange sounds in soundboards.
-* Use global keybinds to switch to a different soundboard, play a sound, stop all sounds or disable/enable keybinds.
-* Configure volume per output device, soundboard and sound.
-* Folder-linked Soundboards: Sounds can synced between a folder on your system and a Soundboard. They are synced instantly and based on events (no polling).
-* Move the source file to a specified folder before importing a sound.
 
 ## Built With
 * [Electron](https://www.electronjs.org/)
