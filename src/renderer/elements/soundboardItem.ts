@@ -150,8 +150,7 @@ export default class SoundboardItem extends Draggable {
 		}
 	};
 
-	private handleDragOver = (e: DragEvent): void => {
-		e.preventDefault();
+	private handleDragOver = (_e: DragEvent): void => {
 		this.safeSelect(true);
 	};
 }

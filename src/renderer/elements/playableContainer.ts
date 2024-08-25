@@ -74,13 +74,15 @@ export default class PlayableContainer extends HTMLElement {
 		dropArea.onOver.addHandler(e => {
 			this.showDragDummy();
 			const index = this._containerHelper.getIndexAtPosition({ x: e.clientX, y: e.clientY });
-			if (index) this.updateDragDummyPosition(index);
+			if (index !== null) this.updateDragDummyPosition(index);
+			else this.hideDragDummy();
 		});
 		dropArea.onLeave.addHandler(() => {
 			this.hideDragDummy();
 		});
 		dropArea.onDrop.addHandler(e => {
-			void this.finishFileDrag(e);
+			const index = this._containerHelper.getIndexAtPosition({ x: e.clientX, y: e.clientY });
+			if (index !== null) void this.finishFileDrag(e);
 		});
 
 		if (MSR.instance.draggableManager.currentGhost) {
@@ -307,7 +309,7 @@ export default class PlayableContainer extends HTMLElement {
 	}
 
 	private async finishFileDrag(e: DragEvent): Promise<void> {
-		const index = this._containerHelper.getIndexAtPosition({ x: e.offsetX, y: e.offsetY });
+		const index = this._containerHelper.getIndexAtPosition({ x: e.clientX, y: e.clientY });
 
 		if (index === null) {
 			if (this._currSubContainer !== null) void this._currSubContainer.finishFileDrag(e);

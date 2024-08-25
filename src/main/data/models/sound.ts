@@ -43,7 +43,7 @@ export class Sound implements IBaseChild, IDirectPlayable {
 	}
 
 	getVolume(): number {
-		return (this.parent?.getVolume() ?? 0) * (this.volume / 100);
+		return (this.parent?.getVolume() ?? 0) * this.volume;
 	}
 
 	getSavable(): JSONObject {

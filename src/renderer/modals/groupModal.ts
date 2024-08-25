@@ -2,6 +2,7 @@ import { Dropdown, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
 import { GroupMode, IGroupData } from "../../shared/models/dataInterfaces";
 import { DropDownItem } from "../elements/dropdown";
+import Utils from "../util/utils";
 
 export default class GroupModal extends Modal {
 	private nameElement!: TextField;
@@ -43,7 +44,8 @@ export default class GroupModal extends Modal {
 	protected getContent(): HTMLElement[] {
 		this.nameElement = new TextField("Name");
 		this.modeElement = new Dropdown();
-		this.volumeElement = new Slider("Volume");
+		this.volumeElement = new Slider(Utils.volumeLabelGenerator, 1);
+		this.volumeElement.step = 0.01;
 		this.keysElement = new KeyRecorder();
 
 		return [

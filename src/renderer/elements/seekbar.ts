@@ -29,7 +29,7 @@ export default class Seekbar extends HTMLElement {
 
 	constructor() {
 		super();
-		this.sliderElement = new Slider(null);
+		this.sliderElement = new Slider(undefined, 1);
 		this.buttonElement = new IconButton();
 		this.timeElement = document.createElement("span");
 	}
@@ -42,7 +42,6 @@ export default class Seekbar extends HTMLElement {
 
 		this.timeElement.innerHTML = "00:00";
 
-		this.sliderElement.max = 1;
 		this.sliderElement.step = null;
 		this.sliderElement.addEventListener("change", this.handleChange);
 		this.sliderElement.addEventListener("input", this.handleInput);

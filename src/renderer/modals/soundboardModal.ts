@@ -1,6 +1,7 @@
 import { FileSelector, KeyRecorder, Slider, TextField } from "../elements";
 import { Modal } from "../modals";
 import { ISoundboardData } from "../../shared/models/dataInterfaces";
+import Utils from "../util/utils";
 
 export default class SoundboardModal extends Modal {
 	private nameElement!: TextField;
@@ -44,7 +45,8 @@ export default class SoundboardModal extends Modal {
 	protected getContent(): HTMLElement[] {
 		this.nameElement = new TextField("Name");
 		this.keysElement = new KeyRecorder();
-		this.volumeElement = new Slider("Volume");
+		this.volumeElement = new Slider(Utils.volumeLabelGenerator, 1);
+		this.volumeElement.step = 0.01;
 		this.folderElement = new FileSelector("Linked Folder (Optional)", "folder");
 
 		this.folderElement.onValueChanged.addHandler(async () => {

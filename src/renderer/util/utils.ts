@@ -1,4 +1,6 @@
 export default class Utils {
+	static volumeLabelGenerator = (v: number): string => `Volume | ${Math.ceil(v * 100)}%`;
+
 	static *map<T, R>(source: Iterable<T>, callback: (element: T) => R): Iterable<R> {
 		for (const item of source) {
 			yield callback(item);

@@ -39,6 +39,13 @@ export default class AudioPlayer {
 		}
 	}
 
+	/** Sets the value of the "loop" property of all sounds playing. */
+	public setLoopState(value: boolean): void {
+		for (const instance of this.playingInstances) {
+			instance.loop = value;
+		}
+	}
+
 	/** Updates the seekbar state only if needed. */
 	private updateSeekbar(): void {
 		const previous = this.currentSingleInstance;
@@ -47,12 +54,25 @@ export default class AudioPlayer {
 			this._seekbarUpdate.raise(this.currentSingleInstance);
 	}
 
+	private showError(error: unknown): void {
+		void new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
+	}
+
 	handlePlay = async (e: IPlayArgs): Promise<void> => {
 		const d = e.data;
-		const instances = await this.createInstances(d.sounds, d.devices, d.loops);
+		const showsErrorMessage = !e.softError && d.sounds.length === 1;
+
+		let instances: readonly AudioInstance[] = [];
+		try {
+			instances = await this.createInstances(d.sounds, d.devices, d.loops);
+		} catch (error) {
+			e.data.sounds.forEach(s => window.actions.soundEnd(s.uuid));
+			void this.playUI("error");
+			if (showsErrorMessage) this.showError(error);
+		}
+
 		this.playingInstances.push(...instances);
 		this.updateSeekbar();
-		const showsErrorMessage = !e.softError && d.sounds.length === 1;
 
 		for (const instance of instances) {
 			try {
@@ -60,8 +80,7 @@ export default class AudioPlayer {
 			} catch (error) {
 				window.actions.soundEnd(instance.playableUuid);
 				void this.playUI("error");
-				if (showsErrorMessage)
-					void new MessageModal("Could not play", Utils.getErrorMessage(error), true).open();
+				if (showsErrorMessage) this.showError(error);
 			}
 		}
 	};
@@ -83,7 +102,6 @@ export default class AudioPlayer {
 
 	private async createInstances(sounds: Audio[], devices: readonly IDevice[], loop: boolean): Promise<readonly AudioInstance[]> {
 		return await Promise.all(sounds.map(async s => {
-			// TODO: Handle error on create
 			const instance = await AudioInstance.create(s.uuid, s.volume, s.path, devices, loop);
 			instance.onEnd.addHandler(() => {
 				this.playingInstances.splice(this.playingInstances.indexOf(instance), 1);

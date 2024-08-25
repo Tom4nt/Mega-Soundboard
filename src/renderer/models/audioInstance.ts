@@ -83,7 +83,7 @@ export default class AudioInstance {
 				}
 			});
 
-			audio.volume = Math.pow((device.volume / 100) * volume, 2);
+			audio.volume = Math.pow(device.volume * volume, 2);
 			audioElements.push(audio);
 			isFirst = false;
 		}
@@ -128,7 +128,7 @@ export default class AudioInstance {
 	public updateVolume(device: IDevice): void {
 		for (const element of this.audioElements) {
 			if (device.id === element.sinkId) {
-				element.volume = (device.volume / 100) * this.playableVolume;
+				element.volume = Math.pow((device.volume) * this.playableVolume, 2);
 			}
 		}
 	}

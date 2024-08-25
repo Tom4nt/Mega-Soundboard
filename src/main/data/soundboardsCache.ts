@@ -30,7 +30,7 @@ export default class SoundboardsCache {
 			if (move && destinationPath) {
 				const basename = path.basename(sound.path);
 				const soundDestination = path.join(destinationPath, basename);
-				moveTasks.push(fs.rename(sound.path, soundDestination));
+				moveTasks.push(this.moveSound(sound.path, soundDestination));
 				sound.path = soundDestination;
 			}
 			EventSender.send("playablesAdded", {
@@ -305,5 +305,10 @@ export default class SoundboardsCache {
 	private findRecursive(predicate: (p: IBase) => boolean): IBase | null {
 		const playables = this.findPlayablesRecursive(predicate);
 		return playables.length > 0 ? playables[0]! : null;
+	}
+
+	private async moveSound(currentPath: string, newPath: string): Promise<void> {
+		await fs.mkdir(path.dirname(newPath), { recursive: true });
+		await fs.rename(currentPath, newPath);
 	}
 }

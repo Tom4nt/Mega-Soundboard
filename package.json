@@ -28,7 +28,7 @@
 		"@typescript-eslint/parser": "^8.0.0",
 		"browserify": "^17.0.0",
 		"copyfiles": "^2.4.1",
-		"electron": "^27.0.0",
+		"electron": "^32.0.0",
 		"electron-builder": "^24.0.0",
 		"eslint": "^9.0.0",
 		"typescript": "^5.0.0"

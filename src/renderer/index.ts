@@ -81,6 +81,7 @@ async function init(): Promise<void> {
 
 	getElementReferences();
 	addElementListeners();
+	initVolumeSliders();
 
 	MessageQueue.setHost(messageHost);
 
@@ -96,8 +97,11 @@ async function init(): Promise<void> {
 		return enabeKeybindsToggler.isOn = state;
 	});
 	window.events.overlapSoundsStateChanged.addHandler(state => overlapSoundsToggler.isOn = state);
-	window.events.loopSoundsChanged.addHandler(state => loopSoundsToggler.isOn = state);
 	window.events.currentSoundboardChanged.addHandler(sb => updatePlayableListButtons(sb.linkedFolder !== null));
+	window.events.loopSoundsChanged.addHandler(state => {
+		loopSoundsToggler.isOn = state;
+		MSR.instance.audioPlayer.setLoopState(state);
+	});
 
 	MSR.instance.draggableManager.onDragUpdate.addHandler(handleDragMove);
 	MSR.instance.draggableManager.onDragEnd.addHandler(handleDragEnd);
@@ -119,6 +123,16 @@ async function init(): Promise<void> {
 		playableList.loadItems(content.initialPlayables, currentSb);
 		updatePlayableListButtons(currentSb.linkedFolder !== null);
 	}
+}
+
+function initVolumeSliders(): void {
+	mainDeviceVolumeSlider.max = 1;
+	mainDeviceVolumeSlider.step = 0.01;
+	mainDeviceVolumeSlider.labelTextGenerator = Utils.volumeLabelGenerator;
+
+	secondaryDeviceVolumeSlider.max = 1;
+	secondaryDeviceVolumeSlider.step = 0.01;
+	secondaryDeviceVolumeSlider.labelTextGenerator = Utils.volumeLabelGenerator;
 }
 
 function updatePlayableListButtons(isLinked: boolean): void {
@@ -296,6 +310,9 @@ function addElementListeners(): void {
 
 	mainDeviceVolumeSlider.onValueChange.addHandler(s => {
 		window.actions.setMainDevice(undefined, s.value);
+	});
+
+	mainDeviceVolumeSlider.onInput.addHandler(s => {
 		if (typeof mainDeviceDropdown.selectedItem?.value === "string")
 			MSR.instance.audioPlayer.updateVolumesOnDevice(
 				{ id: mainDeviceDropdown.selectedItem.value, volume: s.value }
@@ -304,6 +321,9 @@ function addElementListeners(): void {
 
 	secondaryDeviceVolumeSlider.onValueChange.addHandler(s => {
 		window.actions.setSecondaryDevice(undefined, s.value);
+	});
+
+	secondaryDeviceVolumeSlider.onInput.addHandler(s => {
 		if (typeof secondaryDeviceDropdown.selectedItem?.value === "string")
 			MSR.instance.audioPlayer.updateVolumesOnDevice(
 				{ id: secondaryDeviceDropdown.selectedItem.value, volume: s.value }

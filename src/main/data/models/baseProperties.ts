@@ -27,11 +27,13 @@ export class BaseProperties {
 	static convert(data: JSONObject): BaseProperties {
 		// Defaults
 		let name = "¯\\_(ツ)_/¯";
-		let volume = 100;
+		let volume = 1;
 		let keys: number[] = [];
 
 		if (typeof data["name"] === "string") name = data["name"];
-		if (typeof data["volume"] === "number") volume = data["volume"];
+		if (typeof data["volume"] === "number") {
+			volume = data["volume"] > 1 ? data["volume"] / 100 : data["volume"];
+		}
 
 		const keysRes = tryGetValue(data, ["keys", "shortcut"], v => Keys.isKeys(v));
 		if (keysRes) keys = data["keys"] as number[];

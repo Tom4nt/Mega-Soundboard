@@ -41,7 +41,7 @@ export class Soundboard implements IBaseContainer {
 	}
 
 	getVolume(): number {
-		return this.volume / 100;
+		return this.volume;
 	}
 
 	getChildren(): readonly IBaseChild[] {

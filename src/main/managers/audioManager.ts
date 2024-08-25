@@ -9,12 +9,6 @@ import { getHierarchy } from "../utils/utils";
 // The audio manager is in the main process to have access to all the data.
 // Otherwise, we would have to send current playing sounds to the main process before loading a soundboard.
 export default class AudioManager {
-	// set loops(value: boolean) {
-	// 	this._loops = value;
-	// TODO: Send "loops" info do renderer for currenlty playing sounds.
-	// this.playingInstances.forEach(e => e.loop = value);
-	// }
-
 	private currentKeyHoldHandle: string | null = null;
 
 	/** Used when sounds do not overlap. */

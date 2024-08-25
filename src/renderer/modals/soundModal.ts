@@ -1,6 +1,7 @@
 import { FileSelector, InfoBalloon, KeyRecorder, Slider, TextField, Toggler } from "../elements";
 import { Modal } from "../modals";
 import { ISoundData } from "../../shared/models/dataInterfaces";
+import Utils from "../util/utils";
 
 export default class SoundModal extends Modal {
 	private nameElement!: TextField;
@@ -60,7 +61,8 @@ export default class SoundModal extends Modal {
 		this.nameElement = new TextField("Name");
 		this.moveElement = new Toggler("Move sound", new InfoBalloon("The sound file will be moved to the location defined in Settings.", "top"));
 		this.pathElement = new FileSelector("Path", "sound");
-		this.volumeElement = new Slider("Volume");
+		this.volumeElement = new Slider(Utils.volumeLabelGenerator, 1);
+		this.volumeElement.step = 0.01;
 		this.keysElement = new KeyRecorder();
 
 		this.pathElement.onValueChanged.addHandler(async v => {

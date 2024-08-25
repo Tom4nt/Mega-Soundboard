@@ -8,8 +8,8 @@ export default class Settings {
 		public minToTray = true,
 		public mainDevice = "default",
 		public secondaryDevice = "",
-		public mainDeviceVolume = 100,
-		public secondaryDeviceVolume = 100,
+		public mainDeviceVolume = 1,
+		public secondaryDeviceVolume = 1,
 		public selectedSoundboard = 0,
 		public latestLogViewed = 0,
 		public showSoundDragTutorial = true,
@@ -55,6 +55,9 @@ export default class Settings {
 			}
 			else if (iterator == "quickActionStates" && typeof val === "object" && val) {
 				settings.quickActionStates = Settings.convertQuickActionStates(val as JSONObject);
+			}
+			else if ((iterator === "mainDeviceVolume" || iterator === "secondaryDeviceVolume") && typeof val === "number") {
+				settings[iterator] = val > 1 ? val / 100 : val;
 			}
 			else if (typeof val === defaultType && (Array.isArray(settings[iterator]) === Array.isArray(val))) {
 				settings[iterator] = val as never;

@@ -21,7 +21,7 @@ export default class SettingsModal extends Modal {
 		this.soundsLocationFileSelector = new FileSelector("", "folder");
 		this.minimizeToTrayToggler = new Toggler("Minimize to tray");
 		this.processKeysOnReleaseToggler = new Toggler("Process keybinds only on key release");
-		this.zoomSlider = new Slider("", "&times;");
+		this.zoomSlider = new Slider((v) => `${v}&times;`);
 
 		void this.load();
 
