@@ -5,8 +5,8 @@ import { isAction, actionFriendlyNames, actionNames, actionDefaults, ActionName 
 import { actionBindings } from "../quickActionBindings";
 import MS from "../ms";
 
-const iconWhitePath = path.join(Utils.resourcesPath, "icon_white.ico");
-const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
+const iconWhitePath = path.join(Utils.resourcesPath, "img/icon_white256.png");
+const iconPausedPath = path.join(Utils.resourcesPath, "img/icon_dot256.png");
 
 const whiteIcon = nativeImage.createFromPath(iconWhitePath);
 const pausedIcon = nativeImage.createFromPath(iconPausedPath);
@@ -71,6 +71,8 @@ export default class TrayManager {
 				this.tray.setImage(quickActionStates.get(k) ? whiteIcon : pausedIcon);
 				this.tray.setToolTip(quickActionStates.get(k) ? "Mega Soundboard" : "Mega Soundboard (Keybinds disabled)");
 			}
+
+			this.tray.setContextMenu(this.trayMenu); // Linux needs this to update.
 		}
 	}
 
