@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray } from "electron";
+import { app, BrowserWindow, Menu, nativeImage, Tray } from "electron";
 import * as path from "path";
 import Utils from "../utils/utils";
 import { isAction, actionFriendlyNames, actionNames, actionDefaults, ActionName } from "../../shared/quickActions";
@@ -8,6 +8,9 @@ import MS from "../ms";
 const iconWhitePath = path.join(Utils.resourcesPath, "icon_white.ico");
 const iconPausedPath = path.join(Utils.resourcesPath, "icon_dot.ico");
 
+const whiteIcon = nativeImage.createFromPath(iconWhitePath);
+const pausedIcon = nativeImage.createFromPath(iconPausedPath);
+
 export default class TrayManager {
 	private tray!: Tray;
 	private trayMenu!: Menu;
@@ -16,7 +19,7 @@ export default class TrayManager {
 
 	static createTray(win: BrowserWindow, quickActionStates: Map<ActionName, boolean>): TrayManager {
 		const instance = new TrayManager();
-		instance.tray = new Tray(iconWhitePath);
+		instance.tray = new Tray(whiteIcon);
 
 		const trayItems: Electron.MenuItemConstructorOptions[] = [];
 		for (const key of actionNames) {
@@ -65,7 +68,7 @@ export default class TrayManager {
 			if (keysItem) keysItem.checked = quickActionStates.get(k)!;
 
 			if (k === "toggleKeybinds") { // Specific for this action.
-				this.tray.setImage(quickActionStates.get(k) ? iconWhitePath : iconPausedPath);
+				this.tray.setImage(quickActionStates.get(k) ? whiteIcon : pausedIcon);
 				this.tray.setToolTip(quickActionStates.get(k) ? "Mega Soundboard" : "Mega Soundboard (Keybinds disabled)");
 			}
 		}

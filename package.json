@@ -11,7 +11,7 @@
 		"bundle": "npm run bundle-index && npm run bundle-preload",
 		"bundle-index": "browserify out/renderer/index.js -o out/renderer/bundle.js --no-bundle-external --debug",
 		"bundle-preload": "browserify out/shared/preload.js -o out/shared/preload-bundle.js --no-bundle-external",
-		"copy": "copyfiles src/res/**/* out -u 1",
+		"copy": "copyfiles \"src/res/**/*\" out -u 1",
 		"dist": "npm run build && electron-builder -p never",
 		"pub": "npm run build && electron-builder -p always"
 	},
