@@ -4,12 +4,17 @@ import Utils from "../utils/utils";
 import { isAction, actionFriendlyNames, actionNames, actionDefaults, ActionName } from "../../shared/quickActions";
 import { actionBindings } from "../quickActionBindings";
 import MS from "../ms";
+import * as os from "os";
 
-const iconWhitePath = path.join(Utils.resourcesPath, "img/icon_white256.png");
-const iconPausedPath = path.join(Utils.resourcesPath, "img/icon_dot256.png");
+const isWindows = os.platform() === "win32";
+const iconWhiteFileName = isWindows ? "icon_white.ico" : "icon_white256.png";
+const iconDotFileName = isWindows ? "icon_dot.ico" : "icon_dot256.png";
+
+const iconWhitePath = path.join(Utils.resourcesPath, "img", iconWhiteFileName);
+const iconDotPath = path.join(Utils.resourcesPath, "img", iconDotFileName);
 
 const whiteIcon = nativeImage.createFromPath(iconWhitePath);
-const pausedIcon = nativeImage.createFromPath(iconPausedPath);
+const dotIcon = nativeImage.createFromPath(iconDotPath);
 
 export default class TrayManager {
 	private tray!: Tray;
@@ -68,7 +73,7 @@ export default class TrayManager {
 			if (keysItem) keysItem.checked = quickActionStates.get(k)!;
 
 			if (k === "toggleKeybinds") { // Specific for this action.
-				this.tray.setImage(quickActionStates.get(k) ? whiteIcon : pausedIcon);
+				this.tray.setImage(quickActionStates.get(k) ? whiteIcon : dotIcon);
 				this.tray.setToolTip(quickActionStates.get(k) ? "Mega Soundboard" : "Mega Soundboard (Keybinds disabled)");
 			}
 
