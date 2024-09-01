@@ -42,9 +42,9 @@ export default class Dropdown extends HTMLElement {
 		text.innerHTML = "Select...";
 		this.textElement = text;
 
-		const arrow = document.createElement("span");
+		const arrow = document.createElement("i");
 		arrow.classList.add("dropdown-arrow");
-		arrow.innerHTML = "&#9207;";
+		arrow.innerHTML = "arrow_drop_down";
 
 		const itemsContainer = document.createElement("div");
 		itemsContainer.classList.add("dropdown-container");
@@ -71,7 +71,7 @@ export default class Dropdown extends HTMLElement {
 		const opt = this.options[index];
 		if (opt) {
 			opt.classList.add("selected");
-			if (this.isConnected) this.textElement.innerHTML = opt.innerHTML;
+			if (this.isConnected) this.textElement.innerHTML = opt.text;
 		}
 	}
 

@@ -8,9 +8,9 @@ import Settings from "./models/settings";
 
 type JSONObj = { [key: string]: unknown }
 
-const savePath = p.join(app.getPath("appData"), "\\MegaSoundboard");
-const soundboardsPath = p.join(savePath, "\\Soundboards.json");
-const settingsPath = p.join(savePath, "\\Settings.json");
+const savePath = p.join(app.getPath("appData"), "MegaSoundboard");
+const soundboardsPath = p.join(savePath, "Soundboards.json");
+const settingsPath = p.join(savePath, "Settings.json");
 
 export default class DataAccess {
 	static async getSoundboardsFromSaveFile(): Promise<Soundboard[]> {

@@ -107,7 +107,7 @@ export class Sound implements IBaseChild, IDirectPlayable {
 
 	static *iterateSoundsFromPaths(paths: string[]): Generator<Sound> {
 		for (const path of paths) {
-			const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(path), 100, []);
+			const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(path), 1, []);
 			yield new Sound(info, path);
 		}
 	}

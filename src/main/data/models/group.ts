@@ -131,7 +131,7 @@ export class Group implements IBaseChild, IBaseContainer {
 	}
 
 	static getWithName(name: string): Group {
-		return new Group(new BaseProperties(randomUUID(), name, 100, []), "random", []);
+		return new Group(new BaseProperties(randomUUID(), name, 1, []), "random", []);
 	}
 
 	static fromData(data: IGroupData): Group {

@@ -5,7 +5,7 @@ ms-dropdown {
 
 .dropdown-default {
 	border-radius: 4px;
-	padding: 8px;
+	padding: 6px;
 	background-color: var(--color-normal);
 	border: 1px solid var(--color-normalD);
 	color: var(--color-white);
@@ -16,6 +16,8 @@ ms-dropdown {
 	font-size: 13px;
 	font-family: Roboto;
 	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -31,14 +33,12 @@ ms-dropdown {
 }
 
 .dropdown-text {
-	line-height: 1.2;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .dropdown-arrow {
-	line-height: 1.1;
-	margin-left: auto;
+	font-size: 18px;
 }
 
 .dropdown-default.dark:hover {

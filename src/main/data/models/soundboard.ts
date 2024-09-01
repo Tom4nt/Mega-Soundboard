@@ -75,7 +75,7 @@ export class Soundboard implements IBaseContainer {
 	}
 
 	getDefault(uuid: string, name: string): Soundboard {
-		const info = new BaseProperties(uuid, name, 100, []);
+		const info = new BaseProperties(uuid, name, 1, []);
 		return new Soundboard(info, null, []);
 	}
 
@@ -139,7 +139,7 @@ export class Soundboard implements IBaseContainer {
 
 	static getDefault(name: string): Soundboard {
 		return new Soundboard(
-			new BaseProperties(randomUUID(), name, 100, []),
+			new BaseProperties(randomUUID(), name, 1, []),
 			null, [],
 		);
 	}
@@ -175,7 +175,7 @@ export class Soundboard implements IBaseContainer {
 					p => !isIContainer(p) && (p as IDirectPlayable & IBaseChild).getAudioPath() == completeName
 				);
 				if (!soundWithPath) {
-					const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(completeName), 100, []);
+					const info = new BaseProperties(randomUUID(), Utils.getNameFromFile(completeName), 1, []);
 					const s = new Sound(info, completeName);
 					container.addChild(s);
 					hasChanges = true;
