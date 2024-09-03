@@ -16,7 +16,7 @@
 		"pub": "npm run build && electron-builder -p always"
 	},
 	"repository": "https://github.com/Tom4nt/Mega-Soundboard",
-	"author": "Tom4nt",
+	"author": "Tom4nt <tmsntns@gmail.com>",
 	"license": "ISC",
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
@@ -41,7 +41,7 @@
 	"build": {
 		"appId": "com.tom4nt.megasoundboard",
 		"productName": "Mega Soundboard",
-		"icon": "out/res/icon.ico",
+		"icon": "out/res/img/icon.ico",
 		"files": [
 			"out/**/*"
 		],
@@ -55,6 +55,11 @@
 			"ext": "mspkg",
 			"name": "Mega Soundboard Package",
 			"description": "Mega Soundboard Package"
+		},
+		"linux": {
+			"category": "AudioVideo",
+			"icon": "out/res/icons",
+			"target": "deb"
 		}
 	}
 }
