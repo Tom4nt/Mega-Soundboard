@@ -1,7 +1,7 @@
 {
 	"name": "mega-soundboard",
 	"version": "0.7.0",
-	"description": "Mega Soundboard",
+	"description": "Play and manage sounds with keybinds.",
 	"main": "out/main/main.js",
 	"scripts": {
 		"build": "npx eslint src && npm run copy && npm run build-tsc && npm run bundle",
