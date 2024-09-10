@@ -10,7 +10,7 @@
     ·
     <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=BUG&projects=&template=bug_report.md&title=">Report a Bug</a>
     ·
-    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=New+Feature&projects=&template=feature-request.md&title=">Request Feature</a>
+    <a href="https://github.com/Tom4nt/Mega-Soundboard/issues/new?assignees=Tom4nt&labels=New+Feature&projects=&template=feature-request.md&title=">Request a Feature</a>
   </p>
 </p>
 
@@ -28,6 +28,8 @@ Mega Soundboard is an app that allows you to organize sound files and play them 
 * Let Mega Soundboard virtually press a key (or keys) of your choice while a sound is playing. This is usefull for push-to-talk.
 * Folder-linked Soundboards: Sounds can be synced between a folder on your system and a Soundboard. They are synced instantly and based on events (no polling).
 * Move the source audio file to a specified folder before importing a sound.
+
+**Check out [the roadmap](https://github.com/Tom4nt/Mega-Soundboard/wiki/Roadmap) for planned features.**
 
 ## Screenshots
 ![d](doc/images/main.png)
