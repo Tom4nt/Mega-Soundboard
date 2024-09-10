@@ -270,6 +270,7 @@ export default class SoundboardsCache {
 				isPlaying: MS.instance.audioManager.getPlayingInstanceCount(uuid) > 0,
 			}))
 		});
+		await DataAccess.saveSoundboards(this.soundboards);
 	}
 
 	// ---
