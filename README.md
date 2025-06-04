@@ -48,6 +48,7 @@ Download a release of Mega Soundboard [here](https://github.com/Tom4nt/Mega-Soun
 ## Contributing
 ### Prerequisites
 * npm
+
 ### Build and run
 1. Clone repo
 2. Install dependencies with `npm install`
